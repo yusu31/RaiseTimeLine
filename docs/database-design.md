@@ -12,12 +12,17 @@ API設計は [設計書（design.md）](./design.md) を参照。
 > ER図（Entity Relationship Diagram）＝「テーブル同士がどうつながっているか」を表した図。
 > `||--o{` は「1対多」（例：1人のユーザーが多数の投稿を持つ）を意味する。GitHub上で自動的に図として表示される。
 
+> 本ER図は**最終形（目標スキーマ）**を描いている。Phase 1 で作らないものには「Phase 2」「Phase 3」と明記した。
+> 実装はマイグレーション（後述）で段階的にこの形に近づける。
+
 ```mermaid
 erDiagram
     users ||--o{ posts : "投稿する"
     users ||--o{ comments : "コメントする"
     users ||--o{ likes : "いいねする"
     users ||--o{ refresh_tokens : "持つ"
+    users ||--o{ follows : "フォローする（follower）"
+    users ||--o{ follows : "フォローされる（following）"
     posts ||--o{ comments : "コメントされる"
     posts ||--o{ likes : "いいねされる"
 
@@ -26,7 +31,9 @@ erDiagram
         varchar display_name "表示名"
         varchar email UK "メールアドレス（重複不可）"
         varchar password_hash "BCryptハッシュ"
+        varchar username UK "ユーザー名・アットマーク表示用（Phase 2）"
         text bio "自己紹介（Phase 2）"
+        varchar icon_image_url "アイコン画像URL（Phase 2）"
         timestamp created_at
         timestamp updated_at
     }
@@ -62,6 +69,13 @@ erDiagram
         timestamp expires_at "有効期限"
         timestamp created_at
     }
+
+    follows {
+        bigint id PK
+        bigint follower_id FK "フォローする人（Phase 3）"
+        bigint following_id FK "フォローされる人（Phase 3）"
+        timestamp created_at
+    }
 ```
 
 ### 設計のポイント（学習メモ）
@@ -76,6 +90,10 @@ erDiagram
 3. **外部キー（FK）で「存在しない投稿へのコメント」を防ぐ。**
    comments.post_id は posts.id を参照する外部キーにする。親の投稿が消えたら
    コメント・いいねも一緒に消えるように `ON DELETE CASCADE` を設定する（Phase 2 の投稿削除で効いてくる）。
+4. **follows は「users と users を結ぶ中間テーブル」（Phase 3）。**
+   likes が users×posts を結ぶのと同じ仕組みの users×users 版。
+   （follower_id, following_id）のユニーク制約で二重フォローを防ぐのも likes と同じパターン。
+   既存テーブルに手を入れず追加できるため、Phase 3 での実装でも手戻りは発生しない。
 
 ---
 
@@ -89,7 +107,9 @@ erDiagram
 | display_name | VARCHAR(50) | 不可 | - | 表示名（タイムラインに表示される名前） |
 | email | VARCHAR(255) | 不可 | - | メールアドレス（ログインID）。ユニーク制約 |
 | password_hash | VARCHAR(255) | 不可 | - | BCryptでハッシュ化したパスワード |
-| bio | TEXT | 可 | NULL | 自己紹介（Phase 2 のプロフィール機能で使用） |
+| username | VARCHAR(30) | 不可 | - | @表示用のユーザー名。ユニーク制約（**Phase 2 で追加**。追加時に既存ユーザーへ値を割り当てるマイグレーションが必要） |
+| bio | TEXT | 可 | NULL | 自己紹介（**Phase 2 で追加**） |
+| icon_image_url | VARCHAR(512) | 可 | NULL | アイコン画像のURL（**Phase 2 で追加**） |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 更新日時 |
 
@@ -135,6 +155,18 @@ erDiagram
 | expires_at | TIMESTAMP | 不可 | - | 有効期限（期限切れトークンは使用不可） |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 発行日時 |
 
+### follows（フォロー関係）※Phase 3 で作成
+
+| カラム名 | 型 | NULL | デフォルト | 説明 |
+|---------|----|------|-----------|------|
+| id | BIGSERIAL | 不可 | 自動採番 | 主キー |
+| follower_id | BIGINT | 不可 | - | フォローする人。users.id への外部キー（ON DELETE CASCADE） |
+| following_id | BIGINT | 不可 | - | フォローされる人。users.id への外部キー（ON DELETE CASCADE） |
+| created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | フォローした日時 |
+
+> **ユニーク制約:** (follower_id, following_id) — 同じ相手を2回フォローできない
+> **CHECK制約:** follower_id ≠ following_id — 自分自身はフォローできない
+
 ---
 
 ## 3. 列挙値（Enum）の定義
@@ -156,6 +188,9 @@ erDiagram
 | comments | post_id | INDEX | 投稿詳細でその投稿のコメントを取得する・コメント数を数えるため |
 | likes | (post_id, user_id) | UNIQUE | 二重いいね防止。post_id での検索（いいね数の集計）にも使える |
 | refresh_tokens | token | UNIQUE | トークン再発行時にトークン値で検索するため |
+| users | username | UNIQUE | @ユーザー名の重複防止・検索用（**Phase 2**） |
+| follows | (follower_id, following_id) | UNIQUE | 二重フォロー防止。follower_id での検索（フォロー中一覧）にも使える（**Phase 3**） |
+| follows | following_id | INDEX | 「自分のフォロワー一覧」を取得するため（**Phase 3**） |
 
 ---
 
@@ -164,11 +199,24 @@ erDiagram
 > Flyway は `V1__xxx.sql` のような連番ファイルを順番に実行して、DBの状態をバージョン管理するツール。
 > 外部キーの参照先（親テーブル）を先に作る必要があるため、順序が重要。
 
+### Phase 1（最初に実行）
+
 | 順序 | ファイル名（予定） | 内容 |
 |------|------------------|------|
-| V1 | V1__create_users.sql | users テーブル作成 |
+| V1 | V1__create_users.sql | users テーブル作成（Phase 1 時点のカラムのみ） |
 | V2 | V2__create_posts.sql | posts テーブル作成（users を参照） |
 | V3 | V3__create_comments.sql | comments テーブル作成（users, posts を参照） |
 | V4 | V4__create_likes.sql | likes テーブル作成＋ユニーク制約（users, posts を参照） |
 | V5 | V5__create_refresh_tokens.sql | refresh_tokens テーブル作成（users を参照） |
 | V6 | V6__insert_seed_users.sql | Phase 1 用のテストユーザー投入（シードデータ） |
+
+### Phase 2 以降（予定。実装フェーズで番号・内容を確定する）
+
+| 順序 | ファイル名（予定） | 内容 | Phase |
+|------|------------------|------|-------|
+| V7 | V7__add_profile_columns_to_users.sql | users に username / bio / icon_image_url を追加（既存ユーザーへの username 割り当てを含む） | 2 |
+| V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
+
+> **学習メモ:** ER図は最初に最終形（目標スキーマ）まで描き切るが、テーブルやカラムの追加は
+> このように後続のマイグレーションで行う。「一度実行したマイグレーションファイルは書き換えず、
+> 変更は新しいファイルで積み重ねる」のが Flyway の基本ルール。
