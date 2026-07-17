@@ -62,7 +62,7 @@
 
 | サーバー | ポート | 備考 |
 |---------|--------|------|
-| React（フロントエンド） | **3000** | vite.config.ts で固定する |
+| React（フロントエンド） | **5173** | Viteのデフォルトポート（TaskManagementと同一） |
 | Spring Boot（バックエンド） | **8080** | application.yml のデフォルト |
 | PostgreSQL（データベース） | **5432** | docker-compose で起動 |
 
