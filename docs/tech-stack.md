@@ -4,17 +4,20 @@
 
 使用技術・バージョン・選定理由を定義する。
 
+> **バージョン方針（講師指示）:** 前回課題 TaskManagement と同じバージョンを使用する。
+> 下表のバージョンは TaskManagement の実物（build.gradle / package.json / docker-compose.yml）を確認して合わせた。
+
 ---
 
 ## フロントエンド
 
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
 |----------|----------|-----------|---------|
-| 言語 | TypeScript | 5.x | 型安全で開発時のミスを減らせる。前回課題でも使用 |
-| ライブラリ | React | 19.x | 前回課題（TaskManagement）で使用した構成を深める |
-| ビルドツール | Vite | 最新安定版 | 高速な開発サーバー。前回課題でも使用 |
-| ルーティング | React Router | 7.x | ログイン画面⇄タイムライン⇄投稿詳細の画面遷移に必要 |
-| スタイリング | Tailwind CSS | 4.x | ユーティリティクラスで素早くUIを組める |
+| 言語 | TypeScript | ~6.0 | 型安全で開発時のミスを減らせる。TaskManagementと同一 |
+| ライブラリ | React | 19.2.x | TaskManagementと同一 |
+| ビルドツール | Vite | 8.x | 高速な開発サーバー。TaskManagementと同一 |
+| ルーティング | React Router | 7.x | ログイン画面⇄タイムライン⇄投稿詳細の画面遷移に必要（今回から追加。TaskManagementは単一画面のため不使用だった） |
+| スタイリング | Tailwind CSS | 4.x | ユーティリティクラスで素早くUIを組める（今回から追加） |
 | HTTPクライアント | fetch API（標準） | - | 標準機能で十分。追加ライブラリ不要 |
 | 状態管理 | React useState / Context | - | この規模なら外部ライブラリ不要。ログインユーザー情報は Context で保持 |
 
@@ -22,28 +25,29 @@
 
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
 |----------|----------|-----------|---------|
-| 言語 | Java | 21 | 前回課題と同じLTS版 |
-| フレームワーク | Spring Boot | 3.x | RaiseTechの講義で使用。REST APIサーバーの実績が豊富 |
+| 言語 | Java | 21 | TaskManagementと同一のLTS版 |
+| フレームワーク | Spring Boot | 3.4.5 | RaiseTechの講義で使用。TaskManagementと同一バージョン |
 | 認証 | Spring Security + JWT | Boot同梱 + jjwt | 講義（No.24〜）がJWT方式のため。アクセストークン＋リフレッシュトークン構成 |
 | ORマッパー | Spring Data JPA | Boot同梱 | 前回課題で使用経験あり。講師も「JPAかMyBatis」を推奨 |
 | DBマイグレーション | Flyway | Boot同梱 | 講義で導入するツール。DBの変更履歴をSQLファイルで管理できる |
-| API仕様書 | springdoc-openapi | 2.x | 前回課題でも使用。エンドポイントの動作確認（Swagger UI）に便利 |
+| API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
 
 ## データベース
 
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
 |----------|----------|-----------|---------|
-| データベース | PostgreSQL | 16.x | 前回課題と同じ。講義スタックとも一致 |
+| データベース | PostgreSQL | 17 | TaskManagementと同一（docker image: postgres:17） |
 | ローカル環境 | Docker + docker-compose | - | 環境構築を簡単にするためコンテナで動かす |
 
-## インフラ・デプロイ（デプロイフェーズで確定）
+## インフラ・デプロイ（S3は確定・その他は前提）
 
-| カテゴリ | 使用技術 | 選定理由 |
-|----------|----------|---------|
-| クラウド | AWS | 講義・前回課題と同じ。転職市場での需要が高い |
-| 構成案 | EC2 + RDS（PostgreSQL） | 前回課題と同様の構成を想定。詳細は infrastructure.md で定義 |
-| IaC | Terraform | 前回課題で使用。インフラをコードで管理 |
+| カテゴリ | 使用技術 | 状態 | 選定理由 |
+|----------|----------|------|---------|
+| 画像ストレージ | S3 | **確定** | 投稿画像・アイコン画像の保存先（講師指示） |
+| クラウド | AWS | 前提 | 講義・前回課題と同じ。転職市場での需要が高い |
+| サーバー構成 | EC2 + RDS（PostgreSQL） + ALB | 前提 | 構成図は [infrastructure.md](./infrastructure.md) を参照。サーバー構築方式の詳細はデプロイフェーズで確定 |
+| IaC | Terraform | 前提 | 前回課題で使用。インフラをコードで管理 |
 
 ## 共通
 

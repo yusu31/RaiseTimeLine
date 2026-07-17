@@ -30,8 +30,12 @@
 | 認証 | Spring Security + JWT（アクセストークン＋リフレッシュトークン） |
 | ORマッパー | Spring Data JPA |
 | DBマイグレーション | Flyway |
-| データベース | PostgreSQL 16（ローカルは Docker） |
-| デプロイ | AWS（デプロイフェーズで確定） |
+| データベース | PostgreSQL 17（ローカルは Docker） |
+| 画像ストレージ | AWS S3（確定） |
+| デプロイ | AWS: EC2 + RDS + ALB 前提（詳細はデプロイフェーズで確定） |
+
+> **バージョン方針（講師指示）:** ライブラリのバージョンは前回課題 TaskManagement と同じものを使う。
+> 詳細は docs/tech-stack.md を参照。
 
 ## サーバー起動・ポート管理（厳守）
 
