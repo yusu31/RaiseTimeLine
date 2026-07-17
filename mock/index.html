@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaiseTimeLine - ログイン</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-page">
+  <main class="auth-card">
+    <h1 class="logo">RaiseTimeLine</h1>
+    <form id="login-form" class="auth-form" novalidate>
+      <label class="field-label" for="email">メールアドレス</label>
+      <input type="email" id="email" class="text-input" required autocomplete="username">
+
+      <label class="field-label" for="password">パスワード</label>
+      <input type="password" id="password" class="text-input" required autocomplete="current-password">
+
+      <button type="submit" class="btn btn--primary btn--block">ログイン</button>
+      <p id="login-error" class="error-text" hidden></p>
+    </form>
+
+    <div class="test-account-note">
+      <p>この画面は静的プロトタイプです。以下のいずれかでログインできます。</p>
+      <ul>
+        <li>suzuki@example.com / password123</li>
+        <li>takahashi@example.com / password123</li>
+        <li>sato@example.com / password123</li>
+      </ul>
+    </div>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/login.js"></script>
+</body>
+</html>

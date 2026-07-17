@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaiseTimeLine - 投稿詳細</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <a href="timeline.html" class="back-link">← 戻る</a>
+  </header>
+
+  <main class="timeline" id="post-detail-root">
+    <article id="post-detail" class="post-card"></article>
+
+    <form id="comment-form" class="comment-form" novalidate>
+      <input type="text" id="comment-body" class="text-input" placeholder="コメントを入力…">
+      <button type="submit" class="btn btn--primary">コメント</button>
+      <p id="comment-error" class="error-text" hidden></p>
+    </form>
+
+    <h2 class="section-title">コメント一覧（<span id="comment-count">0</span>件）</h2>
+    <section id="comment-list" class="comment-list"></section>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/post.js"></script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaiseTimeLine - タイムライン</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <span class="logo">RaiseTimeLine</span>
+    <div class="app-header__right">
+      <span id="current-user-name" class="current-user-name"></span>
+      <button id="logout-btn" type="button" class="btn btn--ghost">ログアウト</button>
+    </div>
+  </header>
+
+  <main class="timeline">
+    <form id="post-form" class="post-form" novalidate>
+      <textarea id="post-body" class="post-form__textarea" maxlength="320" placeholder="いまどうしてる？"></textarea>
+
+      <div id="image-preview-wrap" class="image-preview-wrap" hidden>
+        <img id="image-preview" class="image-preview" alt="選択した画像のプレビュー">
+        <button type="button" id="image-clear-btn" class="btn btn--ghost btn--small">画像を削除</button>
+      </div>
+
+      <div class="post-form__toolbar">
+        <label class="btn btn--ghost btn--small file-label">
+          📷 画像を選択
+          <input type="file" id="image-input" accept="image/jpeg,image/png" hidden>
+        </label>
+        <span id="char-counter" class="char-counter">0/280</span>
+        <button type="submit" class="btn btn--primary">投稿する</button>
+      </div>
+      <p id="post-error" class="error-text" hidden></p>
+    </form>
+
+    <section id="post-list" class="post-list"></section>
+
+    <button id="load-more-btn" type="button" class="btn btn--ghost btn--block" hidden>もっと見る</button>
+  </main>
+
+  <script src="js/data.js"></script>
+  <script src="js/timeline.js"></script>
+</body>
+</html>

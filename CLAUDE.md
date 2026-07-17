@@ -69,6 +69,7 @@ taskkill /PID <PID> /F
 RaiseTimeLine/
 ├── backend/        # Java + Spring Boot（REST API）
 ├── frontend/       # React + TypeScript（Vite）
+├── mock/           # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし。localStorageで疑似データ保持）
 ├── docs/           # 要件定義・設計ドキュメント
 │   └── features/   # 機能別詳細設計（各機能の実装直前に作成）
 ├── docker-compose.yml

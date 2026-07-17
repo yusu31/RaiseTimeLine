@@ -68,11 +68,21 @@ X（旧Twitter）のタイムライン形式を参考にした、テキストベ
 RaiseTimeLine/
 ├── backend/        # Java + Spring Boot（REST API）
 ├── frontend/       # React + TypeScript（Vite）
+├── mock/           # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし）
 ├── docs/           # 要件定義・設計ドキュメント
 │   └── features/   # 機能別詳細設計
 ├── docker-compose.yml
 ├── CLAUDE.md       # AI開発アシスタント向けプロジェクトルール
 └── README.md
+```
+
+## 静的プロトタイプ（Mock）
+
+実装前の画面・操作感確認用に、HTML/CSS/JavaScriptのみの静的プロトタイプを用意しています（DB・サーバー不使用、疑似データはブラウザのlocalStorageに保持）。
+
+```
+mock/index.html をブラウザで開く（file://でも動作するが、ローカルサーバー推奨）
+テストアカウント: suzuki@example.com / password123 など（画面内に記載）
 ```
 
 ---
