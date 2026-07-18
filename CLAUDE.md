@@ -69,6 +69,7 @@ taskkill /PID <PID> /F
 RaiseTimeLine/
 ├── backend/        # Java + Spring Boot（REST API）
 ├── frontend/       # React + TypeScript（Vite）
+├── prototype/      # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし。localStorageで疑似データ保持。全Phase分の画面を先行して盛り込む）
 ├── docs/           # 要件定義・設計ドキュメント
 │   └── features/   # 機能別詳細設計（各機能の実装直前に作成）
 ├── docker-compose.yml
@@ -117,6 +118,8 @@ cd backend
 
 ## 注意事項
 
-- Phase 順を厳守する（Phase 1 完成まで Phase 2 に着手しない）
+- Phase 順を厳守する（Phase 1 完成まで Phase 2 に着手しない）。
+  **このルールは本番コード（backend/frontend）が対象。使い捨ての静的プロトタイプ（prototype/）は対象外**とし、
+  完成イメージを早期に共有する目的で全Phaseの画面・機能を先に盛り込んでよい
 - 有料APIを呼び出す実装を行う前に、必ずユーザーに確認を取ること（課金が発生するため）
 - 秘密情報（JWTの署名鍵・DBパスワード等）をGitにコミットしない。環境変数または `.gitignore` 済み設定ファイルで管理する

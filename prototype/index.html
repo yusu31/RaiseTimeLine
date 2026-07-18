@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RaiseTimeLine - プロトタイプ</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header id="app-header" class="app-header" hidden>
+  <span class="logo">RaiseTL</span>
+  <nav class="header-nav">
+    <button type="button" id="nav-search-btn" class="icon-btn icon-btn--search" title="ユーザー検索" data-icon="search"></button>
+    <button type="button" id="nav-profile-btn" class="icon-btn icon-btn--profile" title="プロフィール" data-icon="user"></button>
+    <button type="button" id="logout-btn" class="btn btn--ghost">ログアウト</button>
+  </nav>
+</header>
+
+<main class="app-main">
+
+  <!-- 1. ユーザー登録画面 -->
+  <section id="screen-signup" class="screen auth-page" hidden>
+    <div class="auth-card">
+      <h1 class="logo">RaiseTimeLine</h1>
+      <form id="signup-form" class="auth-form" novalidate>
+        <label class="field-label" for="signup-email">メールアドレス</label>
+        <input type="email" id="signup-email" class="text-input" placeholder="example@mail.com" autocomplete="username">
+        <p class="field-hint" id="signup-email-hint"></p>
+
+        <label class="field-label" for="signup-password">パスワード</label>
+        <input type="password" id="signup-password" class="text-input" placeholder="8文字以上" autocomplete="new-password">
+        <p class="field-hint" id="signup-password-hint"></p>
+
+        <label class="field-label" for="signup-password-confirm">パスワード確認</label>
+        <input type="password" id="signup-password-confirm" class="text-input" placeholder="もう一度入力" autocomplete="new-password">
+        <p class="field-hint" id="signup-password-confirm-hint"></p>
+
+        <label class="field-label" for="signup-username">ユーザー名</label>
+        <input type="text" id="signup-username" class="text-input" placeholder="英数字・アンダースコア">
+        <p class="field-hint" id="signup-username-hint"></p>
+
+        <button type="submit" class="btn btn--primary btn--block">登録する</button>
+        <p id="signup-error" class="error-text" hidden></p>
+      </form>
+      <p class="switch-link">アカウントをお持ちの方は <a href="#" id="go-to-login">ログイン</a></p>
+    </div>
+  </section>
+
+  <!-- 2. ログイン画面 -->
+  <section id="screen-login" class="screen auth-page">
+    <div class="auth-card">
+      <h1 class="logo">RaiseTimeLine</h1>
+      <form id="login-form" class="auth-form" novalidate>
+        <label class="field-label" for="login-email">メールアドレス</label>
+        <input type="email" id="login-email" class="text-input" placeholder="example@mail.com" autocomplete="username">
+
+        <label class="field-label" for="login-password">パスワード</label>
+        <input type="password" id="login-password" class="text-input" placeholder="パスワード" autocomplete="current-password">
+
+        <button type="submit" class="btn btn--primary btn--block">ログイン</button>
+        <p id="login-error" class="error-text" hidden></p>
+      </form>
+      <p class="switch-link">アカウントをお持ちでない方は <a href="#" id="go-to-signup">新規登録</a></p>
+      <div class="test-account-note">
+        <p>テスト用アカウント（パスワードは共通で password123）</p>
+        <ul>
+          <li>suzuki@example.com</li>
+          <li>takahashi@example.com</li>
+          <li>sato@example.com</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. タイムライン画面 -->
+  <section id="screen-timeline" class="screen" hidden>
+    <div class="timeline-toolbar">
+      <div class="tabs">
+        <button type="button" class="tab-btn is-active" data-tab="all">全体</button>
+        <button type="button" class="tab-btn" data-tab="following">フォロー中</button>
+      </div>
+      <button type="button" id="open-post-create-btn" class="btn btn--primary">＋投稿する</button>
+    </div>
+    <section id="timeline-post-list" class="post-list"></section>
+    <button id="timeline-load-more-btn" type="button" class="btn btn--ghost btn--block" hidden>もっと見る</button>
+  </section>
+
+  <!-- 6. 投稿詳細画面 -->
+  <section id="screen-post-detail" class="screen" hidden>
+    <a href="#" id="post-detail-back" class="back-link">← 戻る</a>
+    <article id="post-detail-card" class="post-card"></article>
+    <form id="comment-form" class="comment-form" novalidate>
+      <input type="text" id="comment-body" class="text-input" placeholder="コメントを入力…">
+      <button type="submit" class="btn btn--primary">コメント</button>
+    </form>
+    <p id="comment-error" class="error-text" hidden></p>
+    <h2 class="section-title">コメント（<span id="comment-count">0</span>件）</h2>
+    <section id="comment-list" class="comment-list"></section>
+  </section>
+
+  <!-- 7. プロフィール画面 -->
+  <section id="screen-profile" class="screen" hidden>
+    <a href="#" id="profile-back" class="back-link">← 戻る</a>
+    <div class="profile-card">
+      <div class="profile-card__icon" id="profile-icon"></div>
+      <h2 id="profile-display-name" class="profile-card__name"></h2>
+      <p id="profile-username" class="profile-card__username"></p>
+      <p id="profile-bio" class="profile-card__bio"></p>
+      <div class="profile-card__stats">
+        <button type="button" class="link-btn" id="profile-following-count">0 フォロー中</button>
+        <button type="button" class="link-btn" id="profile-follower-count">0 フォロワー</button>
+      </div>
+      <button type="button" id="profile-edit-btn" class="btn btn--primary" hidden>プロフィール編集</button>
+      <button type="button" id="profile-follow-btn" class="btn btn--primary" hidden>フォロー</button>
+    </div>
+    <h2 class="section-title">このユーザーの投稿</h2>
+    <section id="profile-post-list" class="post-list"></section>
+  </section>
+
+  <!-- 8. プロフィール編集画面 -->
+  <section id="screen-profile-edit" class="screen" hidden>
+    <a href="#" id="profile-edit-back" class="back-link">← 戻る</a>
+    <h2 class="section-title">プロフィール編集</h2>
+    <form id="profile-edit-form" class="post-form" novalidate>
+      <div class="icon-edit-row">
+        <div class="profile-card__icon profile-card__icon--sm" id="profile-edit-icon-preview"></div>
+        <label class="btn btn--ghost btn--small file-label">
+          変更する
+          <input type="file" id="profile-edit-icon-input" accept="image/jpeg,image/png" hidden>
+        </label>
+      </div>
+      <label class="field-label" for="profile-edit-display-name">表示名</label>
+      <input type="text" id="profile-edit-display-name" class="text-input">
+      <label class="field-label" for="profile-edit-username">ユーザー名</label>
+      <input type="text" id="profile-edit-username" class="text-input">
+      <label class="field-label" for="profile-edit-bio">自己紹介</label>
+      <textarea id="profile-edit-bio" class="post-form__textarea" maxlength="200"></textarea>
+      <span id="profile-edit-bio-counter" class="char-counter">残り 160文字</span>
+      <p id="profile-edit-error" class="error-text" hidden></p>
+      <button type="submit" class="btn btn--primary btn--block">保存する</button>
+    </form>
+  </section>
+
+  <!-- 9. ユーザー検索画面 -->
+  <section id="screen-search" class="screen" hidden>
+    <a href="#" id="search-back" class="back-link">← 戻る</a>
+    <h2 class="section-title">ユーザー検索</h2>
+    <input type="text" id="search-input" class="text-input" placeholder="ユーザー名を入力…">
+    <section id="search-result-list" class="user-list"></section>
+  </section>
+
+  <!-- 10. フォロー/フォロワー一覧画面 -->
+  <section id="screen-follow-list" class="screen" hidden>
+    <a href="#" id="follow-list-back" class="back-link">← 戻る</a>
+    <div class="tabs">
+      <button type="button" class="tab-btn" data-follow-tab="following">フォロー中</button>
+      <button type="button" class="tab-btn" data-follow-tab="followers">フォロワー</button>
+    </div>
+    <section id="follow-list-users" class="user-list"></section>
+  </section>
+
+</main>
+
+<!-- 4/5. 投稿作成・編集モーダル（同じUIを使い回す） -->
+<div id="post-modal" class="modal-overlay" hidden>
+  <div class="modal-card">
+    <div class="modal-card__header">
+      <h2 id="post-modal-title">投稿する</h2>
+      <button type="button" id="post-modal-close" class="icon-btn" data-icon="close"></button>
+    </div>
+    <form id="post-modal-form" novalidate>
+      <textarea id="post-modal-body" class="post-form__textarea" maxlength="320" placeholder="いまどうしてる？"></textarea>
+      <div id="post-modal-image-wrap" class="image-preview-wrap" hidden>
+        <img id="post-modal-image-preview" class="image-preview" alt="選択した画像のプレビュー">
+        <button type="button" id="post-modal-image-clear" class="btn btn--ghost btn--small">画像を削除</button>
+      </div>
+      <div class="post-form__toolbar">
+        <label class="btn btn--ghost btn--small file-label">
+          <span class="icon-slot" data-icon="camera"></span> 画像添付
+          <input type="file" id="post-modal-image-input" accept="image/jpeg,image/png" hidden>
+        </label>
+        <span id="post-modal-counter" class="char-counter">残り 280文字</span>
+        <button type="submit" id="post-modal-submit" class="btn btn--primary">投稿する</button>
+      </div>
+      <p id="post-modal-error" class="error-text" hidden></p>
+    </form>
+  </div>
+</div>
+
+<!-- 11. 削除確認ダイアログ -->
+<div id="confirm-modal" class="modal-overlay" hidden>
+  <div class="modal-card modal-card--sm">
+    <h2>確認</h2>
+    <p id="confirm-message"></p>
+    <div class="modal-card__actions">
+      <button type="button" id="confirm-cancel-btn" class="btn btn--ghost">キャンセル</button>
+      <button type="button" id="confirm-ok-btn" class="btn btn--danger">削除する</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
