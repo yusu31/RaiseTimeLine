@@ -13,6 +13,24 @@ const STORAGE_KEYS = {
 const PAGE_SIZE = 3;
 const AVATAR_COLORS = ['#1d9bf0', '#f91880', '#00ba7c', '#ffad1f', '#7856ff'];
 
+// アイコンは絵文字ではなくSVG（線画データ）で統一する。
+// 絵文字と違いCSSで自由に色・サイズを変えられるため、見た目を作り込める。
+const ICONS = {
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+  user: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>',
+  comment: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>',
+  heart: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+  heartFilled: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.8 1-1a5.5 5.5 0 0 0 0-7.8z"></path></svg>',
+  edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>',
+  trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path></svg>',
+  camera: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>',
+  close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>',
+  person: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5z"></path></svg>',
+};
+function icon(name, extraClass) {
+  return `<span class="icon ${extraClass || ''}">${ICONS[name]}</span>`;
+}
+
 let currentUser = null;
 let timelineTab = 'all';
 let timelineVisibleCount = PAGE_SIZE;
@@ -119,8 +137,7 @@ function renderAvatar(user, size) {
   if (user.icon) {
     return `<img class="avatar avatar--${size}" src="${user.icon}" alt="${escapeHtml(user.displayName)}のアイコン">`;
   }
-  const initial = (user.displayName || '?').charAt(0);
-  return `<span class="avatar avatar--${size}" style="background:${avatarColor(user.id)}">${escapeHtml(initial)}</span>`;
+  return `<span class="avatar avatar--${size}" style="background:${avatarColor(user.id)}">${icon('person')}</span>`;
 }
 
 /* ---------------- 画面切り替え（SPAの中心部分） ---------------- */
@@ -129,7 +146,15 @@ function showScreen(id) {
   document.querySelectorAll('.screen').forEach((el) => { el.hidden = true; });
   document.getElementById(id).hidden = false;
   document.getElementById('app-header').hidden = (id === 'screen-login' || id === 'screen-signup');
+  syncHeaderNavUI(id);
   window.scrollTo(0, 0);
+}
+
+function syncHeaderNavUI(screenId) {
+  if (!currentUser) return;
+  const isOwnProfileArea = (screenId === 'screen-profile' && state.profileUserId === currentUser.id) || screenId === 'screen-profile-edit';
+  document.getElementById('nav-search-btn').classList.toggle('is-active', screenId === 'screen-search');
+  document.getElementById('nav-profile-btn').classList.toggle('is-active', isOwnProfileArea);
 }
 
 function goTimeline() {
@@ -193,11 +218,11 @@ function renderPostCard(post) {
       <p class="post-card__body">${escapeHtml(post.body)}</p>
       ${post.image ? `<img class="post-card__image" src="${post.image}" alt="投稿画像">` : ''}
       <div class="post-card__actions">
-        <button type="button" class="action-btn" data-action="open-post" data-post-id="${post.id}">💬 <span>${commentCount}</span></button>
-        <button type="button" class="action-btn action-btn--like ${liked ? 'is-liked' : ''}" data-action="like" data-post-id="${post.id}">${liked ? '❤' : '♡'} <span>${post.likedBy.length}</span></button>
+        <button type="button" class="action-btn" data-action="open-post" data-post-id="${post.id}">${icon('comment')} <span>${commentCount}</span></button>
+        <button type="button" class="action-btn action-btn--like ${liked ? 'is-liked' : ''}" data-action="like" data-post-id="${post.id}">${icon(liked ? 'heartFilled' : 'heart')} <span>${post.likedBy.length}</span></button>
         ${isOwn ? `
-          <button type="button" class="action-btn" data-action="edit-post" data-post-id="${post.id}">✏️ 編集</button>
-          <button type="button" class="action-btn" data-action="delete-post" data-post-id="${post.id}">🗑 削除</button>
+          <button type="button" class="action-btn" data-action="edit-post" data-post-id="${post.id}">${icon('edit')} 編集</button>
+          <button type="button" class="action-btn" data-action="delete-post" data-post-id="${post.id}">${icon('trash')} 削除</button>
         ` : ''}
       </div>
     </article>
@@ -757,6 +782,7 @@ function loginAs(user) {
 
 document.addEventListener('DOMContentLoaded', () => {
   seedIfEmpty();
+  document.querySelectorAll('[data-icon]').forEach((el) => { el.innerHTML = ICONS[el.dataset.icon]; });
   bindEvents();
 
   const session = getSession();

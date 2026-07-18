@@ -91,13 +91,49 @@ body {
 .icon-btn {
   background: none;
   border: none;
-  font-size: 1.2rem;
+  color: var(--color-text);
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 8px;
+  padding: 0.4rem;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .icon-btn:hover {
   background: #eef7fe;
+}
+.icon-btn--search {
+  color: #00b8d9;
+}
+.icon-btn--search.is-active {
+  background: rgba(0, 184, 217, 0.12);
+}
+.icon-btn--profile {
+  color: #7856ff;
+}
+.icon-btn--profile.is-active {
+  background: rgba(120, 86, 255, 0.12);
+}
+
+/* SVGアイコン共通サイズ */
+.icon,
+.icon-slot {
+  display: inline-flex;
+  vertical-align: middle;
+}
+.icon svg,
+.icon-slot svg,
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+.action-btn .icon svg {
+  width: 18px;
+  height: 18px;
+}
+.avatar svg {
+  width: 55%;
+  height: 55%;
 }
 
 .error-text {
