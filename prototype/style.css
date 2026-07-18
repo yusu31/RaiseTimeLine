@@ -131,9 +131,13 @@ body {
   width: 18px;
   height: 18px;
 }
-.avatar svg {
-  width: 55%;
-  height: 55%;
+.avatar--sm svg {
+  width: 18px;
+  height: 18px;
+}
+.avatar--lg svg {
+  width: 38px;
+  height: 38px;
 }
 
 .error-text {
