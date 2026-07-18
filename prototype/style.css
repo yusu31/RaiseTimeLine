@@ -355,6 +355,11 @@ body {
   gap: 1rem;
   margin-bottom: 1rem;
 }
+.icon-edit-row .profile-card__icon {
+  /* .profile-card__icon の margin:0 auto はプロフィール表示画面（中央寄せ）専用。
+     flexコンテナの中でそのまま使うと auto マージンがアイコンとボタンを両端に押し広げてしまうため打ち消す */
+  margin: 0;
+}
 
 /* 投稿カード・一覧 */
 .post-list {
