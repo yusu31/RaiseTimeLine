@@ -8,3 +8,12 @@ Thumbs.db
 # エディタ
 .idea/
 .vscode/
+.cursor/
+
+# Gradle / Java（backend）
+backend/HELP.md
+backend/.gradle
+backend/build/
+!backend/gradle/wrapper/gradle-wrapper.jar
+*.log
+logs/

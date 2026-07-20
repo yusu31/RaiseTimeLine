@@ -1,0 +1,16 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/raisetimeline_test
+    username: ${DB_USER:raisetime}
+    password: ${DB_PASSWORD:password}
+  flyway:
+    enabled: true
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+jwt:
+  secret: test-only-secret-key-for-jwt-signing-32chars
+  access-token-validity: 30m
+  refresh-token-validity: 14d

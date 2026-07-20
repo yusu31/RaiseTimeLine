@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: raise-time-line
+  datasource:
+    url: jdbc:postgresql://localhost:5432/raisetimeline
+    username: ${DB_USER:raisetime}
+    password: ${DB_PASSWORD:password}
+  flyway:
+    enabled: true
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+
+jwt:
+  secret: ${JWT_SECRET:local-dev-only-secret-key-please-change-32chars}
+  access-token-validity: ${JWT_ACCESS_VALIDITY:30m}
+  refresh-token-validity: ${JWT_REFRESH_VALIDITY:14d}
