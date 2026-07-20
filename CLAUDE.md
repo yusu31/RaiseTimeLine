@@ -28,7 +28,7 @@
 | フロントエンド | React 19 + TypeScript + Vite + Tailwind CSS |
 | バックエンド | Java 21 + Spring Boot 3.x（REST API） |
 | 認証 | Spring Security + JWT（アクセストークン＋リフレッシュトークン） |
-| ORマッパー | Spring Data JPA |
+| ORマッパー | MyBatis（講師指示。JOOQ・JPAは不採用） |
 | DBマイグレーション | Flyway |
 | データベース | PostgreSQL 17（ローカルは Docker） |
 | 画像ストレージ | AWS S3（確定） |
@@ -115,6 +115,8 @@ npm run lint    # 0 errors, 0 warnings を確認
 cd backend
 ./gradlew build   # ビルドとテストがすべて成功することを確認
 ```
+
+> **前提:** テストが実DB（PostgreSQL）に接続するため、`docker compose up -d` でDBコンテナを起動してから実行すること。
 
 ## 注意事項
 

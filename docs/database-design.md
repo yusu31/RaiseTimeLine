@@ -199,23 +199,28 @@ erDiagram
 > Flyway は `V1__xxx.sql` のような連番ファイルを順番に実行して、DBの状態をバージョン管理するツール。
 > 外部キーの参照先（親テーブル）を先に作る必要があるため、順序が重要。
 
-### Phase 1（最初に実行）
+### 実装済み（認証フェーズ）
 
-| 順序 | ファイル名（予定） | 内容 |
+| 順序 | ファイル名 | 内容 |
 |------|------------------|------|
 | V1 | V1__create_users.sql | users テーブル作成（Phase 1 時点のカラムのみ） |
-| V2 | V2__create_posts.sql | posts テーブル作成（users を参照） |
-| V3 | V3__create_comments.sql | comments テーブル作成（users, posts を参照） |
-| V4 | V4__create_likes.sql | likes テーブル作成＋ユニーク制約（users, posts を参照） |
-| V5 | V5__create_refresh_tokens.sql | refresh_tokens テーブル作成（users を参照） |
-| V6 | V6__insert_seed_users.sql | Phase 1 用のテストユーザー投入（シードデータ） |
+| V2 | V2__create_refresh_tokens.sql | refresh_tokens テーブル作成（users を参照） |
 
-### Phase 2 以降（予定。実装フェーズで番号・内容を確定する）
+> **旧計画からの変更点:** 当初はPhase 1の全テーブル（users→posts→comments→likes→refresh_tokens→シードユーザー）を
+> 一気に作る計画だったが、認証機能を先行実装したため **V1・V2のみを先に作成**した。
+> posts等は次フェーズでV3〜として追加する（Flywayは「必要になった時点のスキーマだけ積む」のが原則）。
+> また、ユーザー登録（signup）APIが先行実装されたことで自分でテストユーザーを登録できるようになったため、
+> **シードユーザー投入（旧V6）は作らないことにした**（BCryptハッシュのSQL直書きは学習上の混乱を招くだけと判断）。
+
+### Phase 1 継続分・Phase 2 以降（予定。実装フェーズで番号・内容を確定する）
 
 | 順序 | ファイル名（予定） | 内容 | Phase |
 |------|------------------|------|-------|
-| V7 | V7__add_profile_columns_to_users.sql | users に username / bio / icon_image_url を追加（既存ユーザーへの username 割り当てを含む） | 2 |
-| V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
+| V3 | V3__create_posts.sql | posts テーブル作成（users を参照） | 1 |
+| V4 | V4__create_comments.sql | comments テーブル作成（users, posts を参照） | 1 |
+| V5 | V5__create_likes.sql | likes テーブル作成＋ユニーク制約（users, posts を参照） | 1 |
+| V6 | V6__add_profile_columns_to_users.sql | users に username / bio / icon_image_url を追加（既存ユーザーへの username 割り当てを含む） | 2 |
+| V7 | V7__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
 
 > **学習メモ:** ER図は最初に最終形（目標スキーマ）まで描き切るが、テーブルやカラムの追加は
 > このように後続のマイグレーションで行う。「一度実行したマイグレーションファイルは書き換えず、

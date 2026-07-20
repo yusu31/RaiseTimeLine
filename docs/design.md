@@ -55,7 +55,11 @@
 | POST | /api/auth/login | ログイン（トークン発行） | 不要 |
 | POST | /api/auth/refresh | アクセストークン再発行 | 不要（リフレッシュトークン必須） |
 | POST | /api/auth/logout | ログアウト（リフレッシュトークン無効化） | 必要 |
-| POST | /api/auth/signup | ユーザー登録 | 不要（**Phase 2**） |
+| POST | /api/auth/signup | ユーザー登録 | 不要 |
+| GET | /api/hello | 認証確認用の暫定エンドポイント（`{"message": "Hello, ..."}`を返す） | 必要 |
+
+> **signupについて:** 当初はPhase 2（ユーザー登録画面と合わせて実装）の予定だったが、講師指示により認証フェーズで先行実装した。
+> **`GET /api/hello`について:** フロントエンドを今回実装しない都合上、「ログイン後の画面」の代わりに用意した暫定API。認証が通ればトークンの有無に応じて200/401が返ることを確認できる。フロントエンド実装時（タイムライン画面ができた時点）に削除予定。詳細は [docs/features/auth.md](./features/auth.md) を参照。
 
 ### 投稿（Phase 1）
 
