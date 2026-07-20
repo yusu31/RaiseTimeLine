@@ -28,7 +28,7 @@
 | 言語 | Java | 21 | TaskManagementと同一のLTS版 |
 | フレームワーク | Spring Boot | 3.4.5 | RaiseTechの講義で使用。TaskManagementと同一バージョン |
 | 認証 | Spring Security + JWT | Boot同梱 + jjwt | 講義（No.24〜）がJWT方式のため。アクセストークン＋リフレッシュトークン構成 |
-| ORマッパー | MyBatis | mybatis-spring-boot-starter 3.0.4 | 講師指示。SQLを自分で書くことで学習効果が高いと判断された |
+| ORマッパー | MyBatis | mybatis-spring-boot-starter 3.0.4 | SQLを自分で書くことで、実行されるクエリを意識しながら学べると判断した |
 | DBマイグレーション | Flyway | Boot同梱 | 講義で導入するツール。DBの変更履歴をSQLファイルで管理できる |
 | API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
@@ -76,7 +76,7 @@
 |------|--------------|
 | セッション方式の認証 | 講義がJWT方式で進むため。JWTのほうがスケーラビリティが高いという講義内容も踏まえた |
 | JOOQ | 講師いわく「少し使いづらい」 |
-| Spring Data JPA | 認証機能の実装フェーズで講師指示によりMyBatisへ変更（当初はJPAを想定していたが撤回） |
+| Spring Data JPA | 認証機能の実装フェーズでMyBatisへ変更（当初はJPAを想定していたが、SQLを自分で書く学習効果を優先し撤回） |
 | Next.js | SSR（サーバー側レンダリング）が不要なSPA構成のため。Vite + React で十分 |
 | Redux | Context API で十分な規模。学習コストに見合わない |
 | GraphQL | REST API で十分。学習コストが高い |
