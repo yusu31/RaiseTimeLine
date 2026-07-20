@@ -28,7 +28,7 @@
 | フロントエンド | React 19 + TypeScript + Vite + Tailwind CSS |
 | バックエンド | Java 21 + Spring Boot 3.x（REST API） |
 | 認証 | Spring Security + JWT（アクセストークン＋リフレッシュトークン） |
-| ORマッパー | MyBatis（講師指示。JOOQ・JPAは不採用） |
+| ORマッパー | MyBatis（JOOQ・JPAは不採用） |
 | DBマイグレーション | Flyway |
 | データベース | PostgreSQL 17（ローカルは Docker） |
 | 画像ストレージ | AWS S3（確定） |
