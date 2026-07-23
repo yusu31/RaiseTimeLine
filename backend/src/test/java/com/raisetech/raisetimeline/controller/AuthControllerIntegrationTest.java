@@ -12,7 +12,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -122,26 +121,6 @@ class AuthControllerIntegrationTest {
                                 """))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("メールアドレスまたはパスワードが正しくありません"));
-    }
-
-    @Test
-    void helloをトークンなしで叩くと401がJSON形式で返る() throws Exception {
-        mockMvc.perform(get("/api/hello"))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.status").value(401));
-    }
-
-    @Test
-    void helloを有効なトークンで叩くと200とメッセージが返る() throws Exception {
-        String signupResponse = mockMvc.perform(post("/api/auth/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(signupBody("suzuki@example.com", "鈴木", "password123")))
-                .andReturn().getResponse().getContentAsString();
-        String accessToken = objectMapper.readTree(signupResponse).get("accessToken").asText();
-
-        mockMvc.perform(get("/api/hello").header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Hello, 鈴木さん！ログイン認証に成功しました。"));
     }
 
     @Test

@@ -122,7 +122,7 @@ erDiagram
 | content | VARCHAR(280) | 不可 | - | 本文（1〜280文字。アプリ側でもバリデーション） |
 | image_path | VARCHAR(255) | 可 | NULL | 添付画像の保存パス（画像なしの場合は NULL） |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 投稿日時（タイムラインの並び順に使用） |
-| updated_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 更新日時（Phase 2 の編集機能で使用） |
+| updated_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 更新日時（F-08の編集機能で使用） |
 
 ### comments（コメント）
 
@@ -199,12 +199,13 @@ erDiagram
 > Flyway は `V1__xxx.sql` のような連番ファイルを順番に実行して、DBの状態をバージョン管理するツール。
 > 外部キーの参照先（親テーブル）を先に作る必要があるため、順序が重要。
 
-### 実装済み（認証フェーズ）
+### 実装済み（認証フェーズ・投稿機能フェーズ）
 
 | 順序 | ファイル名 | 内容 |
 |------|------------------|------|
 | V1 | V1__create_users.sql | users テーブル作成（Phase 1 時点のカラムのみ） |
 | V2 | V2__create_refresh_tokens.sql | refresh_tokens テーブル作成（users を参照） |
+| V3 | V3__create_posts.sql | posts テーブル作成（users を参照）。作成日時・投稿者へのインデックスも同時に作成 |
 
 > **旧計画からの変更点:** 当初はPhase 1の全テーブル（users→posts→comments→likes→refresh_tokens→シードユーザー）を
 > 一気に作る計画だったが、認証機能を先行実装したため **V1・V2のみを先に作成**した。
@@ -216,7 +217,6 @@ erDiagram
 
 | 順序 | ファイル名（予定） | 内容 | Phase |
 |------|------------------|------|-------|
-| V3 | V3__create_posts.sql | posts テーブル作成（users を参照） | 1 |
 | V4 | V4__create_comments.sql | comments テーブル作成（users, posts を参照） | 1 |
 | V5 | V5__create_likes.sql | likes テーブル作成＋ユニーク制約（users, posts を参照） | 1 |
 | V6 | V6__add_profile_columns_to_users.sql | users に username / bio / icon_image_url を追加（既存ユーザーへの username 割り当てを含む） | 2 |
