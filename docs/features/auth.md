@@ -83,12 +83,13 @@ ORマッパーは **Spring Data JPA ではなく MyBatis** を使用する。SQL
   - コンポーネントとフックを同じファイルからexportすると ESLint の `react-refresh/only-export-components` に引っかかるため3ファイルに分割した
 - `accessToken` / `refreshToken` / `user` をまとめて `localStorage`（キー: `raisetimeline.auth`）に保存し、リロード後もログイン状態を維持する
 - **既知の制限:** 本来はXSS対策として`accessToken`はメモリ（React state）のみで保持するほうが安全。今回は最小実装としてlocalStorageにまとめて保存する方式にした
-- ログアウトボタンは今回のスコープに含めていない（バックエンドの`POST /api/auth/logout`はあるが、フロントからの呼び出しは未実装）
+- `/welcome`画面に**ログアウトボタン**を実装済み（Issue #13）。`POST /api/auth/logout`を呼んでリフレッシュトークンをDBから削除し、ローカルの認証状態（Context・localStorage）を破棄してログイン画面へ遷移する。ログアウトAPI呼び出しが失敗してもローカルの状態は必ず破棄する（`try/finally`）
 
 ### APIとの通信
 
 - `vite.config.ts` に `/api` → `http://localhost:8080` のプロキシを設定し、フロントのfetchは相対パス（`/api/auth/login`等）で呼び出す（TaskManagementと同じ方式）
 - `api/client.ts` の `apiRequest` が共通のfetchラッパー。エラー時はバックエンドの`ErrorResponse`から`message`を取り出し`ApiError`としてthrowする
+- **バグ修正（Issue #13）:** `apiRequest`は当初「レスポンスが204のときだけ本文なし」として扱っていたが、`POST /api/auth/logout`は本文なしの**200**を返すため、`response.json()`が空文字列のパースに失敗してエラーになっていた。ステータスコードで判定するのではなく、**本文が空文字列かどうか**で判定する方式に修正した
 
 ### アクセストークンの自動リフレッシュ
 
