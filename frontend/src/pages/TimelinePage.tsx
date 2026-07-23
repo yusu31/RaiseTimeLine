@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { createPost, deletePost, fetchNewPosts, fetchNewPostsCount, fetchTimeline, updatePost } from '../api/postApi'
+import { AppHeader } from '../components/AppHeader'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
 import { NewPostsBanner } from '../components/NewPostsBanner'
 import { PostCard } from '../components/PostCard'
@@ -30,6 +31,9 @@ export function TimelinePage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [newPostsCount, setNewPostsCount] = useState(0)
   const [isFetchingNewPosts, setIsFetchingNewPosts] = useState(false)
+  const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const isLoadingMoreRef = useRef(false)
 
   // 「もっと見る」で末尾に古い投稿を追加しても最大idは変わらないため、常に配列全体から算出する
   const latestKnownId = useMemo(() => posts.reduce((max, post) => Math.max(max, post.id), 0), [posts])
@@ -110,7 +114,9 @@ export function TimelinePage() {
     }
   }
 
-  const handleLoadMore = async () => {
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMoreRef.current || !hasNext) return
+    isLoadingMoreRef.current = true
     setIsLoadingMore(true)
     setError(null)
     try {
@@ -122,8 +128,25 @@ export function TimelinePage() {
       setError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
     } finally {
       setIsLoadingMore(false)
+      isLoadingMoreRef.current = false
     }
-  }
+  }, [authorizedRequest, page, hasNext])
+
+  // 無限スクロール: リスト末尾のセンチネルが画面内に入ったら次ページを自動取得する
+  useEffect(() => {
+    if (!hasNext) return undefined
+    const node = sentinelRef.current
+    if (!node) return undefined
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) handleLoadMore()
+      },
+      { rootMargin: '200px' },
+    )
+    observer.observe(node)
+    return () => observer.disconnect()
+  }, [hasNext, handleLoadMore])
 
   const handleCreatePost = async (content: string, image: File | null) => {
     const created = await createPost(authorizedRequest, content, image)
@@ -160,24 +183,38 @@ export function TimelinePage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9F9]">
-      <header className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur">
-        <h1 className="text-lg font-bold text-[#0F1419]">RaiseTimeLine</h1>
-        <button
-          type="button"
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="rounded-full border border-gray-300 px-4 py-1.5 text-sm font-medium text-[#0F1419] transition hover:bg-gray-100 disabled:opacity-50"
-        >
-          {isLoggingOut ? 'ログアウト中…' : 'ログアウト'}
-        </button>
-      </header>
+      <AppHeader onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex gap-1">
+            <button
+              type="button"
+              className="border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]"
+            >
+              全体
+            </button>
+            <button
+              type="button"
+              disabled
+              title="フォロー機能は今後実装予定です"
+              className="border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-400 disabled:cursor-not-allowed"
+            >
+              フォロー中
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => setIsComposerOpen(true)}
+            className="rounded-full bg-[#1D9BF0] px-4 py-1.5 text-sm font-bold text-white transition hover:bg-[#1a8cd8]"
+          >
+            ＋投稿する
+          </button>
+        </div>
+
         {newPostsCount > 0 && (
           <NewPostsBanner count={newPostsCount} isLoading={isFetchingNewPosts} onClick={handleShowNewPosts} />
         )}
-
-        <PostComposer onSubmit={handleCreatePost} />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
@@ -198,16 +235,15 @@ export function TimelinePage() {
         )}
 
         {hasNext && (
-          <button
-            type="button"
-            onClick={handleLoadMore}
-            disabled={isLoadingMore}
-            className="mx-auto rounded-full border border-gray-300 px-5 py-2 text-sm font-medium text-[#0F1419] hover:bg-gray-100 disabled:opacity-50"
-          >
-            {isLoadingMore ? '読み込み中…' : 'もっと見る'}
-          </button>
+          <div ref={sentinelRef} className="py-4 text-center text-sm text-gray-500">
+            {isLoadingMore ? '読み込み中…' : null}
+          </div>
         )}
       </main>
+
+      {isComposerOpen && (
+        <PostComposer onSubmit={handleCreatePost} onClose={() => setIsComposerOpen(false)} />
+      )}
 
       {editingPost && (
         <PostEditModal post={editingPost} onCancel={() => setEditingPost(null)} onSave={handleSaveEdit} />
