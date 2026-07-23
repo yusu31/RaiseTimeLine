@@ -21,6 +21,10 @@ export type LoginRequest = {
   password: string
 }
 
+export type RefreshResponse = {
+  accessToken: string
+}
+
 export type ErrorResponse = {
   status: number
   error: string

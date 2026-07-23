@@ -36,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     user: auth?.user ?? null,
     accessToken: auth?.accessToken ?? null,
+    refreshToken: auth?.refreshToken ?? null,
     isAuthenticated: auth !== null,
     login: (response) => {
       setAuth({
@@ -46,6 +47,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     logout: () => {
       setAuth(null)
+    },
+    setAccessToken: (accessToken) => {
+      setAuth((current) => (current ? { ...current, accessToken } : current))
     },
   }
 

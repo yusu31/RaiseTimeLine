@@ -82,10 +82,21 @@ ORマッパーは **Spring Data JPA ではなく MyBatis** を使用する。SQL
 - `AuthContext`（`context/AuthContext.ts` + `context/AuthProvider.tsx` + `hooks/useAuth.ts`）でログイン状態を管理する
   - コンポーネントとフックを同じファイルからexportすると ESLint の `react-refresh/only-export-components` に引っかかるため3ファイルに分割した
 - `accessToken` / `refreshToken` / `user` をまとめて `localStorage`（キー: `raisetimeline.auth`）に保存し、リロード後もログイン状態を維持する
-- **既知の制限:** 本来はXSS対策として`accessToken`はメモリ（React state）のみで保持し、リロード時は`refreshToken`を使ってサイレント再認証するほうが安全。今回は最小実装としてlocalStorageにまとめて保存する方式にした。リフレッシュ機能をフロントで使う段階（アクセストークンの有効期限切れ対応）で見直す候補
+- **既知の制限:** 本来はXSS対策として`accessToken`はメモリ（React state）のみで保持するほうが安全。今回は最小実装としてlocalStorageにまとめて保存する方式にした
 - ログアウトボタンは今回のスコープに含めていない（バックエンドの`POST /api/auth/logout`はあるが、フロントからの呼び出しは未実装）
 
 ### APIとの通信
 
 - `vite.config.ts` に `/api` → `http://localhost:8080` のプロキシを設定し、フロントのfetchは相対パス（`/api/auth/login`等）で呼び出す（TaskManagementと同じ方式）
 - `api/client.ts` の `apiRequest` が共通のfetchラッパー。エラー時はバックエンドの`ErrorResponse`から`message`を取り出し`ApiError`としてthrowする
+
+### アクセストークンの自動リフレッシュ
+
+バックエンドは実装当初からアクセストークン（30分）＋リフレッシュトークン（14日、DB保存）の2トークン構成だったが、
+フロントエンドは`refreshToken`を保存するだけで実際には使っていなかった（アクセストークン切れ後は401になるだけ）。
+これを解消するため、認証必須API呼び出し用の `hooks/useAuthorizedRequest.ts` を追加した。
+
+- 呼び出し先が401を返したら、保持している`refreshToken`で`POST /api/auth/refresh`を呼び、新しい`accessToken`を取得して**元のリクエストを1回だけ自動的に再試行する**
+- リフレッシュ自体も失敗する場合（リフレッシュトークンが無効・期限切れ）は`logout()`でログイン状態を破棄する。`ProtectedRoute`が反応して自動的に`/login`へ戻る
+- 現時点で認証必須APIは`GET /api/hello`のみだが、Phase 2以降で投稿・いいね・コメントなど認証必須APIが増える前提で、特定のAPIに依存しない汎用フックとして作った
+- 動作確認は、正規にログイン後に`localStorage`の`accessToken`だけを不正な値に書き換えて再アクセスし、「401→自動リフレッシュ→再試行成功」を確認。さらに`refreshToken`も無効な値にして、「refresh自体が401→自動ログアウト→`/login`へリダイレクト」も確認した（Playwrightでの自動テストによる）

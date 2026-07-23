@@ -1,21 +1,19 @@
 import { useEffect, useState } from 'react'
-import { fetchHello } from '../api/helloApi'
 import { ApiError } from '../api/client'
 import { useAuth } from '../hooks/useAuth'
+import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
+import type { HelloResponse } from '../types/hello'
 
 export function WelcomePage() {
-  const { accessToken, user } = useAuth()
+  const { user } = useAuth()
+  const authorizedRequest = useAuthorizedRequest()
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!accessToken) {
-      return
-    }
-
     let cancelled = false
 
-    fetchHello(accessToken)
+    authorizedRequest<HelloResponse>('/hello')
       .then((response) => {
         if (!cancelled) {
           setMessage(response.message)
@@ -30,7 +28,7 @@ export function WelcomePage() {
     return () => {
       cancelled = true
     }
-  }, [accessToken])
+  }, [authorizedRequest])
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-[#F7F9F9] px-4 text-center">
