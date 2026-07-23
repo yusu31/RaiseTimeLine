@@ -21,7 +21,7 @@ export function LoginPage() {
     try {
       const response = await login({ email, password })
       setAuth(response)
-      navigate('/welcome', { replace: true })
+      navigate('/timeline', { replace: true })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
     } finally {

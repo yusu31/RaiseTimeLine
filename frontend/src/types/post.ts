@@ -1,0 +1,21 @@
+export type PostAuthor = {
+  id: number
+  displayName: string
+}
+
+export type Post = {
+  id: number
+  content: string
+  imageUrl: string | null
+  author: PostAuthor
+  likeCount: number
+  commentCount: number
+  likedByMe: boolean
+  createdAt: string
+}
+
+export type PostListResponse = {
+  posts: Post[]
+  page: number
+  hasNext: boolean
+}

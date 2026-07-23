@@ -71,7 +71,7 @@ export function SignupPage() {
     try {
       const response = await signup({ email, displayName, password })
       setAuth(response)
-      navigate('/welcome', { replace: true })
+      navigate('/timeline', { replace: true })
     } catch (err) {
       setApiError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
     } finally {

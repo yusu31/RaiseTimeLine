@@ -90,6 +90,32 @@ JavaのrecordとMultipartFileの併用バインディングは不安定になり
 - アップロード画像はサーバー側でUUIDを採番したファイル名で保存する（クライアントから渡されたファイル名をそのまま使わない。パストラバーサル対策）
 - 拡張子とContent-Typeの両方を検証する（`docs/design.md`のセキュリティ設計を踏襲）
 
+## フロントエンド実装
+
+`frontend/`にタイムライン画面（`/timeline`）を実装した。ログイン後の遷移先を暫定の`/welcome`（`GET /api/hello`を表示するだけの仮画面）から置き換え、`WelcomePage.tsx`・`GET /api/hello`前提のコード一式は削除した。
+
+### ファイル構成
+
+- `types/post.ts`: `Post`/`PostAuthor`/`PostListResponse`型
+- `api/postApi.ts`: `fetchTimeline`/`createPost`/`updatePost`/`deletePost`。`useAuthorizedRequest`はフック（コンポーネント内でのみ呼べる）のため、呼び出し関数を引数として受け取る形にした
+- `pages/TimelinePage.tsx`: タイムライン本体。投稿一覧・ページネーション（「もっと見る」）・投稿作成/編集/削除の状態管理をまとめて持つ
+- `components/PostComposer.tsx`: 投稿フォーム（本文＋画像選択＋プレビュー＋文字数カウンター）
+- `components/PostCard.tsx`: 投稿カード（自分の投稿のときのみ編集・削除ボタンを表示）
+- `components/PostEditModal.tsx`: 編集モーダル（本文のみ）
+- `components/DeleteConfirmDialog.tsx`: 削除確認ダイアログ（汎用）
+
+### `api/client.ts`のFormData対応
+
+画像付き投稿は`FormData`で送信する必要があるが、既存の`apiRequest`は`body`が`undefined`でなければ無条件で`JSON.stringify`し`Content-Type: application/json`を付与する実装だったため、そのままでは画像アップロードが壊れる。`body instanceof FormData`の場合は`JSON.stringify`せず`Content-Type`ヘッダーも付与しない（ブラウザに`multipart/form-data; boundary=...`を自動設定させる）よう修正した。
+
+### 自分の投稿かどうかの判定
+
+バックエンドのレスポンスに`isOwnedByMe`のようなフィールドは持たせず、フロントエンド側で`post.author.id === user.id`（`AuthContext`が保持するログインユーザー情報と比較）で判定している。バックエンドに真実の権限チェック（403を返す）があるため、フロント側の判定はあくまで表示の出し分け用。
+
+### 状態更新の方針
+
+投稿作成・編集・削除のたびにタイムライン全体を再取得するのではなく、成功したレスポンスを使ってローカルの配列を直接更新する（作成は先頭に追加、編集は該当要素を置き換え、削除は該当要素を除去）。ページネーション中の一覧が再取得によって崩れるのを防ぐため。
+
 ## 既知の制限
 
 - 画像は1枚まで（複数枚添付は将来の拡張候補）
