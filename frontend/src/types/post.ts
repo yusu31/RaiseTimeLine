@@ -19,3 +19,12 @@ export type PostListResponse = {
   page: number
   hasNext: boolean
 }
+
+export type NewPostsCountResponse = {
+  count: number
+}
+
+export type NewPostsResponse = {
+  posts: Post[]
+  hasMore: boolean
+}

@@ -66,6 +66,8 @@
 | メソッド | パス | 説明 | 認証 |
 |---------|------|------|------|
 | GET | /api/posts | タイムライン取得（新着順・ページネーション） | 必要 |
+| GET | /api/posts/new-count | 新着投稿の件数だけを軽量に確認する | 必要 |
+| GET | /api/posts/new | 新着投稿を実際に取得する | 必要 |
 | GET | /api/posts/{id} | 投稿詳細取得 | 必要 |
 | POST | /api/posts | 投稿作成（本文＋画像1枚まで、multipart/form-data） | 必要 |
 | PUT | /api/posts/{id} | 投稿編集（自分の投稿のみ。本文のみ変更可、画像は変更不可） | 必要 |
@@ -77,6 +79,14 @@
 |-----------|----|-----------|------|
 | page | 数値 | 0 | ページ番号（0始まり） |
 | size | 数値 | 20 | 1ページあたりの件数 |
+
+**GET /api/posts/new-count・GET /api/posts/new のクエリパラメータ**
+
+| パラメータ | 型 | デフォルト | 説明 |
+|-----------|----|-----------|------|
+| afterId | 数値 | 0 | このid（投稿の連番）より新しい投稿だけを対象にする。フロントエンドが現在表示している中で最も新しい投稿のidを渡す |
+
+> **F-12（タイムラインの新着チェック）について:** 詳細な設計理由（idをマーカーに使う理由・ポーリング間隔の根拠など）は [docs/features/timeline-sync.md](./features/timeline-sync.md) を参照。
 
 ### コメント（Phase 1）
 
@@ -146,6 +156,43 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
 > **現状（F-03/F-04未実装）:** `likeCount`/`commentCount`は`0`、`likedByMe`は`false`で固定して返す。
 > F-03（コメント）・F-04（いいね）実装時に実際の集計値へ差し替える。フィールド自体を今のうちに用意しておくことで、
 > 将来の実装時にフロントエンドの型・表示コードを変更せずに済む。
+
+### GET /api/posts/new-count（新着件数の確認）
+
+```json
+{
+  "count": 3
+}
+```
+
+> **ポイント:** `posts`テーブルへの`COUNT(*)`のみで完結する軽量なAPI。`users`とのJOINを行わないため、
+> フロントエンドが一定間隔でポーリングしてもDBへの負荷が小さい。
+
+### GET /api/posts/new（新着投稿の取得）
+
+```json
+{
+  "posts": [
+    {
+      "id": 105,
+      "content": "たった今投稿しました",
+      "imageUrl": null,
+      "author": {
+        "id": 3,
+        "displayName": "佐藤"
+      },
+      "likeCount": 0,
+      "commentCount": 0,
+      "likedByMe": false,
+      "createdAt": "2026-07-23T21:00:00"
+    }
+  ],
+  "hasMore": false
+}
+```
+
+> **ポイント:** `page`フィールドを持たない（`GET /api/posts`のoffsetページネーションとは別の概念のため）。
+> `hasMore`は取得件数が上限（50件）を超えた場合に`true`になる。
 
 ### POST /api/auth/login（ログイン）
 

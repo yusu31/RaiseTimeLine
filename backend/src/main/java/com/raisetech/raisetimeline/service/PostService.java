@@ -8,6 +8,8 @@ import com.raisetech.raisetimeline.exception.PostNotFoundException;
 import com.raisetech.raisetimeline.mapper.PostMapper;
 import com.raisetech.raisetimeline.request.PostCreateRequest;
 import com.raisetech.raisetimeline.request.PostUpdateRequest;
+import com.raisetech.raisetimeline.response.NewPostsCountResponse;
+import com.raisetech.raisetimeline.response.NewPostsResponse;
 import com.raisetech.raisetimeline.response.PostAuthorResponse;
 import com.raisetech.raisetimeline.response.PostListResponse;
 import com.raisetech.raisetimeline.response.PostResponse;
@@ -23,6 +25,7 @@ public class PostService {
     private static final int MAX_CONTENT_LENGTH = 280;
     private static final int DEFAULT_PAGE_SIZE = 20;
     private static final int MAX_PAGE_SIZE = 100;
+    private static final int NEW_POSTS_FETCH_LIMIT = 50;
 
     private final PostMapper postMapper;
     private final StorageService storageService;
@@ -45,6 +48,25 @@ public class PostService {
 
         List<PostResponse> posts = pageRows.stream().map(this::toResponse).toList();
         return new PostListResponse(posts, normalizedPage, hasNext);
+    }
+
+    @Transactional(readOnly = true)
+    public NewPostsCountResponse getNewPostsCount(long afterId) {
+        long normalizedAfterId = Math.max(afterId, 0);
+        return new NewPostsCountResponse(postMapper.countNewerThan(normalizedAfterId));
+    }
+
+    @Transactional(readOnly = true)
+    public NewPostsResponse getNewPosts(long afterId) {
+        long normalizedAfterId = Math.max(afterId, 0);
+
+        // size+1件取得してhasMoreを判定する（getTimelineと同じ軽量な方式）
+        List<PostDetail> rows = postMapper.selectNewerThan(normalizedAfterId, NEW_POSTS_FETCH_LIMIT + 1);
+        boolean hasMore = rows.size() > NEW_POSTS_FETCH_LIMIT;
+        List<PostDetail> limitedRows = hasMore ? rows.subList(0, NEW_POSTS_FETCH_LIMIT) : rows;
+
+        List<PostResponse> posts = limitedRows.stream().map(this::toResponse).toList();
+        return new NewPostsResponse(posts, hasMore);
     }
 
     @Transactional(readOnly = true)

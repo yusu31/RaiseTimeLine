@@ -1,14 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
-import { createPost, deletePost, fetchTimeline, updatePost } from '../api/postApi'
+import { createPost, deletePost, fetchNewPosts, fetchNewPostsCount, fetchTimeline, updatePost } from '../api/postApi'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { NewPostsBanner } from '../components/NewPostsBanner'
 import { PostCard } from '../components/PostCard'
 import { PostComposer } from '../components/PostComposer'
 import { PostEditModal } from '../components/PostEditModal'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
 import type { Post } from '../types/post'
+
+// 短すぎるとWebSocketに近い頻度になり、長すぎると新着への気づきが遅れるためのバランス値
+const POLL_INTERVAL_MS = 30_000
 
 export function TimelinePage() {
   const { user, refreshToken, logout } = useAuth()
@@ -24,6 +28,11 @@ export function TimelinePage() {
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [newPostsCount, setNewPostsCount] = useState(0)
+  const [isFetchingNewPosts, setIsFetchingNewPosts] = useState(false)
+
+  // 「もっと見る」で末尾に古い投稿を追加しても最大idは変わらないため、常に配列全体から算出する
+  const latestKnownId = useMemo(() => posts.reduce((max, post) => Math.max(max, post.id), 0), [posts])
 
   useEffect(() => {
     let cancelled = false
@@ -47,6 +56,59 @@ export function TimelinePage() {
       cancelled = true
     }
   }, [authorizedRequest])
+
+  useEffect(() => {
+    if (isLoading) return undefined
+
+    let cancelled = false
+    let intervalId: ReturnType<typeof setInterval> | undefined
+
+    const checkNewPosts = () => {
+      fetchNewPostsCount(authorizedRequest, latestKnownId)
+        .then((response) => {
+          if (cancelled) return
+          setNewPostsCount(response.count)
+        })
+        .catch(() => {
+          // バックグラウンドの定期チェック失敗は画面のエラー表示に反映せず、次回のポーリングに委ねる
+        })
+    }
+
+    const startPolling = () => {
+      intervalId = setInterval(checkNewPosts, POLL_INTERVAL_MS)
+    }
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        clearInterval(intervalId)
+      } else {
+        checkNewPosts()
+        startPolling()
+      }
+    }
+
+    startPolling()
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      cancelled = true
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [authorizedRequest, latestKnownId, isLoading])
+
+  const handleShowNewPosts = async () => {
+    setIsFetchingNewPosts(true)
+    try {
+      const response = await fetchNewPosts(authorizedRequest, latestKnownId)
+      setPosts((current) => [...response.posts, ...current])
+      setNewPostsCount(0)
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
+    } finally {
+      setIsFetchingNewPosts(false)
+    }
+  }
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true)
@@ -111,6 +173,10 @@ export function TimelinePage() {
       </header>
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
+        {newPostsCount > 0 && (
+          <NewPostsBanner count={newPostsCount} isLoading={isFetchingNewPosts} onClick={handleShowNewPosts} />
+        )}
+
         <PostComposer onSubmit={handleCreatePost} />
 
         {error && <p className="text-sm text-red-600">{error}</p>}
