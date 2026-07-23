@@ -5,7 +5,7 @@ export function GuestRoute() {
   const { isAuthenticated } = useAuth()
 
   if (isAuthenticated) {
-    return <Navigate to="/welcome" replace />
+    return <Navigate to="/timeline" replace />
   }
 
   return <Outlet />
