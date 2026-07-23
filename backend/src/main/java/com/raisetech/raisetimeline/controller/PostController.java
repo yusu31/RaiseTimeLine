@@ -2,6 +2,8 @@ package com.raisetech.raisetimeline.controller;
 
 import com.raisetech.raisetimeline.request.PostCreateRequest;
 import com.raisetech.raisetimeline.request.PostUpdateRequest;
+import com.raisetech.raisetimeline.response.NewPostsCountResponse;
+import com.raisetech.raisetimeline.response.NewPostsResponse;
 import com.raisetech.raisetimeline.response.PostListResponse;
 import com.raisetech.raisetimeline.response.PostResponse;
 import com.raisetech.raisetimeline.security.AuthenticatedUser;
@@ -38,6 +40,20 @@ public class PostController {
             @RequestParam(defaultValue = "20") int size
     ) {
         return ResponseEntity.ok(postService.getTimeline(page, size));
+    }
+
+    @GetMapping("/new-count")
+    public ResponseEntity<NewPostsCountResponse> newPostsCount(
+            @RequestParam(defaultValue = "0") long afterId
+    ) {
+        return ResponseEntity.ok(postService.getNewPostsCount(afterId));
+    }
+
+    @GetMapping("/new")
+    public ResponseEntity<NewPostsResponse> newPosts(
+            @RequestParam(defaultValue = "0") long afterId
+    ) {
+        return ResponseEntity.ok(postService.getNewPosts(afterId));
     }
 
     @GetMapping("/{id}")

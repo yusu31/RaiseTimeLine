@@ -33,4 +33,20 @@
         WHERE p.id = #{id}
     </select>
 
+    <select id="selectNewerThan" resultType="com.raisetech.raisetimeline.domain.PostDetail">
+        SELECT
+            p.id AS id,
+            p.content AS content,
+            p.image_path AS image_path,
+            p.created_at AS created_at,
+            p.updated_at AS updated_at,
+            u.id AS author_id,
+            u.display_name AS author_display_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id > #{afterId}
+        ORDER BY p.id DESC
+        LIMIT #{limit}
+    </select>
+
 </mapper>

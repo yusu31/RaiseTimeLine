@@ -34,4 +34,11 @@ public interface PostMapper {
     List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") int offset);
 
     Optional<PostDetail> selectDetailById(@Param("id") Long id);
+
+    // posts単体へのCOUNTのみでJOIN不要のためアノテーション方式にする
+    @Select("SELECT COUNT(*) FROM posts WHERE id > #{afterId}")
+    long countNewerThan(@Param("afterId") long afterId);
+
+    // posts × users のJOINを伴うため PostMapper.xml 側で定義する
+    List<PostDetail> selectNewerThan(@Param("afterId") long afterId, @Param("limit") int limit);
 }

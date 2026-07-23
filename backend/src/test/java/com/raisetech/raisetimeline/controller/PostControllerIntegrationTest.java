@@ -157,6 +157,118 @@ class PostControllerIntegrationTest {
     }
 
     @Test
+    void 新着投稿がないと新着件数は0が返る() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        String createResponse = mockMvc.perform(multipart("/api/posts")
+                        .param("content", "最初の投稿")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn().getResponse().getContentAsString();
+        long postId = objectMapper.readTree(createResponse).get("id").asLong();
+
+        mockMvc.perform(get("/api/posts/new-count").param("afterId", String.valueOf(postId))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(0));
+    }
+
+    @Test
+    void afterIdより新しい投稿の件数だけ新着件数に反映される() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        String firstResponse = mockMvc.perform(multipart("/api/posts")
+                        .param("content", "1件目")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn().getResponse().getContentAsString();
+        long firstPostId = objectMapper.readTree(firstResponse).get("id").asLong();
+
+        mockMvc.perform(multipart("/api/posts")
+                .param("content", "2件目")
+                .header("Authorization", "Bearer " + accessToken));
+        mockMvc.perform(multipart("/api/posts")
+                .param("content", "3件目")
+                .header("Authorization", "Bearer " + accessToken));
+
+        mockMvc.perform(get("/api/posts/new-count").param("afterId", String.valueOf(firstPostId))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.count").value(2));
+    }
+
+    @Test
+    void 新着投稿取得はafterIdより新しい投稿のみをid降順で返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        String firstResponse = mockMvc.perform(multipart("/api/posts")
+                        .param("content", "1件目")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn().getResponse().getContentAsString();
+        long firstPostId = objectMapper.readTree(firstResponse).get("id").asLong();
+
+        mockMvc.perform(multipart("/api/posts")
+                .param("content", "2件目")
+                .header("Authorization", "Bearer " + accessToken));
+        mockMvc.perform(multipart("/api/posts")
+                .param("content", "3件目")
+                .header("Authorization", "Bearer " + accessToken));
+
+        mockMvc.perform(get("/api/posts/new").param("afterId", String.valueOf(firstPostId))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(2))
+                .andExpect(jsonPath("$.posts[0].content").value("3件目"))
+                .andExpect(jsonPath("$.posts[1].content").value("2件目"))
+                .andExpect(jsonPath("$.hasMore").value(false));
+    }
+
+    @Test
+    void afterIdが最新idのとき新着投稿取得は空でhasMoreがfalse() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        String createResponse = mockMvc.perform(multipart("/api/posts")
+                        .param("content", "最新の投稿")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andReturn().getResponse().getContentAsString();
+        long latestId = objectMapper.readTree(createResponse).get("id").asLong();
+
+        mockMvc.perform(get("/api/posts/new").param("afterId", String.valueOf(latestId))
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0))
+                .andExpect(jsonPath("$.hasMore").value(false));
+    }
+
+    @Test
+    void 新着投稿が上限を超えるとhasMoreがtrueになる() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        for (int i = 0; i < 51; i++) {
+            mockMvc.perform(multipart("/api/posts")
+                    .param("content", "投稿" + i)
+                    .header("Authorization", "Bearer " + accessToken));
+        }
+
+        mockMvc.perform(get("/api/posts/new").param("afterId", "0")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(50))
+                .andExpect(jsonPath("$.hasMore").value(true));
+    }
+
+    @Test
+    void 新着チェック系エンドポイントは投稿詳細のパス変数解決と衝突しない() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts/new-count").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/posts/new").header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void 認証なしで新着チェック系エンドポイントを呼ぶと401が返る() throws Exception {
+        mockMvc.perform(get("/api/posts/new-count"))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/api/posts/new"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void 存在しない投稿の詳細取得は404が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
