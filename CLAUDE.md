@@ -71,7 +71,8 @@ RaiseTimeLine/
 ├── frontend/       # React + TypeScript（Vite）
 ├── prototype/      # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし。localStorageで疑似データ保持。全Phase分の画面を先行して盛り込む）
 ├── docs/           # 要件定義・設計ドキュメント
-│   └── features/   # 機能別詳細設計（各機能の実装直前に作成）
+│   ├── features/   # 機能別詳細設計（各機能の実装直前に作成）
+│   └── plans/      # Claude Codeで承認された実装計画(Plan)のアーカイブ（実装後も残す）
 ├── docker-compose.yml
 └── CLAUDE.md
 ```
