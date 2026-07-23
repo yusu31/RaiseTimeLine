@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetech.raisetimeline.mapper.PostMapper">
+
+    <select id="selectTimeline" resultType="com.raisetech.raisetimeline.domain.PostDetail">
+        SELECT
+            p.id AS id,
+            p.content AS content,
+            p.image_path AS image_path,
+            p.created_at AS created_at,
+            p.updated_at AS updated_at,
+            u.id AS author_id,
+            u.display_name AS author_display_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        ORDER BY p.created_at DESC, p.id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="selectDetailById" resultType="com.raisetech.raisetimeline.domain.PostDetail">
+        SELECT
+            p.id AS id,
+            p.content AS content,
+            p.image_path AS image_path,
+            p.created_at AS created_at,
+            p.updated_at AS updated_at,
+            u.id AS author_id,
+            u.display_name AS author_display_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        WHERE p.id = #{id}
+    </select>
+
+</mapper>
