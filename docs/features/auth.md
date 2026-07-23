@@ -2,10 +2,11 @@
 
 ## 概要
 
-ユーザー登録・ログイン・トークン再発行・ログアウトのバックエンドAPI。
+ユーザー登録・ログイン・トークン再発行・ログアウトの認証機能（バックエンドAPI＋フロントエンド画面）。
 当初「Phase 2」としていたユーザー登録（F-06）を、認証機能をひとまとまりで完成させるため認証フェーズで先行実装する。
-フロントエンドは今回対象外のため、「ログイン後の画面」の代わりに認証必須の `GET /api/hello` を用意する
-（トークンがあれば200、なければ401が返ることで認証フローが機能していることを確認できる）。
+バックエンド実装時点ではフロントエンドが未着手だったため、「ログイン後の画面」の代わりに認証必須の `GET /api/hello` を用意していた。
+フロントエンド実装後は、このAPIをそのまま「ログイン後の仮画面（`/welcome`）」の表示内容として使っている
+（タイムライン画面がまだ無いための代替。トークンがあれば200、なければ401が返ることで認証フローが機能していることも確認できる）。
 
 ## 技術方針: MyBatisを採用（JPAではない）
 
@@ -63,3 +64,28 @@ ORマッパーは **Spring Data JPA ではなく MyBatis** を使用する。SQL
 - **UserDetailsService / AuthenticationManagerは使わない**: ログイン照合は`AuthService`が`passwordEncoder.matches()`を直接呼ぶ簡易構成。JWT構成でフォームログインの仕組みを経由しない方が初学者にコードが追いやすいため
 - **XMLマッパーは使わない**（上記のMyBatis方針を参照）
 - **フィルタ内でトークン不正・期限切れを検出しても例外を投げない**: 「何もセットせずchainを進める」設計にし、後段の`JsonAuthenticationEntryPoint`が401 JSONを返す。フィルタ内例外は`@RestControllerAdvice`に届かないため
+
+## フロントエンド実装
+
+`frontend/` を今回新規に構築した（React 19 + TypeScript + Vite + Tailwind CSS + React Router。バージョンは`docs/tech-stack.md`参照）。
+
+### 画面・ルーティング
+
+| パス | 画面 | 説明 |
+|---|---|---|
+| `/login` | ログイン画面 | email/passwordでログイン。ログイン済みなら`/welcome`へリダイレクト（`GuestRoute`） |
+| `/signup` | 新規登録画面 | email/displayName/passwordで登録。**プロトタイプにある「ユーザー名（@handle）」項目はバックエンドの`SignupRequest`に存在しないため今回は含めていない**（プロフィール機能=F-07実装時に追加検討） |
+| `/welcome` | ログイン後の仮画面 | 未ログインなら`/login`へリダイレクト（`ProtectedRoute`）。表示内容は`GET /api/hello`のレスポンス。タイムライン（F-02）実装時に置き換える |
+
+### 状態管理・トークンの持ち方
+
+- `AuthContext`（`context/AuthContext.ts` + `context/AuthProvider.tsx` + `hooks/useAuth.ts`）でログイン状態を管理する
+  - コンポーネントとフックを同じファイルからexportすると ESLint の `react-refresh/only-export-components` に引っかかるため3ファイルに分割した
+- `accessToken` / `refreshToken` / `user` をまとめて `localStorage`（キー: `raisetimeline.auth`）に保存し、リロード後もログイン状態を維持する
+- **既知の制限:** 本来はXSS対策として`accessToken`はメモリ（React state）のみで保持し、リロード時は`refreshToken`を使ってサイレント再認証するほうが安全。今回は最小実装としてlocalStorageにまとめて保存する方式にした。リフレッシュ機能をフロントで使う段階（アクセストークンの有効期限切れ対応）で見直す候補
+- ログアウトボタンは今回のスコープに含めていない（バックエンドの`POST /api/auth/logout`はあるが、フロントからの呼び出しは未実装）
+
+### APIとの通信
+
+- `vite.config.ts` に `/api` → `http://localhost:8080` のプロキシを設定し、フロントのfetchは相対パス（`/api/auth/login`等）で呼び出す（TaskManagementと同じ方式）
+- `api/client.ts` の `apiRequest` が共通のfetchラッパー。エラー時はバックエンドの`ErrorResponse`から`message`を取り出し`ApiError`としてthrowする
