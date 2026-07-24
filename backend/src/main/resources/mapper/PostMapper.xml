@@ -12,7 +12,10 @@
             p.created_at AS created_at,
             p.updated_at AS updated_at,
             u.id AS author_id,
-            u.display_name AS author_display_name
+            u.display_name AS author_display_name,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count,
+            (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
+            EXISTS(SELECT 1 FROM likes l2 WHERE l2.post_id = p.id AND l2.user_id = #{currentUserId}) AS liked_by_me
         FROM posts p
         JOIN users u ON p.user_id = u.id
         ORDER BY p.created_at DESC, p.id DESC
@@ -27,7 +30,10 @@
             p.created_at AS created_at,
             p.updated_at AS updated_at,
             u.id AS author_id,
-            u.display_name AS author_display_name
+            u.display_name AS author_display_name,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count,
+            (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
+            EXISTS(SELECT 1 FROM likes l2 WHERE l2.post_id = p.id AND l2.user_id = #{currentUserId}) AS liked_by_me
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id = #{id}
@@ -41,7 +47,10 @@
             p.created_at AS created_at,
             p.updated_at AS updated_at,
             u.id AS author_id,
-            u.display_name AS author_display_name
+            u.display_name AS author_display_name,
+            (SELECT COUNT(*) FROM comments c WHERE c.post_id = p.id) AS comment_count,
+            (SELECT COUNT(*) FROM likes l WHERE l.post_id = p.id) AS like_count,
+            EXISTS(SELECT 1 FROM likes l2 WHERE l2.post_id = p.id AND l2.user_id = #{currentUserId}) AS liked_by_me
         FROM posts p
         JOIN users u ON p.user_id = u.id
         WHERE p.id > #{afterId}

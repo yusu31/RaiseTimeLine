@@ -31,14 +31,16 @@ public interface PostMapper {
     void deleteById(Long id);
 
     // posts × users のJOINを伴うため PostMapper.xml 側で定義する
-    List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") int offset);
+    List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") int offset,
+                                     @Param("currentUserId") Long currentUserId);
 
-    Optional<PostDetail> selectDetailById(@Param("id") Long id);
+    Optional<PostDetail> selectDetailById(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
 
     // posts単体へのCOUNTのみでJOIN不要のためアノテーション方式にする
     @Select("SELECT COUNT(*) FROM posts WHERE id > #{afterId}")
     long countNewerThan(@Param("afterId") long afterId);
 
     // posts × users のJOINを伴うため PostMapper.xml 側で定義する
-    List<PostDetail> selectNewerThan(@Param("afterId") long afterId, @Param("limit") int limit);
+    List<PostDetail> selectNewerThan(@Param("afterId") long afterId, @Param("limit") int limit,
+                                      @Param("currentUserId") Long currentUserId);
 }

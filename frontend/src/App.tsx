@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from 'react-router'
 import { LoginPage } from './pages/LoginPage'
+import { PostDetailPage } from './pages/PostDetailPage'
 import { SignupPage } from './pages/SignupPage'
 import { TimelinePage } from './pages/TimelinePage'
 import { ProtectedRoute } from './components/ProtectedRoute'
@@ -15,6 +16,7 @@ function App() {
       </Route>
       <Route element={<ProtectedRoute />}>
         <Route path="/timeline" element={<TimelinePage />} />
+        <Route path="/posts/:id" element={<PostDetailPage />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

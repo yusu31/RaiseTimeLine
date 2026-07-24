@@ -36,13 +36,13 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostListResponse getTimeline(int page, int size) {
+    public PostListResponse getTimeline(int page, int size, Long currentUserId) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
         int offset = normalizedPage * normalizedSize;
 
         // size+1件取得してhasNextを判定する（COUNT(*)を別途発行しない軽量な方式）
-        List<PostDetail> rows = postMapper.selectTimeline(normalizedSize + 1, offset);
+        List<PostDetail> rows = postMapper.selectTimeline(normalizedSize + 1, offset, currentUserId);
         boolean hasNext = rows.size() > normalizedSize;
         List<PostDetail> pageRows = hasNext ? rows.subList(0, normalizedSize) : rows;
 
@@ -57,11 +57,11 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public NewPostsResponse getNewPosts(long afterId) {
+    public NewPostsResponse getNewPosts(long afterId, Long currentUserId) {
         long normalizedAfterId = Math.max(afterId, 0);
 
         // size+1件取得してhasMoreを判定する（getTimelineと同じ軽量な方式）
-        List<PostDetail> rows = postMapper.selectNewerThan(normalizedAfterId, NEW_POSTS_FETCH_LIMIT + 1);
+        List<PostDetail> rows = postMapper.selectNewerThan(normalizedAfterId, NEW_POSTS_FETCH_LIMIT + 1, currentUserId);
         boolean hasMore = rows.size() > NEW_POSTS_FETCH_LIMIT;
         List<PostDetail> limitedRows = hasMore ? rows.subList(0, NEW_POSTS_FETCH_LIMIT) : rows;
 
@@ -70,8 +70,8 @@ public class PostService {
     }
 
     @Transactional(readOnly = true)
-    public PostResponse getPost(Long id) {
-        PostDetail detail = postMapper.selectDetailById(id)
+    public PostResponse getPost(Long id, Long currentUserId) {
+        PostDetail detail = postMapper.selectDetailById(id, currentUserId)
                 .orElseThrow(() -> new PostNotFoundException("投稿が見つかりません"));
         return toResponse(detail);
     }
@@ -90,13 +90,13 @@ public class PostService {
         post.setImagePath(imagePath);
         postMapper.insert(post);
 
-        return getPost(post.getId());
+        return getPost(post.getId(), userId);
     }
 
     public PostResponse update(Long userId, Long postId, PostUpdateRequest request) {
         findOwnedPostOrThrow(userId, postId);
         postMapper.updateContent(postId, request.content());
-        return getPost(postId);
+        return getPost(postId, userId);
     }
 
     public void delete(Long userId, Long postId) {
@@ -125,7 +125,7 @@ public class PostService {
     private PostResponse toResponse(PostDetail detail) {
         String imageUrl = detail.getImagePath() != null ? storageService.toPublicUrl(detail.getImagePath()) : null;
         PostAuthorResponse author = new PostAuthorResponse(detail.getAuthorId(), detail.getAuthorDisplayName());
-        // likeCount/commentCount/likedByMeはF-03/F-04未実装のため固定値で返す
-        return new PostResponse(detail.getId(), detail.getContent(), imageUrl, author, 0, 0, false, detail.getCreatedAt());
+        return new PostResponse(detail.getId(), detail.getContent(), imageUrl, author,
+                detail.getLikeCount(), detail.getCommentCount(), detail.isLikedByMe(), detail.getCreatedAt());
     }
 }
