@@ -38,7 +38,7 @@ class PostControllerIntegrationTest {
 
     @BeforeEach
     void cleanDatabase() {
-        jdbcTemplate.execute("TRUNCATE TABLE posts, refresh_tokens, users RESTART IDENTITY CASCADE");
+        jdbcTemplate.execute("TRUNCATE TABLE posts, comments, likes, refresh_tokens, users RESTART IDENTITY CASCADE");
     }
 
     private String signupAndGetAccessToken(String email, String displayName) throws Exception {

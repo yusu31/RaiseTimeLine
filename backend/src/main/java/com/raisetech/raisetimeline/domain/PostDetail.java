@@ -14,6 +14,9 @@ public class PostDetail {
     private LocalDateTime updatedAt;
     private Long authorId;
     private String authorDisplayName;
+    private int likeCount;
+    private int commentCount;
+    private boolean likedByMe;
 
     public Long getId() {
         return id;
@@ -69,5 +72,29 @@ public class PostDetail {
 
     public void setAuthorDisplayName(String authorDisplayName) {
         this.authorDisplayName = authorDisplayName;
+    }
+
+    public int getLikeCount() {
+        return likeCount;
+    }
+
+    public void setLikeCount(int likeCount) {
+        this.likeCount = likeCount;
+    }
+
+    public int getCommentCount() {
+        return commentCount;
+    }
+
+    public void setCommentCount(int commentCount) {
+        this.commentCount = commentCount;
+    }
+
+    public boolean isLikedByMe() {
+        return likedByMe;
+    }
+
+    public void setLikedByMe(boolean likedByMe) {
+        this.likedByMe = likedByMe;
     }
 }

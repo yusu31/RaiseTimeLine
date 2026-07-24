@@ -14,6 +14,10 @@ export function fetchNewPosts(request: AuthorizedRequest, afterId: number): Prom
   return request<NewPostsResponse>(`/posts/new?afterId=${afterId}`)
 }
 
+export function fetchPost(request: AuthorizedRequest, id: number): Promise<Post> {
+  return request<Post>(`/posts/${id}`)
+}
+
 export function createPost(request: AuthorizedRequest, content: string, image: File | null): Promise<Post> {
   const formData = new FormData()
   formData.append('content', content)

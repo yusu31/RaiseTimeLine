@@ -28,3 +28,8 @@ export type NewPostsResponse = {
   posts: Post[]
   hasMore: boolean
 }
+
+export type LikeStatusResponse = {
+  likeCount: number
+  likedByMe: boolean
+}

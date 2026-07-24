@@ -36,10 +36,11 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<PostListResponse> list(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size
     ) {
-        return ResponseEntity.ok(postService.getTimeline(page, size));
+        return ResponseEntity.ok(postService.getTimeline(page, size, user.id()));
     }
 
     @GetMapping("/new-count")
@@ -51,14 +52,18 @@ public class PostController {
 
     @GetMapping("/new")
     public ResponseEntity<NewPostsResponse> newPosts(
+            @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam(defaultValue = "0") long afterId
     ) {
-        return ResponseEntity.ok(postService.getNewPosts(afterId));
+        return ResponseEntity.ok(postService.getNewPosts(afterId, user.id()));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PostResponse> get(@PathVariable Long id) {
-        return ResponseEntity.ok(postService.getPost(id));
+    public ResponseEntity<PostResponse> get(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable Long id
+    ) {
+        return ResponseEntity.ok(postService.getPost(id, user.id()));
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

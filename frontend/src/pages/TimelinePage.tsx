@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
+import { likePost, unlikePost } from '../api/likeApi'
 import { createPost, deletePost, fetchNewPosts, fetchNewPostsCount, fetchTimeline, updatePost } from '../api/postApi'
 import { AppHeader } from '../components/AppHeader'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
@@ -167,6 +168,13 @@ export function TimelinePage() {
     setDeletingPostId(null)
   }
 
+  const handleToggleLike = async (post: Post) => {
+    const updated = post.likedByMe
+      ? await unlikePost(authorizedRequest, post.id)
+      : await likePost(authorizedRequest, post.id)
+    setPosts((current) => current.map((p) => (p.id === post.id ? { ...p, ...updated } : p)))
+  }
+
   const handleLogout = async () => {
     setIsLoggingOut(true)
     try {
@@ -230,6 +238,7 @@ export function TimelinePage() {
               isOwn={post.author.id === user?.id}
               onEdit={setEditingPost}
               onDeleteRequest={setDeletingPostId}
+              onToggleLike={handleToggleLike}
             />
           ))
         )}
