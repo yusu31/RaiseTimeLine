@@ -1,1 +1,112 @@
 @import "tailwindcss";
+
+/* いいねボタン: グローの滲み具合をなめらかにアニメーションさせるためカスタムプロパティとして型登録する */
+@property --like-glow-spread {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+@property --like-glow-opacity {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 0;
+}
+
+.like-heart-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.like-heart {
+  filter: drop-shadow(0 0 var(--like-glow-spread) rgba(249, 24, 128, var(--like-glow-opacity)));
+}
+
+.like-heart--burst {
+  animation:
+    like-pop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    like-glow 0.4s ease-out;
+}
+
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes like-glow {
+  0% {
+    --like-glow-spread: 0px;
+    --like-glow-opacity: 0;
+  }
+  40% {
+    --like-glow-spread: 6px;
+    --like-glow-opacity: 0.9;
+  }
+  100% {
+    --like-glow-spread: 0px;
+    --like-glow-opacity: 0;
+  }
+}
+
+.like-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.like-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 7px;
+  height: 7px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: like-particle-fly 0.5s ease-out forwards;
+}
+
+.like-particle--1 {
+  --tx: -15px;
+  --ty: -16px;
+  animation-delay: 0s;
+}
+.like-particle--2 {
+  --tx: 15px;
+  --ty: -15px;
+  animation-delay: 0.03s;
+}
+.like-particle--3 {
+  --tx: -11px;
+  --ty: 11px;
+  animation-delay: 0.06s;
+}
+.like-particle--4 {
+  --tx: 11px;
+  --ty: 13px;
+  animation-delay: 0.02s;
+}
+
+@keyframes like-particle-fly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(0.6);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .like-heart--burst,
+  .like-particle {
+    animation: none !important;
+  }
+}

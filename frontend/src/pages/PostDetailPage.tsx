@@ -7,6 +7,7 @@ import { fetchPost } from '../api/postApi'
 import { CommentForm } from '../components/CommentForm'
 import { CommentList } from '../components/CommentList'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { LikeButton } from '../components/LikeButton'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
 import type { Comment } from '../types/comment'
@@ -98,13 +99,7 @@ export function PostDetailPage() {
               )}
               <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
                 <span>💬 {post.commentCount}</span>
-                <button
-                  type="button"
-                  onClick={handleToggleLike}
-                  className={`flex items-center gap-1 ${post.likedByMe ? 'font-bold text-[#F91880]' : 'text-gray-500 hover:text-[#F91880]'}`}
-                >
-                  {post.likedByMe ? '❤' : '♡'} {post.likeCount}
-                </button>
+                <LikeButton likeCount={post.likeCount} likedByMe={post.likedByMe} onToggle={handleToggleLike} />
               </div>
             </article>
 

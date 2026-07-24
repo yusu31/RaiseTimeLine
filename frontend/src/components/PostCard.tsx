@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router'
 import type { Post } from '../types/post'
 import { formatRelativeTime } from '../utils/formatRelativeTime'
+import { LikeButton } from './LikeButton'
 
 type PostCardProps = {
   post: Post
@@ -58,16 +59,7 @@ export function PostCard({ post, isOwn, onEdit, onDeleteRequest, onToggleLike }:
 
       <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
         <span>💬 {post.commentCount}</span>
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleLike(post)
-          }}
-          className={`flex items-center gap-1 ${post.likedByMe ? 'font-bold text-[#F91880]' : 'text-gray-500 hover:text-[#F91880]'}`}
-        >
-          {post.likedByMe ? '❤' : '♡'} {post.likeCount}
-        </button>
+        <LikeButton likeCount={post.likeCount} likedByMe={post.likedByMe} onToggle={() => onToggleLike(post)} />
       </div>
     </article>
   )
