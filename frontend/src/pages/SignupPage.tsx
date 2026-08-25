@@ -6,21 +6,38 @@ import { useAuth } from '../hooks/useAuth'
 import { FormField } from '../components/FormField'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+// バックエンド（SignupRequest）の @Pattern と同じルール。英数字とアンダースコアのみ許可する
+const USERNAME_PATTERN = /^[A-Za-z0-9_]+$/
 
 type ValidationErrors = {
   email?: string
+  username?: string
   displayName?: string
   password?: string
   confirmPassword?: string
 }
 
-function validate(email: string, displayName: string, password: string, confirmPassword: string): ValidationErrors {
+function validate(
+  email: string,
+  username: string,
+  displayName: string,
+  password: string,
+  confirmPassword: string,
+): ValidationErrors {
   const errors: ValidationErrors = {}
 
   if (!email) {
     errors.email = 'メールアドレスを入力してください'
   } else if (email.length > 255 || !EMAIL_PATTERN.test(email)) {
     errors.email = 'メールアドレスの形式が正しくありません'
+  }
+
+  if (!username) {
+    errors.username = 'ユーザー名を入力してください'
+  } else if (username.length < 4 || username.length > 15) {
+    errors.username = 'ユーザー名は4〜15文字で入力してください'
+  } else if (!USERNAME_PATTERN.test(username)) {
+    errors.username = 'ユーザー名は英数字とアンダースコアのみ使用できます'
   }
 
   if (!displayName) {
@@ -48,6 +65,7 @@ export function SignupPage() {
   const { login: setAuth } = useAuth()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
+  const [username, setUsername] = useState('')
   const [displayName, setDisplayName] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -55,7 +73,7 @@ export function SignupPage() {
   const [apiError, setApiError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const errors = validate(email, displayName, password, confirmPassword)
+  const errors = validate(email, username, displayName, password, confirmPassword)
   const hasErrors = Object.keys(errors).length > 0
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -69,7 +87,7 @@ export function SignupPage() {
 
     setIsSubmitting(true)
     try {
-      const response = await signup({ email, displayName, password })
+      const response = await signup({ email, username, displayName, password })
       setAuth(response)
       navigate('/timeline', { replace: true })
     } catch (err) {
@@ -92,6 +110,15 @@ export function SignupPage() {
             value={email}
             onChange={setEmail}
             error={submitted ? errors.email : undefined}
+          />
+          <FormField
+            id="signup-username"
+            label="ユーザー名（英数字4〜15文字）"
+            type="text"
+            autoComplete="off"
+            value={username}
+            onChange={setUsername}
+            error={submitted ? errors.username : undefined}
           />
           <FormField
             id="signup-display-name"

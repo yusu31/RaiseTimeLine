@@ -11,8 +11,8 @@ import java.util.Optional;
 @Mapper
 public interface UserMapper {
 
-    @Insert("INSERT INTO users (display_name, email, password_hash) "
-            + "VALUES (#{displayName}, #{email}, #{passwordHash})")
+    @Insert("INSERT INTO users (username, display_name, email, password_hash) "
+            + "VALUES (#{username}, #{displayName}, #{email}, #{passwordHash})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     void insert(User user);
 
@@ -24,4 +24,7 @@ public interface UserMapper {
 
     @Select("SELECT EXISTS(SELECT 1 FROM users WHERE email = #{email})")
     boolean existsByEmail(String email);
+
+    @Select("SELECT EXISTS(SELECT 1 FROM users WHERE username = #{username})")
+    boolean existsByUsername(String username);
 }

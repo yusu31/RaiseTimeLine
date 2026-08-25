@@ -72,7 +72,8 @@ public class CommentService {
     }
 
     private CommentResponse toResponse(CommentDetail detail) {
-        PostAuthorResponse author = new PostAuthorResponse(detail.getAuthorId(), detail.getAuthorDisplayName());
+        PostAuthorResponse author = new PostAuthorResponse(
+                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName());
         return new CommentResponse(detail.getId(), detail.getPostId(), detail.getContent(), author, detail.getCreatedAt());
     }
 }

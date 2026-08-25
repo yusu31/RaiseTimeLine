@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useNavigate } from 'react-router'
 import { ApiError } from '../api/client'
 import { likePost, unlikePost } from '../api/likeApi'
 import { createPost, deletePost, fetchNewPosts, fetchNewPostsCount, fetchTimeline, updatePost } from '../api/postApi'
@@ -11,15 +10,16 @@ import { PostComposer } from '../components/PostComposer'
 import { PostEditModal } from '../components/PostEditModal'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
+import { useLogout } from '../hooks/useLogout'
 import type { Post } from '../types/post'
 
 // 短すぎるとWebSocketに近い頻度になり、長すぎると新着への気づきが遅れるためのバランス値
 const POLL_INTERVAL_MS = 30_000
 
 export function TimelinePage() {
-  const { user, refreshToken, logout } = useAuth()
+  const { user } = useAuth()
   const authorizedRequest = useAuthorizedRequest()
-  const navigate = useNavigate()
+  const { handleLogout, isLoggingOut } = useLogout()
 
   const [posts, setPosts] = useState<Post[]>([])
   const [page, setPage] = useState(0)
@@ -29,7 +29,6 @@ export function TimelinePage() {
   const [error, setError] = useState<string | null>(null)
   const [editingPost, setEditingPost] = useState<Post | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [newPostsCount, setNewPostsCount] = useState(0)
   const [isFetchingNewPosts, setIsFetchingNewPosts] = useState(false)
   const [isComposerOpen, setIsComposerOpen] = useState(false)
@@ -173,20 +172,6 @@ export function TimelinePage() {
       ? await unlikePost(authorizedRequest, post.id)
       : await likePost(authorizedRequest, post.id)
     setPosts((current) => current.map((p) => (p.id === post.id ? { ...p, ...updated } : p)))
-  }
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true)
-    try {
-      if (refreshToken) {
-        await authorizedRequest('/auth/logout', { method: 'POST', body: { refreshToken } })
-      }
-    } catch {
-      // ログアウトAPIが失敗しても、ローカルの認証状態は必ず破棄する
-    } finally {
-      logout()
-      navigate('/login', { replace: true })
-    }
   }
 
   return (

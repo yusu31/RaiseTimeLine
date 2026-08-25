@@ -74,7 +74,7 @@ ORマッパーは **Spring Data JPA ではなく MyBatis** を使用する。SQL
 | パス | 画面 | 説明 |
 |---|---|---|
 | `/login` | ログイン画面 | email/passwordでログイン。ログイン済みなら`/welcome`へリダイレクト（`GuestRoute`） |
-| `/signup` | 新規登録画面 | email/displayName/passwordで登録。**プロトタイプにある「ユーザー名（@handle）」項目はバックエンドの`SignupRequest`に存在しないため今回は含めていない**（プロフィール機能=F-07実装時に追加検討） |
+| `/signup` | 新規登録画面 | email/username/displayName/passwordで登録。**当初は「ユーザー名（@handle）」項目をバックエンド未対応のため見送っていたが、投稿・コメントへの@表示が必要になったタイミングで追加した**（Issue #29。DBは`V6__add_username_to_users.sql`、バリデーションは英数字とアンダースコアのみ・4〜15文字） |
 | `/welcome` | ログイン後の仮画面 | 未ログインなら`/login`へリダイレクト（`ProtectedRoute`）。表示内容は`GET /api/hello`のレスポンス。タイムライン（F-02）実装時に置き換える |
 
 ### 状態管理・トークンの持ち方

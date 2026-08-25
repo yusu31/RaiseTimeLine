@@ -124,7 +124,8 @@ public class PostService {
 
     private PostResponse toResponse(PostDetail detail) {
         String imageUrl = detail.getImagePath() != null ? storageService.toPublicUrl(detail.getImagePath()) : null;
-        PostAuthorResponse author = new PostAuthorResponse(detail.getAuthorId(), detail.getAuthorDisplayName());
+        PostAuthorResponse author = new PostAuthorResponse(
+                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName());
         return new PostResponse(detail.getId(), detail.getContent(), imageUrl, author,
                 detail.getLikeCount(), detail.getCommentCount(), detail.isLikedByMe(), detail.getCreatedAt());
     }

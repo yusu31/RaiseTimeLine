@@ -36,9 +36,17 @@ class AuthControllerIntegrationTest {
     }
 
     private String signupBody(String email, String displayName, String password) {
+        // username はメールアドレスの @ より前を使う。
+        // email 形式が不正なケース（@ を含まない）でも組み立てられるよう、その場合は既定値にする。
+        int atIndex = email.indexOf('@');
+        String username = atIndex > 0 ? email.substring(0, atIndex) : "testuser";
+        return signupBody(email, username, displayName, password);
+    }
+
+    private String signupBody(String email, String username, String displayName, String password) {
         return """
-                {"email":"%s","displayName":"%s","password":"%s"}
-                """.formatted(email, displayName, password);
+                {"email":"%s","username":"%s","displayName":"%s","password":"%s"}
+                """.formatted(email, username, displayName, password);
     }
 
     @Test
@@ -50,6 +58,7 @@ class AuthControllerIntegrationTest {
                 .andExpect(jsonPath("$.accessToken").exists())
                 .andExpect(jsonPath("$.refreshToken").exists())
                 .andExpect(jsonPath("$.user.email").value("suzuki@example.com"))
+                .andExpect(jsonPath("$.user.username").value("suzuki"))
                 .andExpect(jsonPath("$.user.displayName").value("鈴木"));
     }
 
@@ -64,6 +73,35 @@ class AuthControllerIntegrationTest {
                         .content(signupBody("suzuki@example.com", "鈴木2", "password456")))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void signupで重複usernameは409が返る() throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(signupBody("suzuki@example.com", "suzuki", "鈴木", "password123")));
+
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupBody("takahashi@example.com", "suzuki", "高橋", "password123")))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409));
+    }
+
+    @Test
+    void signupでusernameに記号が含まれると400が返る() throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupBody("suzuki@example.com", "suzuki-san", "鈴木", "password123")))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void signupでusernameが3文字だと400が返る() throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(signupBody("suzuki@example.com", "abc", "鈴木", "password123")))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
