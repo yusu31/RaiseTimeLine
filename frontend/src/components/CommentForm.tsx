@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { ApiError } from '../api/client'
+import { SendIcon } from './icons'
 
 type CommentFormProps = {
   onSubmit: (content: string) => Promise<void>
@@ -31,7 +32,7 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
         <input
           type="text"
           value={content}
@@ -42,9 +43,11 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
         <button
           type="submit"
           disabled={isSubmitting}
-          className="rounded-full bg-[#1D9BF0] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+          title="コメントを送信"
+          aria-label="コメントを送信"
+          className="rounded-full p-2 text-[#1D9BF0] transition hover:bg-blue-50 disabled:opacity-50"
         >
-          {isSubmitting ? '送信中…' : 'コメント'}
+          <SendIcon />
         </button>
       </div>
       {error && <p className="text-xs text-red-600">{error}</p>}
