@@ -33,6 +33,28 @@
 | API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
 
+## SQLの記述方針（MyBatis）
+
+**SQLはすべて Mapper XML に記述する。Javaのアノテーション（`@Select` / `@Insert` / `@Update` / `@Delete`）は使わない。**
+
+| 項目 | ルール |
+|------|--------|
+| SQLの置き場所 | `backend/src/main/resources/mapper/{Mapper名}.xml` の1か所のみ |
+| Mapperインターフェース | `@Mapper` とメソッド定義のみを持つ。SQLは書かない |
+| 引数 | 単一引数でも `@Param` を明示する |
+| 自動採番の取得 | `<insert useGeneratedKeys="true" keyProperty="id">` を使う |
+| XMLの読み込み設定 | `application.yml` の `mybatis.mapper-locations: classpath:mapper/*.xml`（本番・テスト共通） |
+| カラム名の対応 | `mybatis.configuration.map-underscore-to-camel-case: true` によりスネークケース列を自動でキャメルケースに変換する（`author_username` → `authorUsername`） |
+
+**この方針にした理由:**
+
+- 当初は「JOINを伴うものだけXML、単純なCRUDはアノテーション」と書き分けていたが、SQLを探すのに毎回2か所を見る必要があり可読性を損ねていた
+- アノテーション方式ではSQLがJavaの文字列リテラルになるため、改行のたびに `" + "` の連結が必要で、SQL自体が読みづらくなる
+- SQLがXMLに集約されていれば、Javaを読まずにSQLだけをレビューできる
+- `@Param` を明示するのは、コンパイラの `-parameters` オプション（Spring Bootが暗黙に有効化している）への依存をなくすため。ビルド設定の変更で全クエリが動かなくなる事故を防ぐ
+
+---
+
 ## データベース
 
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
@@ -82,3 +104,4 @@
 | GraphQL | REST API で十分。学習コストが高い |
 | WebSocket | リアルタイム更新（通知など）はMVP後に検討 → F-12（タイムラインの新着チェック）で、WebSocketではなく定期チェック＋通知バナー方式（X/Twitter方式）を採用することで決着した |
 | カウンタキャッシュ | いいね数・コメント数はCOUNT集計で十分な規模。数字ずれ事故のリスクを避ける |
+| MyBatisのアノテーション方式（`@Select` 等） | SQLの置き場所がXMLと2か所に分かれて可読性が落ちるため、XML方式に一本化した。詳細は「SQLの記述方針（MyBatis）」を参照 |
