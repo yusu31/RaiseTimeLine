@@ -33,7 +33,7 @@ erDiagram
         varchar password_hash "BCryptハッシュ"
         varchar username UK "ユーザー名・アットマーク表示用"
         text bio "自己紹介（Phase 2）"
-        varchar icon_image_url "アイコン画像URL（Phase 2）"
+        varchar icon_image_path "アイコン画像の保存パス（Phase 2）"
         timestamp created_at
         timestamp updated_at
     }
@@ -108,8 +108,8 @@ erDiagram
 | email | VARCHAR(255) | 不可 | - | メールアドレス（ログインID）。ユニーク制約 |
 | password_hash | VARCHAR(255) | 不可 | - | BCryptでハッシュ化したパスワード |
 | username | VARCHAR(15) | 不可 | - | @表示用のユーザー名。ユニーク制約。英数字とアンダースコアのみ・4〜15文字（**V6で追加済み**。桁数はX/Twitterに揃えて30→15に変更した。既存ユーザーには `user{id}` を自動採番して割り当て済み） |
-| bio | TEXT | 可 | NULL | 自己紹介（**Phase 2 で追加**） |
-| icon_image_url | VARCHAR(512) | 可 | NULL | アイコン画像のURL（**Phase 2 で追加**） |
+| bio | TEXT | 可 | NULL | 自己紹介（**V7で追加済み**）。アプリ側で160文字以内に制限する（上限を変えやすいようDBはTEXTのまま） |
+| icon_image_path | VARCHAR(255) | 可 | NULL | アイコン画像の**保存パス**（**V7で追加済み**）。URLではなくパスを持ち、公開URLへの変換は `StorageService` が行う。`posts.image_path` と同じ方針 |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 作成日時 |
 | updated_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 更新日時 |
 
@@ -209,6 +209,7 @@ erDiagram
 | V4 | V4__create_comments.sql | comments テーブル作成（users, posts を参照）＋ post_id へのインデックス |
 | V5 | V5__create_likes.sql | likes テーブル作成＋ (post_id, user_id) のユニーク制約（users, posts を参照） |
 | V6 | V6__add_username_to_users.sql | users に username を追加。既存ユーザーへ `user{id}` を割り当ててから NOT NULL・UNIQUE を付ける4段階構成 |
+| V7 | V7__add_profile_columns_to_users.sql | users に bio / icon_image_path を追加（F-07 プロフィール機能）。どちらもNULL許容のため段階的な移行は不要 |
 
 > **旧計画からの変更点:** 当初はPhase 1の全テーブル（users→posts→comments→likes→refresh_tokens→シードユーザー）を
 > 一気に作る計画だったが、認証機能を先行実装したため **V1・V2のみを先に作成**した。
@@ -220,12 +221,14 @@ erDiagram
 
 | 順序 | ファイル名（予定） | 内容 | Phase |
 |------|------------------|------|-------|
-| V7 | V7__add_profile_columns_to_users.sql | users に bio / icon_image_url を追加（F-07 プロフィール機能で実装する） | 2 |
 | V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
 
 > **旧計画からの変更点:** 当初 V6 は「username / bio / icon_image_url をまとめて追加」する予定だったが、
 > @ユーザー名の表示はプロフィール機能を待たずに必要になったため、**V6 では username だけを先行して追加**した。
-> bio と icon_image_url は F-07 の実装時に V7 として追加する。
+> bio と アイコン画像の列は F-07 の実装時に **V7として追加した**。
+> このとき、列名は設計当初の `icon_image_url VARCHAR(512)` ではなく **`icon_image_path VARCHAR(255)`** にした。
+> DBにフルURLを保存すると、ローカル保存から S3 へ移行したときに全行が使えなくなるため、
+> 既存の `posts.image_path` と同じく保存パスだけを持つ方針に揃えている。
 
 > **学習メモ:** ER図は最初に最終形（目標スキーマ）まで描き切るが、テーブルやカラムの追加は
 > このように後続のマイグレーションで行う。「一度実行したマイグレーションファイルは書き換えず、

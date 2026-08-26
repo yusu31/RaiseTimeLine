@@ -24,10 +24,12 @@ public class CommentService {
 
     private final CommentMapper commentMapper;
     private final PostMapper postMapper;
+    private final StorageService storageService;
 
-    public CommentService(CommentMapper commentMapper, PostMapper postMapper) {
+    public CommentService(CommentMapper commentMapper, PostMapper postMapper, StorageService storageService) {
         this.commentMapper = commentMapper;
         this.postMapper = postMapper;
+        this.storageService = storageService;
     }
 
     @Transactional(readOnly = true)
@@ -72,8 +74,11 @@ public class CommentService {
     }
 
     private CommentResponse toResponse(CommentDetail detail) {
+        String authorIconUrl = detail.getAuthorIconImagePath() != null
+                ? storageService.toPublicUrl(detail.getAuthorIconImagePath())
+                : null;
         PostAuthorResponse author = new PostAuthorResponse(
-                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName());
+                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName(), authorIconUrl);
         return new CommentResponse(detail.getId(), detail.getPostId(), detail.getContent(), author, detail.getCreatedAt());
     }
 }

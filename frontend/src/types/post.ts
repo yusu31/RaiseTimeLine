@@ -2,6 +2,7 @@ export type PostAuthor = {
   id: number
   username: string
   displayName: string
+  iconImageUrl: string | null
 }
 
 export type Post = {

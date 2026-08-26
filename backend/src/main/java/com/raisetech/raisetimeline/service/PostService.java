@@ -50,6 +50,24 @@ public class PostService {
         return new PostListResponse(posts, normalizedPage, hasNext);
     }
 
+    /**
+     * 指定ユーザーの投稿一覧（プロフィール画面用）。
+     * 件数が多くなるためプロフィール取得APIには含めず、ページング可能な別APIとして提供する。
+     */
+    @Transactional(readOnly = true)
+    public PostListResponse getPostsByAuthor(Long authorId, int page, int size, Long currentUserId) {
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
+        int offset = normalizedPage * normalizedSize;
+
+        List<PostDetail> rows = postMapper.selectByAuthorId(authorId, normalizedSize + 1, offset, currentUserId);
+        boolean hasNext = rows.size() > normalizedSize;
+        List<PostDetail> pageRows = hasNext ? rows.subList(0, normalizedSize) : rows;
+
+        List<PostResponse> posts = pageRows.stream().map(this::toResponse).toList();
+        return new PostListResponse(posts, normalizedPage, hasNext);
+    }
+
     @Transactional(readOnly = true)
     public NewPostsCountResponse getNewPostsCount(long afterId) {
         long normalizedAfterId = Math.max(afterId, 0);
@@ -124,8 +142,11 @@ public class PostService {
 
     private PostResponse toResponse(PostDetail detail) {
         String imageUrl = detail.getImagePath() != null ? storageService.toPublicUrl(detail.getImagePath()) : null;
+        String authorIconUrl = detail.getAuthorIconImagePath() != null
+                ? storageService.toPublicUrl(detail.getAuthorIconImagePath())
+                : null;
         PostAuthorResponse author = new PostAuthorResponse(
-                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName());
+                detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName(), authorIconUrl);
         return new PostResponse(detail.getId(), detail.getContent(), imageUrl, author,
                 detail.getLikeCount(), detail.getCommentCount(), detail.isLikedByMe(), detail.getCreatedAt());
     }

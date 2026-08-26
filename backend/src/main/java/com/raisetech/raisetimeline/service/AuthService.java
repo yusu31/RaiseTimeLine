@@ -34,19 +34,22 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final JwtProperties jwtProperties;
+    private final StorageService storageService;
 
     public AuthService(
             UserMapper userMapper,
             RefreshTokenMapper refreshTokenMapper,
             PasswordEncoder passwordEncoder,
             JwtTokenProvider jwtTokenProvider,
-            JwtProperties jwtProperties
+            JwtProperties jwtProperties,
+            StorageService storageService
     ) {
         this.userMapper = userMapper;
         this.refreshTokenMapper = refreshTokenMapper;
         this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
         this.jwtProperties = jwtProperties;
+        this.storageService = storageService;
     }
 
     public AuthResponse signup(SignupRequest request) {
@@ -110,8 +113,11 @@ public class AuthService {
         refreshToken.setExpiresAt(LocalDateTime.now().plus(jwtProperties.refreshTokenValidity()));
         refreshTokenMapper.insert(refreshToken);
 
+        String iconImageUrl = user.getIconImagePath() != null
+                ? storageService.toPublicUrl(user.getIconImagePath())
+                : null;
         UserResponse userResponse = new UserResponse(
-                user.getId(), user.getUsername(), user.getDisplayName(), user.getEmail());
+                user.getId(), user.getUsername(), user.getDisplayName(), user.getEmail(), iconImageUrl);
         return new AuthResponse(accessToken, refreshTokenValue, userResponse);
     }
 }

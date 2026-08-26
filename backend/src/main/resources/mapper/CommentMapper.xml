@@ -26,7 +26,8 @@
             c.created_at AS created_at,
             u.id AS author_id,
             u.username AS author_username,
-            u.display_name AS author_display_name
+            u.display_name AS author_display_name,
+            u.icon_image_path AS author_icon_image_path
         FROM comments c
         JOIN users u ON c.user_id = u.id
         WHERE c.post_id = #{postId}
@@ -41,7 +42,8 @@
             c.created_at AS created_at,
             u.id AS author_id,
             u.username AS author_username,
-            u.display_name AS author_display_name
+            u.display_name AS author_display_name,
+            u.icon_image_path AS author_icon_image_path
         FROM comments c
         JOIN users u ON c.user_id = u.id
         WHERE c.id = #{id}

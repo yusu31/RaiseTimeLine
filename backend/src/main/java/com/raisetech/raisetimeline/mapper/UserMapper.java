@@ -18,7 +18,20 @@ public interface UserMapper {
 
     Optional<User> findById(@Param("id") Long id);
 
+    Optional<User> findByUsername(@Param("username") String username);
+
     boolean existsByEmail(@Param("email") String email);
 
     boolean existsByUsername(@Param("username") String username);
+
+    /**
+     * 自分自身を除いて @ユーザー名 の重複を調べる。
+     * プロフィール編集では「変更せずに保存」もありうるため、自分の現在の名前は重複扱いにしない。
+     */
+    boolean existsByUsernameExcludingSelf(@Param("username") String username, @Param("selfId") Long selfId);
+
+    void updateProfile(@Param("id") Long id, @Param("displayName") String displayName,
+                       @Param("username") String username, @Param("bio") String bio);
+
+    void updateIconImagePath(@Param("id") Long id, @Param("iconImagePath") String iconImagePath);
 }

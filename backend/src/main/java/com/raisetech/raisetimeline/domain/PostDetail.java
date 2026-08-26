@@ -15,6 +15,7 @@ public class PostDetail {
     private Long authorId;
     private String authorUsername;
     private String authorDisplayName;
+    private String authorIconImagePath;
     private int likeCount;
     private int commentCount;
     private boolean likedByMe;
@@ -81,6 +82,14 @@ public class PostDetail {
 
     public void setAuthorDisplayName(String authorDisplayName) {
         this.authorDisplayName = authorDisplayName;
+    }
+
+    public String getAuthorIconImagePath() {
+        return authorIconImagePath;
+    }
+
+    public void setAuthorIconImagePath(String authorIconImagePath) {
+        this.authorIconImagePath = authorIconImagePath;
     }
 
     public int getLikeCount() {
