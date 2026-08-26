@@ -1,5 +1,6 @@
 export type UserResponse = {
   id: number
+  username: string
   displayName: string
   email: string
 }
@@ -12,6 +13,7 @@ export type AuthResponse = {
 
 export type SignupRequest = {
   email: string
+  username: string
   displayName: string
   password: string
 }

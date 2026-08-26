@@ -6,6 +6,7 @@ import com.raisetech.raisetimeline.domain.User;
 import com.raisetech.raisetimeline.exception.EmailAlreadyExistsException;
 import com.raisetech.raisetimeline.exception.InvalidCredentialsException;
 import com.raisetech.raisetimeline.exception.InvalidRefreshTokenException;
+import com.raisetech.raisetimeline.exception.UsernameAlreadyExistsException;
 import com.raisetech.raisetimeline.mapper.RefreshTokenMapper;
 import com.raisetech.raisetimeline.mapper.UserMapper;
 import com.raisetech.raisetimeline.request.LoginRequest;
@@ -52,9 +53,13 @@ public class AuthService {
         if (userMapper.existsByEmail(request.email())) {
             throw new EmailAlreadyExistsException("このメールアドレスは既に登録されています");
         }
+        if (userMapper.existsByUsername(request.username())) {
+            throw new UsernameAlreadyExistsException("このユーザー名は既に使われています");
+        }
 
         User user = new User();
         user.setEmail(request.email());
+        user.setUsername(request.username());
         user.setDisplayName(request.displayName());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         userMapper.insert(user);
@@ -105,7 +110,8 @@ public class AuthService {
         refreshToken.setExpiresAt(LocalDateTime.now().plus(jwtProperties.refreshTokenValidity()));
         refreshTokenMapper.insert(refreshToken);
 
-        UserResponse userResponse = new UserResponse(user.getId(), user.getDisplayName(), user.getEmail());
+        UserResponse userResponse = new UserResponse(
+                user.getId(), user.getUsername(), user.getDisplayName(), user.getEmail());
         return new AuthResponse(accessToken, refreshTokenValue, userResponse);
     }
 }

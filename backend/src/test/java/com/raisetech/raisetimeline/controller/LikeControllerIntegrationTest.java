@@ -38,11 +38,14 @@ class LikeControllerIntegrationTest {
     }
 
     private String signupAndGetAccessToken(String email, String displayName) throws Exception {
+        // username はメールアドレスの @ より前をそのまま使う（例: suzuki@example.com → suzuki）。
+        // テストで使うメールはいずれも英数字4文字以上のため、SignupRequest のバリデーションを満たす。
+        String username = email.substring(0, email.indexOf('@'));
         String response = mockMvc.perform(post("/api/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"%s","displayName":"%s","password":"password123"}
-                                """.formatted(email, displayName)))
+                                {"email":"%s","username":"%s","displayName":"%s","password":"password123"}
+                                """.formatted(email, username, displayName)))
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(response).get("accessToken").asText();
     }

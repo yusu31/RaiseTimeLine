@@ -31,7 +31,7 @@ erDiagram
         varchar display_name "表示名"
         varchar email UK "メールアドレス（重複不可）"
         varchar password_hash "BCryptハッシュ"
-        varchar username UK "ユーザー名・アットマーク表示用（Phase 2）"
+        varchar username UK "ユーザー名・アットマーク表示用"
         text bio "自己紹介（Phase 2）"
         varchar icon_image_url "アイコン画像URL（Phase 2）"
         timestamp created_at
@@ -107,7 +107,7 @@ erDiagram
 | display_name | VARCHAR(50) | 不可 | - | 表示名（タイムラインに表示される名前） |
 | email | VARCHAR(255) | 不可 | - | メールアドレス（ログインID）。ユニーク制約 |
 | password_hash | VARCHAR(255) | 不可 | - | BCryptでハッシュ化したパスワード |
-| username | VARCHAR(30) | 不可 | - | @表示用のユーザー名。ユニーク制約（**Phase 2 で追加**。追加時に既存ユーザーへ値を割り当てるマイグレーションが必要） |
+| username | VARCHAR(15) | 不可 | - | @表示用のユーザー名。ユニーク制約。英数字とアンダースコアのみ・4〜15文字（**V6で追加済み**。桁数はX/Twitterに揃えて30→15に変更した。既存ユーザーには `user{id}` を自動採番して割り当て済み） |
 | bio | TEXT | 可 | NULL | 自己紹介（**Phase 2 で追加**） |
 | icon_image_url | VARCHAR(512) | 可 | NULL | アイコン画像のURL（**Phase 2 で追加**） |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 作成日時 |
@@ -206,6 +206,9 @@ erDiagram
 | V1 | V1__create_users.sql | users テーブル作成（Phase 1 時点のカラムのみ） |
 | V2 | V2__create_refresh_tokens.sql | refresh_tokens テーブル作成（users を参照） |
 | V3 | V3__create_posts.sql | posts テーブル作成（users を参照）。作成日時・投稿者へのインデックスも同時に作成 |
+| V4 | V4__create_comments.sql | comments テーブル作成（users, posts を参照）＋ post_id へのインデックス |
+| V5 | V5__create_likes.sql | likes テーブル作成＋ (post_id, user_id) のユニーク制約（users, posts を参照） |
+| V6 | V6__add_username_to_users.sql | users に username を追加。既存ユーザーへ `user{id}` を割り当ててから NOT NULL・UNIQUE を付ける4段階構成 |
 
 > **旧計画からの変更点:** 当初はPhase 1の全テーブル（users→posts→comments→likes→refresh_tokens→シードユーザー）を
 > 一気に作る計画だったが、認証機能を先行実装したため **V1・V2のみを先に作成**した。
@@ -217,10 +220,12 @@ erDiagram
 
 | 順序 | ファイル名（予定） | 内容 | Phase |
 |------|------------------|------|-------|
-| V4 | V4__create_comments.sql | comments テーブル作成（users, posts を参照） | 1 |
-| V5 | V5__create_likes.sql | likes テーブル作成＋ユニーク制約（users, posts を参照） | 1 |
-| V6 | V6__add_profile_columns_to_users.sql | users に username / bio / icon_image_url を追加（既存ユーザーへの username 割り当てを含む） | 2 |
-| V7 | V7__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
+| V7 | V7__add_profile_columns_to_users.sql | users に bio / icon_image_url を追加（F-07 プロフィール機能で実装する） | 2 |
+| V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
+
+> **旧計画からの変更点:** 当初 V6 は「username / bio / icon_image_url をまとめて追加」する予定だったが、
+> @ユーザー名の表示はプロフィール機能を待たずに必要になったため、**V6 では username だけを先行して追加**した。
+> bio と icon_image_url は F-07 の実装時に V7 として追加する。
 
 > **学習メモ:** ER図は最初に最終形（目標スキーマ）まで描き切るが、テーブルやカラムの追加は
 > このように後続のマイグレーションで行う。「一度実行したマイグレーションファイルは書き換えず、

@@ -4,21 +4,26 @@ import { ApiError } from '../api/client'
 import { createComment, deleteComment, fetchComments } from '../api/commentApi'
 import { likePost, unlikePost } from '../api/likeApi'
 import { fetchPost } from '../api/postApi'
+import { AppHeader } from '../components/AppHeader'
+import { Avatar } from '../components/Avatar'
 import { CommentForm } from '../components/CommentForm'
 import { CommentList } from '../components/CommentList'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { CommentIcon } from '../components/icons'
 import { LikeButton } from '../components/LikeButton'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
+import { useLogout } from '../hooks/useLogout'
 import type { Comment } from '../types/comment'
 import type { Post } from '../types/post'
-import { formatRelativeTime } from '../utils/formatRelativeTime'
+import { formatDateTime } from '../utils/formatDateTime'
 
 export function PostDetailPage() {
   const { id } = useParams<{ id: string }>()
   const postId = Number(id)
   const { user } = useAuth()
   const authorizedRequest = useAuthorizedRequest()
+  const { handleLogout, isLoggingOut } = useLogout()
 
   const [post, setPost] = useState<Post | null>(null)
   const [comments, setComments] = useState<Comment[]>([])
@@ -72,13 +77,17 @@ export function PostDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#F7F9F9]">
-      <header className="sticky top-0 z-10 border-b border-gray-200 bg-white/80 px-4 py-3 backdrop-blur">
-        <Link to="/timeline" className="text-sm text-[#1D9BF0] hover:underline">
-          ← 戻る
-        </Link>
-      </header>
+      <AppHeader onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
+        <Link
+          to="/timeline"
+          className="flex items-center gap-3 text-lg font-bold text-[#0F1419] transition hover:text-[#1D9BF0]"
+        >
+          <span aria-hidden="true">←</span>
+          投稿
+        </Link>
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         {isLoading ? (
@@ -88,25 +97,35 @@ export function PostDetailPage() {
         ) : (
           <>
             <article className="rounded-2xl bg-white p-4 shadow-sm">
-              <p className="text-sm text-gray-500">
-                <span className="font-bold text-[#0F1419]">{post.author.displayName}</span>
-                {' ・ '}
-                {formatRelativeTime(post.createdAt)}
-              </p>
-              <p className="mt-2 whitespace-pre-wrap text-[#0F1419]">{post.content}</p>
+              <div className="flex items-center gap-3">
+                <Avatar displayName={post.author.displayName} />
+                <div className="leading-tight">
+                  <p className="font-bold text-[#0F1419]">{post.author.displayName}</p>
+                  <p className="text-sm text-gray-500">@{post.author.username}</p>
+                </div>
+              </div>
+
+              <p className="mt-3 whitespace-pre-wrap text-[#0F1419]">{post.content}</p>
+
               {post.imageUrl && (
                 <img src={post.imageUrl} alt="投稿画像" className="mt-3 max-h-96 w-full rounded-lg object-cover" />
               )}
-              <div className="mt-3 flex items-center gap-4 text-sm text-gray-500">
-                <span>💬 {post.commentCount}</span>
+
+              <p className="mt-2 text-sm text-gray-500">{formatDateTime(post.createdAt)}</p>
+
+              <div className="mt-3 flex items-center gap-6 border-t border-gray-100 pt-3 text-sm text-gray-500">
                 <LikeButton likeCount={post.likeCount} likedByMe={post.likedByMe} onToggle={handleToggleLike} />
+                <span className="flex items-center gap-1">
+                  <CommentIcon />
+                  {post.commentCount}
+                </span>
               </div>
             </article>
 
-            <CommentForm onSubmit={handleCreateComment} />
-
-            <h2 className="text-sm font-bold text-[#0F1419]">コメント（{comments.length}件）</h2>
+            <h2 className="text-sm font-bold text-[#0F1419]">コメント ({comments.length}件)</h2>
             <CommentList comments={comments} currentUserId={user?.id} onDeleteRequest={setDeletingCommentId} />
+
+            <CommentForm onSubmit={handleCreateComment} />
           </>
         )}
       </main>

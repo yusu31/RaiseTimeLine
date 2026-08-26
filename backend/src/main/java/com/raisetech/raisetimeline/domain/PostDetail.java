@@ -13,6 +13,7 @@ public class PostDetail {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private Long authorId;
+    private String authorUsername;
     private String authorDisplayName;
     private int likeCount;
     private int commentCount;
@@ -64,6 +65,14 @@ public class PostDetail {
 
     public void setAuthorId(Long authorId) {
         this.authorId = authorId;
+    }
+
+    public String getAuthorUsername() {
+        return authorUsername;
+    }
+
+    public void setAuthorUsername(String authorUsername) {
+        this.authorUsername = authorUsername;
     }
 
     public String getAuthorDisplayName() {

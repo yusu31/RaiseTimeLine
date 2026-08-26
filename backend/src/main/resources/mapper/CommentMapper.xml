@@ -11,6 +11,7 @@
             c.content AS content,
             c.created_at AS created_at,
             u.id AS author_id,
+            u.username AS author_username,
             u.display_name AS author_display_name
         FROM comments c
         JOIN users u ON c.user_id = u.id
@@ -25,6 +26,7 @@
             c.content AS content,
             c.created_at AS created_at,
             u.id AS author_id,
+            u.username AS author_username,
             u.display_name AS author_display_name
         FROM comments c
         JOIN users u ON c.user_id = u.id
