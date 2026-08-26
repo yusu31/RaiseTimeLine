@@ -245,7 +245,8 @@ export function TimelinePage() {
 
       {deletingPostId !== null && (
         <DeleteConfirmDialog
-          message="この投稿を削除しますか？削除した投稿は元に戻せません。"
+          message="この投稿を削除しますか？"
+          description="削除した投稿は元に戻せません。"
           onConfirm={handleConfirmDelete}
           onCancel={() => setDeletingPostId(null)}
         />

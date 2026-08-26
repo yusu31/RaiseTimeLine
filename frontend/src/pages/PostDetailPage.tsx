@@ -140,7 +140,8 @@ export function PostDetailPage() {
 
       {deletingCommentId !== null && (
         <DeleteConfirmDialog
-          message="このコメントを削除しますか？削除したコメントは元に戻せません。"
+          message="このコメントを削除しますか？"
+          description="削除したコメントは元に戻せません。"
           onConfirm={handleConfirmDeleteComment}
           onCancel={() => setDeletingCommentId(null)}
         />
