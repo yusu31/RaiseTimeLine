@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { createComment, deleteComment, fetchComments } from '../api/commentApi'
@@ -30,6 +30,10 @@ export function PostDetailPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [deletingCommentId, setDeletingCommentId] = useState<number | null>(null)
+  // コメント送信後に最下部までスクロールするための目印と、その実行フラグ。
+  // フラグを useState ではなく useRef にしているのは、この値が変わっても画面を描き直す必要がないため。
+  const commentsEndRef = useRef<HTMLDivElement>(null)
+  const shouldScrollToNewCommentRef = useRef(false)
 
   useEffect(() => {
     let cancelled = false
@@ -57,7 +61,24 @@ export function PostDetailPage() {
     const created = await createComment(authorizedRequest, postId, content)
     setComments((current) => [...current, created])
     setPost((current) => (current ? { ...current, commentCount: current.commentCount + 1 } : current))
+    // 画面にコメントが追加された「後」にスクロールしたいので、ここでは予約だけしておく
+    shouldScrollToNewCommentRef.current = true
   }
+
+  // 送信したコメントが画面外に追加されたままにならないよう、最下部までスクロールする。
+  // comments が更新されて画面が描き直された「後」に実行されるため、追加したコメントは既に表示されている。
+  // 初回表示や他の理由での更新では予約フラグが false のままなので、勝手にスクロールすることはない。
+  useEffect(() => {
+    if (!shouldScrollToNewCommentRef.current) return
+    shouldScrollToNewCommentRef.current = false
+
+    // OS側で「視差効果を減らす」設定をしている場合、滑らかな動きは不快になりうるため瞬時に移動する
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    commentsEndRef.current?.scrollIntoView({
+      behavior: prefersReducedMotion ? 'auto' : 'smooth',
+      block: 'end',
+    })
+  }, [comments])
 
   const handleConfirmDeleteComment = async () => {
     if (deletingCommentId === null) return
@@ -125,6 +146,12 @@ export function PostDetailPage() {
 
             <h2 className="text-sm font-bold text-[#0F1419]">コメント ({comments.length}件)</h2>
             <CommentList comments={comments} currentUserId={user?.id} onDeleteRequest={setDeletingCommentId} />
+
+            {/*
+              スクロール先の目印。scroll-mb-24 は「ここへスクロールするとき下に6rem分の余白を取る」指定で、
+              下部に固定したコメント入力欄に最後のコメントが隠れるのを防ぐ。
+            */}
+            <div ref={commentsEndRef} className="scroll-mb-24" />
           </>
         )}
       </main>
