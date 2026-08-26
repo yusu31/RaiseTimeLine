@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetech.raisetimeline.mapper.UserMapper">
+
+    <insert id="insert" parameterType="com.raisetech.raisetimeline.domain.User"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, display_name, email, password_hash)
+        VALUES (#{username}, #{displayName}, #{email}, #{passwordHash})
+    </insert>
+
+    <select id="findByEmail" resultType="com.raisetech.raisetimeline.domain.User">
+        SELECT * FROM users WHERE email = #{email}
+    </select>
+
+    <select id="findById" resultType="com.raisetech.raisetimeline.domain.User">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM users WHERE email = #{email})
+    </select>
+
+    <select id="existsByUsername" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM users WHERE username = #{username})
+    </select>
+
+</mapper>

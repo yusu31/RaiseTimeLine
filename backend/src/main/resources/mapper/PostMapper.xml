@@ -4,6 +4,31 @@
         "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.raisetech.raisetimeline.mapper.PostMapper">
 
+    <insert id="insert" parameterType="com.raisetech.raisetimeline.domain.Post"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO posts (user_id, content, image_path)
+        VALUES (#{userId}, #{content}, #{imagePath})
+    </insert>
+
+    <select id="findById" resultType="com.raisetech.raisetimeline.domain.Post">
+        SELECT * FROM posts WHERE id = #{id}
+    </select>
+
+    <update id="updateContent">
+        UPDATE posts
+        SET content = #{content},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM posts WHERE id = #{id}
+    </delete>
+
+    <select id="countNewerThan" resultType="long">
+        SELECT COUNT(*) FROM posts WHERE id > #{afterId}
+    </select>
+
     <select id="selectTimeline" resultType="com.raisetech.raisetimeline.domain.PostDetail">
         SELECT
             p.id AS id,

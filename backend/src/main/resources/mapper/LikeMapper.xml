@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetech.raisetimeline.mapper.LikeMapper">
+
+    <!-- ユニーク制約(post_id, user_id)違反はON CONFLICT DO NOTHINGで無害化し、二重いいねを冪等に成功させる -->
+    <insert id="insertIgnoreDuplicate">
+        INSERT INTO likes (post_id, user_id)
+        VALUES (#{postId}, #{userId})
+        ON CONFLICT (post_id, user_id) DO NOTHING
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM likes
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*) FROM likes WHERE post_id = #{postId}
+    </select>
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM likes WHERE post_id = #{postId} AND user_id = #{userId})
+    </select>
+
+</mapper>
