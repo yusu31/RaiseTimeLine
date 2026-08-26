@@ -76,7 +76,8 @@ export function PostDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F7F9F9]">
+    // 下部に固定するコメント入力欄と重ならないよう、本文の下に余白（pb-28）を確保する
+    <div className="min-h-screen bg-[#F7F9F9] pb-28">
       <AppHeader onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
@@ -124,11 +125,18 @@ export function PostDetailPage() {
 
             <h2 className="text-sm font-bold text-[#0F1419]">コメント ({comments.length}件)</h2>
             <CommentList comments={comments} currentUserId={user?.id} onDeleteRequest={setDeletingCommentId} />
-
-            <CommentForm onSubmit={handleCreateComment} />
           </>
         )}
       </main>
+
+      {/* コメント入力欄は画面下部に固定し、どこまでスクロールしても入力できるようにする */}
+      {post && (
+        <div className="fixed inset-x-0 bottom-0 border-t border-gray-200 bg-white/90 px-4 py-3 backdrop-blur">
+          <div className="mx-auto max-w-xl">
+            <CommentForm onSubmit={handleCreateComment} />
+          </div>
+        </div>
+      )}
 
       {deletingCommentId !== null && (
         <DeleteConfirmDialog

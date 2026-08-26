@@ -1,5 +1,27 @@
 @import "tailwindcss";
 
+/*
+ * 押せる要素のカーソルを指の形にする。
+ * Tailwind CSS は v3 まで button に cursor: pointer を付けていたが、
+ * v4 で「HTMLの仕様上ボタンは矢印」という理由から削除された。
+ * Web では「押せるものは指」が事実上の標準のため、ここで戻している。
+ * 個別に cursor-pointer を書く方式は付け忘れが起きるので、base レイヤーに1回だけ書く。
+ */
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled),
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  /* 押せない状態であることを見た目でも伝える */
+  button:disabled,
+  [role="button"][aria-disabled="true"] {
+    cursor: not-allowed;
+  }
+}
+
 /* いいねボタン: グローの滲み具合をなめらかにアニメーションさせるためカスタムプロパティとして型登録する */
 @property --like-glow-spread {
   syntax: '<length>';
