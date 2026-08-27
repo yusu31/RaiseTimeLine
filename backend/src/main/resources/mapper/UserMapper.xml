@@ -22,6 +22,24 @@
         SELECT * FROM users WHERE username = #{username}
     </select>
 
+    <!-- プロフィール画面用。フォロー数とフォロー中フラグを相関サブクエリで同時に取得し、
+         「プロフィール取得 → フォロー数 → フォロー判定」の3往復を1クエリに集約する -->
+    <select id="selectProfileByUsername" resultType="com.raisetech.raisetimeline.domain.UserProfileDetail">
+        SELECT
+            u.id AS id,
+            u.username AS username,
+            u.display_name AS display_name,
+            u.bio AS bio,
+            u.icon_image_path AS icon_image_path,
+            u.created_at AS created_at,
+            (SELECT COUNT(*) FROM follows f WHERE f.follower_id = u.id) AS following_count,
+            (SELECT COUNT(*) FROM follows f WHERE f.following_id = u.id) AS follower_count,
+            EXISTS(SELECT 1 FROM follows f2
+                   WHERE f2.follower_id = #{currentUserId} AND f2.following_id = u.id) AS followed_by_me
+        FROM users u
+        WHERE u.username = #{username}
+    </select>
+
     <update id="updateProfile">
         UPDATE users
         SET display_name = #{displayName},

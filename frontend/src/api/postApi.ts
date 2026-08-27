@@ -2,8 +2,17 @@ import type { NewPostsCountResponse, NewPostsResponse, Post, PostListResponse } 
 
 type AuthorizedRequest = <T>(path: string, options?: { method?: string; body?: unknown }) => Promise<T>
 
-export function fetchTimeline(request: AuthorizedRequest, page = 0, size = 20): Promise<PostListResponse> {
-  return request<PostListResponse>(`/posts?page=${page}&size=${size}`)
+/** タイムラインの表示範囲。'all' は全ユーザー、'following' はフォロー中＋自分の投稿 */
+export type TimelineMode = 'all' | 'following'
+
+export function fetchTimeline(
+  request: AuthorizedRequest,
+  page = 0,
+  size = 20,
+  mode: TimelineMode = 'all',
+): Promise<PostListResponse> {
+  const timelineQuery = mode === 'following' ? '&timeline=following' : ''
+  return request<PostListResponse>(`/posts?page=${page}&size=${size}${timelineQuery}`)
 }
 
 export function fetchNewPostsCount(request: AuthorizedRequest, afterId: number): Promise<NewPostsCountResponse> {

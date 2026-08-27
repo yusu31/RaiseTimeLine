@@ -1,6 +1,7 @@
 package com.raisetech.raisetimeline.mapper;
 
 import com.raisetech.raisetimeline.domain.User;
+import com.raisetech.raisetimeline.domain.UserProfileDetail;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -19,6 +20,13 @@ public interface UserMapper {
     Optional<User> findById(@Param("id") Long id);
 
     Optional<User> findByUsername(@Param("username") String username);
+
+    /**
+     * プロフィール画面用。フォロー数・フォロー中フラグを1クエリで同時に取得する。
+     * currentUserId は閲覧者のID（followedByMe の判定に使う）。
+     */
+    Optional<UserProfileDetail> selectProfileByUsername(@Param("username") String username,
+                                                        @Param("currentUserId") Long currentUserId);
 
     boolean existsByEmail(@Param("email") String email);
 

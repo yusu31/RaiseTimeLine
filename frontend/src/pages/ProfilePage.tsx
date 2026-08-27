@@ -7,12 +7,14 @@ import { fetchProfile, fetchUserPosts } from '../api/userApi'
 import { AppHeader } from '../components/AppHeader'
 import { Avatar } from '../components/Avatar'
 import { DeleteConfirmDialog } from '../components/DeleteConfirmDialog'
+import { FollowButton } from '../components/FollowButton'
 import { PostCard } from '../components/PostCard'
 import { PostEditModal } from '../components/PostEditModal'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useLogout } from '../hooks/useLogout'
+import type { FollowStatus } from '../types/follow'
 import type { Post } from '../types/post'
 import type { UserProfile } from '../types/user'
 
@@ -89,6 +91,14 @@ export function ProfilePage() {
 
   const sentinelRef = useInfiniteScroll(hasNext, handleLoadMore)
 
+  // フォロー操作の結果はAPIが返す最新値で上書きする。
+  // 画面側で ±1 するとタブを開いたまま別端末で操作されたときにずれる
+  const handleFollowChanged = (status: FollowStatus) => {
+    setProfile((current) =>
+      current ? { ...current, followerCount: status.followerCount, followedByMe: status.followedByMe } : current,
+    )
+  }
+
   const handleToggleLike = async (post: Post) => {
     try {
       const status = post.likedByMe
@@ -139,19 +149,38 @@ export function ProfilePage() {
             <section className="rounded-2xl bg-white p-6 shadow-sm">
               <div className="flex items-start justify-between gap-4">
                 <Avatar displayName={profile.displayName} iconImageUrl={profile.iconImageUrl} size="lg" />
-                {isOwnProfile && (
+                {isOwnProfile ? (
                   <Link
                     to="/profile/edit"
                     className="rounded-full border border-gray-300 px-4 py-1.5 text-sm font-bold text-[#0F1419] transition hover:bg-gray-100"
                   >
                     プロフィール編集
                   </Link>
+                ) : (
+                  <FollowButton
+                    username={profile.username}
+                    displayName={profile.displayName}
+                    followedByMe={profile.followedByMe}
+                    onChanged={handleFollowChanged}
+                    onError={setError}
+                  />
                 )}
               </div>
 
               <h1 className="mt-4 text-xl font-bold text-[#0F1419]">{profile.displayName}</h1>
               <p className="text-gray-500">@{profile.username}</p>
               {profile.bio && <p className="mt-3 whitespace-pre-wrap text-[#0F1419]">{profile.bio}</p>}
+
+              <div className="mt-3 flex gap-4 text-sm">
+                <Link to={`/users/${encodeURIComponent(profile.username)}/following`} className="hover:underline">
+                  <span className="font-bold text-[#0F1419]">{profile.followingCount}</span>
+                  <span className="ml-1 text-gray-500">フォロー中</span>
+                </Link>
+                <Link to={`/users/${encodeURIComponent(profile.username)}/followers`} className="hover:underline">
+                  <span className="font-bold text-[#0F1419]">{profile.followerCount}</span>
+                  <span className="ml-1 text-gray-500">フォロワー</span>
+                </Link>
+              </div>
             </section>
 
             <h2 className="mt-6 mb-3 font-bold text-[#0F1419]">このユーザーの投稿</h2>

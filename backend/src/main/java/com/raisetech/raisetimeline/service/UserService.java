@@ -1,6 +1,7 @@
 package com.raisetech.raisetimeline.service;
 
 import com.raisetech.raisetimeline.domain.User;
+import com.raisetech.raisetimeline.domain.UserProfileDetail;
 import com.raisetech.raisetimeline.exception.UserNotFoundException;
 import com.raisetech.raisetimeline.exception.UsernameAlreadyExistsException;
 import com.raisetech.raisetimeline.mapper.UserMapper;
@@ -24,15 +25,19 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public UserProfileResponse getProfile(String username) {
-        User user = findByUsernameOrThrow(username);
+    public UserProfileResponse getProfile(String username, Long currentUserId) {
+        UserProfileDetail detail = userMapper.selectProfileByUsername(username, currentUserId)
+                .orElseThrow(() -> new UserNotFoundException("ユーザーが見つかりません"));
         return new UserProfileResponse(
-                user.getId(),
-                user.getUsername(),
-                user.getDisplayName(),
-                user.getBio(),
-                toIconUrl(user.getIconImagePath()),
-                user.getCreatedAt());
+                detail.getId(),
+                detail.getUsername(),
+                detail.getDisplayName(),
+                detail.getBio(),
+                toIconUrl(detail.getIconImagePath()),
+                detail.getCreatedAt(),
+                detail.getFollowingCount(),
+                detail.getFollowerCount(),
+                detail.isFollowedByMe());
     }
 
     public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
