@@ -1,8 +1,8 @@
 import { Link } from 'react-router'
 import type { Comment } from '../types/comment'
-import { formatDateTime } from '../utils/formatDateTime'
 import { Avatar } from './Avatar'
 import { TrashIcon } from './icons'
+import { TimeAgo } from './TimeAgo'
 
 type CommentListProps = {
   comments: Comment[]
@@ -30,14 +30,15 @@ export function CommentList({ comments, currentUserId, onDeleteRequest }: Commen
 
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
-                <p className="min-w-0 text-sm">
+                <p className="min-w-0 truncate text-sm">
                   <Link to={`/users/${comment.author.username}`} className="hover:underline">
                     <span className="font-bold text-[#0F1419]">{comment.author.displayName}</span>{' '}
                     <span className="text-gray-500">@{comment.author.username}</span>
                   </Link>
+                  <span className="text-gray-500"> · </span>
+                  <TimeAgo isoString={comment.createdAt} className="text-gray-500" />
                 </p>
                 <div className="flex shrink-0 items-center gap-1">
-                  <span className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</span>
                   {comment.author.id === currentUserId && (
                     <button
                       type="button"
