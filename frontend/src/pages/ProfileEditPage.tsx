@@ -5,6 +5,7 @@ import { fetchProfile, updateIcon, updateProfile } from '../api/userApi'
 import { AppHeader } from '../components/AppHeader'
 import { Avatar } from '../components/Avatar'
 import { FormField } from '../components/FormField'
+import { IconCropModal } from '../components/IconCropModal'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
 import { useLogout } from '../hooks/useLogout'
@@ -23,7 +24,10 @@ export function ProfileEditPage() {
   const [username, setUsername] = useState('')
   const [bio, setBio] = useState('')
   const [currentIconUrl, setCurrentIconUrl] = useState<string | null>(null)
+  // image は「トリミング済みで、保存時に送る画像」。
+  // croppingFile は「選んだ直後で、まだ切り抜いていない画像」
   const [image, setImage] = useState<File | null>(null)
+  const [croppingFile, setCroppingFile] = useState<File | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -78,7 +82,10 @@ export function ProfileEditPage() {
     }
 
     setError(null)
-    setImage(file)
+    setCroppingFile(file)
+    // 同じファイルをもう一度選び直せるようにする。
+    // input の値が残っていると同じファイルでは change イベントが発火しない
+    event.target.value = ''
   }
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -130,6 +137,7 @@ export function ProfileEditPage() {
                 変更する
                 <input type="file" accept="image/jpeg,image/png" onChange={handleImageSelect} className="hidden" />
               </label>
+              {image && <p className="text-xs text-gray-500">保存するまで反映されません</p>}
             </div>
 
             <FormField
@@ -187,6 +195,17 @@ export function ProfileEditPage() {
           </form>
         )}
       </main>
+
+      {croppingFile && (
+        <IconCropModal
+          file={croppingFile}
+          onCancel={() => setCroppingFile(null)}
+          onCropped={(cropped) => {
+            setImage(cropped)
+            setCroppingFile(null)
+          }}
+        />
+      )}
     </div>
   )
 }
