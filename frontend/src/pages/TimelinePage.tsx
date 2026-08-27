@@ -10,6 +10,7 @@ import { PostComposer } from '../components/PostComposer'
 import { PostEditModal } from '../components/PostEditModal'
 import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
+import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useLogout } from '../hooks/useLogout'
 import type { Post } from '../types/post'
 
@@ -32,7 +33,6 @@ export function TimelinePage() {
   const [newPostsCount, setNewPostsCount] = useState(0)
   const [isFetchingNewPosts, setIsFetchingNewPosts] = useState(false)
   const [isComposerOpen, setIsComposerOpen] = useState(false)
-  const sentinelRef = useRef<HTMLDivElement | null>(null)
   const isLoadingMoreRef = useRef(false)
 
   // 「もっと見る」で末尾に古い投稿を追加しても最大idは変わらないため、常に配列全体から算出する
@@ -133,20 +133,7 @@ export function TimelinePage() {
   }, [authorizedRequest, page, hasNext])
 
   // 無限スクロール: リスト末尾のセンチネルが画面内に入ったら次ページを自動取得する
-  useEffect(() => {
-    if (!hasNext) return undefined
-    const node = sentinelRef.current
-    if (!node) return undefined
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting) handleLoadMore()
-      },
-      { rootMargin: '200px' },
-    )
-    observer.observe(node)
-    return () => observer.disconnect()
-  }, [hasNext, handleLoadMore])
+  const sentinelRef = useInfiniteScroll(hasNext, handleLoadMore)
 
   const handleCreatePost = async (content: string, image: File | null) => {
     const created = await createPost(authorizedRequest, content, image)

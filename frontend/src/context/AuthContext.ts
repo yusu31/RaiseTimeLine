@@ -9,6 +9,8 @@ export type AuthContextValue = {
   login: (auth: AuthResponse) => void
   logout: () => void
   setAccessToken: (accessToken: string) => void
+  /** プロフィール編集後に、ヘッダーなどに表示しているログインユーザー情報を最新化する */
+  updateUser: (user: UserResponse) => void
 }
 
 export const AuthContext = createContext<AuthContextValue | null>(null)

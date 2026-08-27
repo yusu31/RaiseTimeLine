@@ -1,3 +1,4 @@
+import { Link } from 'react-router'
 import type { Comment } from '../types/comment'
 import { formatDateTime } from '../utils/formatDateTime'
 import { Avatar } from './Avatar'
@@ -19,13 +20,21 @@ export function CommentList({ comments, currentUserId, onDeleteRequest }: Commen
       {comments.map((comment) => (
         <li key={comment.id} className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex items-start gap-3">
-            <Avatar displayName={comment.author.displayName} size="sm" />
+            <Link to={`/users/${comment.author.username}`} className="transition hover:opacity-80">
+              <Avatar
+                displayName={comment.author.displayName}
+                iconImageUrl={comment.author.iconImageUrl}
+                size="sm"
+              />
+            </Link>
 
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between gap-2">
                 <p className="min-w-0 text-sm">
-                  <span className="font-bold text-[#0F1419]">{comment.author.displayName}</span>{' '}
-                  <span className="text-gray-500">@{comment.author.username}</span>
+                  <Link to={`/users/${comment.author.username}`} className="hover:underline">
+                    <span className="font-bold text-[#0F1419]">{comment.author.displayName}</span>{' '}
+                    <span className="text-gray-500">@{comment.author.username}</span>
+                  </Link>
                 </p>
                 <div className="flex shrink-0 items-center gap-1">
                   <span className="text-xs text-gray-500">{formatDateTime(comment.createdAt)}</span>

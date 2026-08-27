@@ -44,6 +44,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        return build(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
+
     @ExceptionHandler(PostNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePostNotFound(PostNotFoundException ex) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage());

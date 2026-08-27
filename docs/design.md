@@ -111,16 +111,28 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
 
 | メソッド | パス | 説明 | 認証 |
 |---------|------|------|------|
-| GET | /api/users?q={keyword} | ユーザー検索（ユーザー名・表示名の部分一致） | 必要 |
-| GET | /api/users/{id} | プロフィール取得（そのユーザーの投稿一覧含む） | 必要 |
-| PUT | /api/users/me | 自分のプロフィール編集（表示名・自己紹介・アイコン） | 必要 |
+| GET | /api/users?q={keyword} | ユーザー検索（ユーザー名・表示名の部分一致）。F-10 で実装予定 | 必要 |
+| GET | /api/users/{username} | プロフィール取得 | 必要 |
+| GET | /api/users/{username}/posts?page=&size= | そのユーザーの投稿一覧 | 必要 |
+| PUT | /api/users/me | 自分のプロフィール編集（表示名・@ユーザー名・自己紹介）。JSON | 必要 |
+| POST | /api/users/me/icon | 自分のアイコン画像のアップロード。multipart/form-data | 必要 |
+
+> **旧設計からの変更点（F-07 実装時に確定）**
+>
+> 1. **パスのキーを `{id}` から `{username}` に変更した。** 画面URLを `/users/:username`（X準拠）にしたため、
+>    APIも同じキーにしないと「username から id を引く」ための余分な往復が発生する。
+> 2. **プロフィール取得と投稿一覧を別APIに分けた。** 当初は `GET /api/users/{id}` に投稿一覧を含める設計だったが、
+>    1レスポンスに全投稿を埋め込むとページングができず、無限スクロールが成立しないため。
+>    投稿一覧のレスポンスは既存の `PostListResponse`（`posts` / `page` / `hasNext`）をそのまま再利用する。
+> 3. **アイコン画像を別エンドポイントに分けた。** テキスト項目は JSON、画像は multipart と形式が異なるため。
+>    分けたことで、テキスト側は Bean Validation（`@Size` 等）がそのまま使え、エラー応答の形式も既存と揃う。
 
 ### フォロー（Phase 3）
 
 | メソッド | パス | 説明 | 認証 |
 |---------|------|------|------|
-| POST | /api/users/{id}/follow | フォローする | 必要 |
-| DELETE | /api/users/{id}/follow | フォロー解除 | 必要 |
+| POST | /api/users/{username}/follow | フォローする | 必要 |
+| DELETE | /api/users/{username}/follow | フォロー解除 | 必要 |
 | GET | /api/posts?timeline=following | フォロー中ユーザーのみのタイムライン取得 | 必要 |
 
 ---

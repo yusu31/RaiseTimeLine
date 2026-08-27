@@ -25,6 +25,9 @@ public interface PostMapper {
     List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") int offset,
                                      @Param("currentUserId") Long currentUserId);
 
+    List<PostDetail> selectByAuthorId(@Param("authorId") Long authorId, @Param("limit") int limit,
+                                       @Param("offset") int offset, @Param("currentUserId") Long currentUserId);
+
     Optional<PostDetail> selectDetailById(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
 
     long countNewerThan(@Param("afterId") long afterId);

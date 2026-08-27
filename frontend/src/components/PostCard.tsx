@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import type { Post } from '../types/post'
 import { formatDateTime } from '../utils/formatDateTime'
 import { Avatar } from './Avatar'
@@ -22,13 +22,19 @@ export function PostCard({ post, isOwn, onEdit, onDeleteRequest, onToggleLike }:
       className="cursor-pointer rounded-2xl bg-white p-4 shadow-sm transition hover:bg-gray-50"
     >
       <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-3">
-          <Avatar displayName={post.author.displayName} />
+        {/* カード全体が投稿詳細へのリンクになっているため、
+            著者部分のクリックは stopPropagation で親への伝播を止める */}
+        <Link
+          to={`/users/${post.author.username}`}
+          onClick={(event) => event.stopPropagation()}
+          className="flex items-center gap-3 rounded-lg transition hover:opacity-80"
+        >
+          <Avatar displayName={post.author.displayName} iconImageUrl={post.author.iconImageUrl} />
           <div className="leading-tight">
-            <p className="font-bold text-[#0F1419]">{post.author.displayName}</p>
+            <p className="font-bold text-[#0F1419] hover:underline">{post.author.displayName}</p>
             <p className="text-sm text-gray-500">@{post.author.username}</p>
           </div>
-        </div>
+        </Link>
         {isOwn && (
           <div className="flex items-center gap-1">
             <button

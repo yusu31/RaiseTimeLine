@@ -9,6 +9,9 @@ public class User {
     private String displayName;
     private String email;
     private String passwordHash;
+    private String bio;
+    /** アイコン画像の保存パス。公開URLへの変換は StorageService が行う */
+    private String iconImagePath;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,6 +53,22 @@ public class User {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getIconImagePath() {
+        return iconImagePath;
+    }
+
+    public void setIconImagePath(String iconImagePath) {
+        this.iconImagePath = iconImagePath;
     }
 
     public LocalDateTime getCreatedAt() {

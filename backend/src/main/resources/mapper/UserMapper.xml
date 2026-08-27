@@ -18,12 +18,38 @@
         SELECT * FROM users WHERE id = #{id}
     </select>
 
+    <select id="findByUsername" resultType="com.raisetech.raisetimeline.domain.User">
+        SELECT * FROM users WHERE username = #{username}
+    </select>
+
+    <update id="updateProfile">
+        UPDATE users
+        SET display_name = #{displayName},
+            username     = #{username},
+            bio          = #{bio},
+            updated_at   = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateIconImagePath">
+        UPDATE users
+        SET icon_image_path = #{iconImagePath},
+            updated_at      = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
     <select id="existsByEmail" resultType="boolean">
         SELECT EXISTS(SELECT 1 FROM users WHERE email = #{email})
     </select>
 
     <select id="existsByUsername" resultType="boolean">
         SELECT EXISTS(SELECT 1 FROM users WHERE username = #{username})
+    </select>
+
+    <!-- 自分自身（id = selfId）は重複判定から除外する。
+         除外しないと、@ユーザー名を変更せずに保存しただけで409になってしまう -->
+    <select id="existsByUsernameExcludingSelf" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM users WHERE username = #{username} AND id &lt;&gt; #{selfId})
     </select>
 
 </mapper>

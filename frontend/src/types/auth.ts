@@ -3,6 +3,8 @@ export type UserResponse = {
   username: string
   displayName: string
   email: string
+  // 以前のログインで localStorage に保存された値には存在しないため、undefined も許容する
+  iconImageUrl?: string | null
 }
 
 export type AuthResponse = {

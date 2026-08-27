@@ -51,6 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken: (accessToken) => {
       setAuth((current) => (current ? { ...current, accessToken } : current))
     },
+    updateUser: (user) => {
+      setAuth((current) => (current ? { ...current, user } : current))
+    },
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

@@ -14,6 +14,7 @@ public class CommentDetail {
     private Long authorId;
     private String authorUsername;
     private String authorDisplayName;
+    private String authorIconImagePath;
 
     public Long getId() {
         return id;
@@ -69,5 +70,13 @@ public class CommentDetail {
 
     public void setAuthorDisplayName(String authorDisplayName) {
         this.authorDisplayName = authorDisplayName;
+    }
+
+    public String getAuthorIconImagePath() {
+        return authorIconImagePath;
+    }
+
+    public void setAuthorIconImagePath(String authorIconImagePath) {
+        this.authorIconImagePath = authorIconImagePath;
     }
 }
