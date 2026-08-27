@@ -120,7 +120,7 @@ export function PostDetailPage() {
           <>
             <article className="rounded-2xl bg-white p-4 shadow-sm">
               <div className="flex items-center gap-3">
-                <Avatar displayName={post.author.displayName} />
+                <Avatar displayName={post.author.displayName} iconImageUrl={post.author.iconImageUrl} />
                 <div className="leading-tight">
                   <p className="font-bold text-[#0F1419]">{post.author.displayName}</p>
                   <p className="text-sm text-gray-500">@{post.author.username}</p>
