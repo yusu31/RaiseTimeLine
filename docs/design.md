@@ -127,13 +127,26 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
 > 3. **アイコン画像を別エンドポイントに分けた。** テキスト項目は JSON、画像は multipart と形式が異なるため。
 >    分けたことで、テキスト側は Bean Validation（`@Size` 等）がそのまま使え、エラー応答の形式も既存と揃う。
 
-### フォロー（Phase 3）
+### フォロー（F-11・実装済み）
 
 | メソッド | パス | 説明 | 認証 |
 |---------|------|------|------|
 | POST | /api/users/{username}/follow | フォローする | 必要 |
 | DELETE | /api/users/{username}/follow | フォロー解除 | 必要 |
-| GET | /api/posts?timeline=following | フォロー中ユーザーのみのタイムライン取得 | 必要 |
+| GET | /api/users/{username}/following | そのユーザーがフォロー中の一覧 | 必要 |
+| GET | /api/users/{username}/followers | そのユーザーのフォロワー一覧 | 必要 |
+| GET | /api/posts?timeline=following | フォロー中ユーザー**と自分自身**のタイムライン取得 | 必要 |
+
+> **実装時の決定:**
+> 1. **フォロー／解除は冪等。** 二重フォローも未フォロー状態での解除も 200 を返す（いいねと同じ）。
+>    ただし**自分自身へのフォローは 400**（DBのCHECK制約に任せると 500 になるため Service 層で弾く）。
+> 2. **フォロー中タイムラインに自分の投稿を含める**（X と同じ挙動）。
+>    誰もフォローしていないユーザーのタブが空になるのを避けるため。
+> 3. **`GET /api/users/{username}`（プロフィール取得）のレスポンスに
+>    `followingCount` / `followerCount` / `followedByMe` を追加した。** 相関サブクエリで1クエリにまとめている。
+> 4. **一覧APIはページングしない**（配列をそのまま返す）。件数が増えたら要対応。
+>
+> 詳細は [docs/features/follow.md](./features/follow.md) を参照。
 
 ---
 

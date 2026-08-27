@@ -34,13 +34,21 @@ public class PostController {
         this.postService = postService;
     }
 
+    /** 「フォロー中」タブを表すクエリパラメータの値。これ以外は全体タイムラインとして扱う */
+    private static final String TIMELINE_FOLLOWING = "following";
+
     @GetMapping
     public ResponseEntity<PostListResponse> list(
             @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String timeline
     ) {
-        return ResponseEntity.ok(postService.getTimeline(page, size, user.id()));
+        // SQLの動的分岐（<if>）は使わず、呼ぶメソッド自体をJavaで切り替える
+        PostListResponse response = TIMELINE_FOLLOWING.equals(timeline)
+                ? postService.getFollowingTimeline(page, size, user.id())
+                : postService.getTimeline(page, size, user.id());
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/new-count")

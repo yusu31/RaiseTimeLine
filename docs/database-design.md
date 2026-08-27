@@ -72,8 +72,8 @@ erDiagram
 
     follows {
         bigint id PK
-        bigint follower_id FK "フォローする人（Phase 3）"
-        bigint following_id FK "フォローされる人（Phase 3）"
+        bigint follower_id FK "フォローする人（V8）"
+        bigint following_id FK "フォローされる人（V8）"
         timestamp created_at
     }
 ```
@@ -90,10 +90,10 @@ erDiagram
 3. **外部キー（FK）で「存在しない投稿へのコメント」を防ぐ。**
    comments.post_id は posts.id を参照する外部キーにする。親の投稿が消えたら
    コメント・いいねも一緒に消えるように `ON DELETE CASCADE` を設定する（Phase 2 の投稿削除で効いてくる）。
-4. **follows は「users と users を結ぶ中間テーブル」（Phase 3）。**
+4. **follows は「users と users を結ぶ中間テーブル」（V8で作成済み）。**
    likes が users×posts を結ぶのと同じ仕組みの users×users 版。
    （follower_id, following_id）のユニーク制約で二重フォローを防ぐのも likes と同じパターン。
-   既存テーブルに手を入れず追加できるため、Phase 3 での実装でも手戻りは発生しない。
+   既存テーブルに手を入れず追加できるため、後から実装しても手戻りが発生しなかった（実際 V8 で追加している）。
 
 ---
 
@@ -155,7 +155,7 @@ erDiagram
 | expires_at | TIMESTAMP | 不可 | - | 有効期限（期限切れトークンは使用不可） |
 | created_at | TIMESTAMP | 不可 | CURRENT_TIMESTAMP | 発行日時 |
 
-### follows（フォロー関係）※Phase 3 で作成
+### follows（フォロー関係）※**V8で作成済み**
 
 | カラム名 | 型 | NULL | デフォルト | 説明 |
 |---------|----|------|-----------|------|
@@ -167,12 +167,18 @@ erDiagram
 > **ユニーク制約:** (follower_id, following_id) — 同じ相手を2回フォローできない
 > **CHECK制約:** follower_id ≠ following_id — 自分自身はフォローできない
 
+> **CHECK制約はDB直操作に対する最後の砦であって、一次防衛ではない。**
+> 二重フォローを吸収している `ON CONFLICT DO NOTHING` が無害化できるのは
+> **ユニーク制約違反（SQLSTATE 23505）だけ**で、CHECK制約違反（23514）は素通りして 500 になる。
+> 自己フォローの判定は `FollowService` で行い 400 を返す（詳細は
+> [docs/features/follow.md](./features/follow.md)）。
+
 ---
 
 ## 3. 列挙値（Enum）の定義
 
 現時点で固定値カラムはなし。
-（Phase 3 のフォロー機能や将来の通知機能を実装する際に、通知種別などで必要になる可能性がある）
+（F-11 フォロー機能でも固定値カラムは不要だった。将来の通知機能で通知種別などが必要になる可能性はある）
 
 ---
 
@@ -189,8 +195,8 @@ erDiagram
 | likes | (post_id, user_id) | UNIQUE | 二重いいね防止。post_id での検索（いいね数の集計）にも使える |
 | refresh_tokens | token | UNIQUE | トークン再発行時にトークン値で検索するため |
 | users | username | UNIQUE | @ユーザー名の重複防止・検索用（**Phase 2**） |
-| follows | (follower_id, following_id) | UNIQUE | 二重フォロー防止。follower_id での検索（フォロー中一覧）にも使える（**Phase 3**） |
-| follows | following_id | INDEX | 「自分のフォロワー一覧」を取得するため（**Phase 3**） |
+| follows | (follower_id, following_id) | UNIQUE | 二重フォロー防止。follower_id での検索（フォロー中一覧）にも使える（**V8で作成済み**） |
+| follows | following_id | INDEX | 「自分のフォロワー一覧」を取得するため（**V8で作成済み**） |
 
 ---
 
@@ -210,6 +216,7 @@ erDiagram
 | V5 | V5__create_likes.sql | likes テーブル作成＋ (post_id, user_id) のユニーク制約（users, posts を参照） |
 | V6 | V6__add_username_to_users.sql | users に username を追加。既存ユーザーへ `user{id}` を割り当ててから NOT NULL・UNIQUE を付ける4段階構成 |
 | V7 | V7__add_profile_columns_to_users.sql | users に bio / icon_image_path を追加（F-07 プロフィール機能）。どちらもNULL許容のため段階的な移行は不要 |
+| V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約・following_id へのインデックス（F-11 フォロー機能） |
 
 > **旧計画からの変更点:** 当初はPhase 1の全テーブル（users→posts→comments→likes→refresh_tokens→シードユーザー）を
 > 一気に作る計画だったが、認証機能を先行実装したため **V1・V2のみを先に作成**した。
@@ -217,11 +224,11 @@ erDiagram
 > また、ユーザー登録（signup）APIが先行実装されたことで自分でテストユーザーを登録できるようになったため、
 > **シードユーザー投入（旧V6）は作らないことにした**（BCryptハッシュのSQL直書きは学習上の混乱を招くだけと判断）。
 
-### Phase 1 継続分・Phase 2 以降（予定。実装フェーズで番号・内容を確定する）
+### Phase 2 以降（予定。実装フェーズで番号・内容を確定する）
 
 | 順序 | ファイル名（予定） | 内容 | Phase |
 |------|------------------|------|-------|
-| V8 | V8__create_follows.sql | follows テーブル作成＋ユニーク制約・CHECK制約 | 3 |
+| （現時点で予定なし。F-09 投稿検索・F-10 ユーザー検索は既存テーブルのみで実装できる見込み） | | | 2 |
 
 > **旧計画からの変更点:** 当初 V6 は「username / bio / icon_image_url をまとめて追加」する予定だったが、
 > @ユーザー名の表示はプロフィール機能を待たずに必要になったため、**V6 では username だけを先行して追加**した。

@@ -8,11 +8,22 @@ type DeleteConfirmDialogProps = {
   message: string
   /** 補足。取り消せないことなどの注意書き */
   description?: string
+  /** 実行ボタンの文言。削除以外の取り消し操作（フォロー解除など）に流用するために差し替えられる */
+  confirmLabel?: string
+  /** 実行中のボタン文言 */
+  confirmingLabel?: string
   onConfirm: () => Promise<void>
   onCancel: () => void
 }
 
-export function DeleteConfirmDialog({ message, description, onConfirm, onCancel }: DeleteConfirmDialogProps) {
+export function DeleteConfirmDialog({
+  message,
+  description,
+  confirmLabel = '削除する',
+  confirmingLabel = '削除中…',
+  onConfirm,
+  onCancel,
+}: DeleteConfirmDialogProps) {
   const [isDeleting, setIsDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -63,7 +74,7 @@ export function DeleteConfirmDialog({ message, description, onConfirm, onCancel 
           disabled={isDeleting}
           className="rounded-full bg-[#F91880] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#d81570] disabled:opacity-50"
         >
-          {isDeleting ? '削除中…' : '削除する'}
+          {isDeleting ? confirmingLabel : confirmLabel}
         </button>
       </div>
     </ModalOverlay>

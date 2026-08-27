@@ -84,6 +84,11 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
+    @ExceptionHandler(SelfFollowException.class)
+    public ResponseEntity<ErrorResponse> handleSelfFollow(SelfFollowException ex) {
+        return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
         return build(HttpStatus.BAD_REQUEST, "アップロードできるファイルサイズを超えています");

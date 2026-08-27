@@ -12,10 +12,16 @@ import { useAuth } from '../hooks/useAuth'
 import { useAuthorizedRequest } from '../hooks/useAuthorizedRequest'
 import { useInfiniteScroll } from '../hooks/useInfiniteScroll'
 import { useLogout } from '../hooks/useLogout'
+import type { TimelineMode } from '../api/postApi'
 import type { Post } from '../types/post'
 
 // 短すぎるとWebSocketに近い頻度になり、長すぎると新着への気づきが遅れるためのバランス値
 const POLL_INTERVAL_MS = 30_000
+
+const tabClass = (isActive: boolean) =>
+  isActive
+    ? 'border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]'
+    : 'border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-500 transition hover:text-[#0F1419]'
 
 export function TimelinePage() {
   const { user } = useAuth()
@@ -33,36 +39,47 @@ export function TimelinePage() {
   const [newPostsCount, setNewPostsCount] = useState(0)
   const [isFetchingNewPosts, setIsFetchingNewPosts] = useState(false)
   const [isComposerOpen, setIsComposerOpen] = useState(false)
+  const [timelineMode, setTimelineMode] = useState<TimelineMode>('all')
   const isLoadingMoreRef = useRef(false)
 
   // 「もっと見る」で末尾に古い投稿を追加しても最大idは変わらないため、常に配列全体から算出する
   const latestKnownId = useMemo(() => posts.reduce((max, post) => Math.max(max, post.id), 0), [posts])
 
+  // タブを切り替えたときも、この効果が再実行されて一覧を取り直す
   useEffect(() => {
     let cancelled = false
 
-    fetchTimeline(authorizedRequest, 0)
-      .then((response) => {
+    const load = async () => {
+      setIsLoading(true)
+      setError(null)
+      setNewPostsCount(0)
+      try {
+        const response = await fetchTimeline(authorizedRequest, 0, 20, timelineMode)
+        // 読み込み中にタブを切り替えた場合、古い結果で上書きしない
         if (cancelled) return
         setPosts(response.posts)
         setPage(response.page)
         setHasNext(response.hasNext)
-      })
-      .catch((err) => {
+      } catch (err) {
         if (cancelled) return
         setError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setIsLoading(false)
-      })
+      }
+    }
 
+    load()
     return () => {
       cancelled = true
     }
-  }, [authorizedRequest])
+  }, [authorizedRequest, timelineMode])
 
   useEffect(() => {
     if (isLoading) return undefined
+    // 新着API（new-count / new）は全体とフォロー中を区別しないため、
+    // フォロー中タブでは「フォローしていない人の投稿」を新着として数えてしまう。
+    // 誤った件数を出さないよう、このタブではポーリング自体を止める
+    if (timelineMode !== 'all') return undefined
 
     let cancelled = false
     let intervalId: ReturnType<typeof setInterval> | undefined
@@ -99,7 +116,7 @@ export function TimelinePage() {
       clearInterval(intervalId)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [authorizedRequest, latestKnownId, isLoading])
+  }, [authorizedRequest, latestKnownId, isLoading, timelineMode])
 
   const handleShowNewPosts = async () => {
     setIsFetchingNewPosts(true)
@@ -120,7 +137,7 @@ export function TimelinePage() {
     setIsLoadingMore(true)
     setError(null)
     try {
-      const response = await fetchTimeline(authorizedRequest, page + 1)
+      const response = await fetchTimeline(authorizedRequest, page + 1, 20, timelineMode)
       setPosts((current) => [...current, ...response.posts])
       setPage(response.page)
       setHasNext(response.hasNext)
@@ -130,7 +147,7 @@ export function TimelinePage() {
       setIsLoadingMore(false)
       isLoadingMoreRef.current = false
     }
-  }, [authorizedRequest, page, hasNext])
+  }, [authorizedRequest, page, hasNext, timelineMode])
 
   // 無限スクロール: リスト末尾のセンチネルが画面内に入ったら次ページを自動取得する
   const sentinelRef = useInfiniteScroll(hasNext, handleLoadMore)
@@ -167,18 +184,14 @@ export function TimelinePage() {
 
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex gap-1">
-            <button
-              type="button"
-              className="border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]"
-            >
+          <div className="flex gap-4">
+            <button type="button" onClick={() => setTimelineMode('all')} className={tabClass(timelineMode === 'all')}>
               全体
             </button>
             <button
               type="button"
-              disabled
-              title="フォロー機能は今後実装予定です"
-              className="border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-400 disabled:cursor-not-allowed"
+              onClick={() => setTimelineMode('following')}
+              className={tabClass(timelineMode === 'following')}
             >
               フォロー中
             </button>
@@ -192,7 +205,8 @@ export function TimelinePage() {
           </button>
         </div>
 
-        {newPostsCount > 0 && (
+        {/* フォロー中タブでは新着ポーリングを止めているため、バナーも全体タブ限定にする */}
+        {timelineMode === 'all' && newPostsCount > 0 && (
           <NewPostsBanner count={newPostsCount} isLoading={isFetchingNewPosts} onClick={handleShowNewPosts} />
         )}
 
@@ -201,7 +215,11 @@ export function TimelinePage() {
         {isLoading ? (
           <p className="text-center text-sm text-gray-500">読み込み中…</p>
         ) : posts.length === 0 ? (
-          <p className="text-center text-sm text-gray-500">まだ投稿がありません。最初の投稿をしてみましょう。</p>
+          <p className="text-center text-sm text-gray-500">
+            {timelineMode === 'following'
+              ? 'フォロー中のユーザーの投稿はまだありません。気になる人をフォローしてみましょう。'
+              : 'まだ投稿がありません。最初の投稿をしてみましょう。'}
+          </p>
         ) : (
           posts.map((post) => (
             <PostCard

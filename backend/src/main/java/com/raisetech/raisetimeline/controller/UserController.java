@@ -34,8 +34,11 @@ public class UserController {
     }
 
     @GetMapping("/{username}")
-    public ResponseEntity<UserProfileResponse> getProfile(@PathVariable String username) {
-        return ResponseEntity.ok(userService.getProfile(username));
+    public ResponseEntity<UserProfileResponse> getProfile(
+            @AuthenticationPrincipal AuthenticatedUser user,
+            @PathVariable String username
+    ) {
+        return ResponseEntity.ok(userService.getProfile(username, user.id()));
     }
 
     @GetMapping("/{username}/posts")

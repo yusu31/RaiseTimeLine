@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from 'react-router'
+import { FollowListPage } from './pages/FollowListPage'
 import { LoginPage } from './pages/LoginPage'
 import { PostDetailPage } from './pages/PostDetailPage'
 import { ProfileEditPage } from './pages/ProfileEditPage'
@@ -23,6 +24,9 @@ function App() {
             保存した瞬間にURLが古い名前を指す状態になるのを避ける */}
         <Route path="/profile/edit" element={<ProfileEditPage />} />
         <Route path="/users/:username" element={<ProfilePage />} />
+        {/* 一覧の中身が違うだけで画面構造は同じなので、mode を渡して1つのページで共用する */}
+        <Route path="/users/:username/following" element={<FollowListPage mode="following" />} />
+        <Route path="/users/:username/followers" element={<FollowListPage mode="followers" />} />
       </Route>
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>

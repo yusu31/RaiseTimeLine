@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.raisetech.raisetimeline.mapper.FollowMapper">
+
+    <!-- ユニーク制約(follower_id, following_id)違反はON CONFLICT DO NOTHINGで無害化し、二重フォローを冪等に成功させる。
+         ただしCHECK制約(ck_follows_not_self)違反はSQLSTATEが異なるため無害化されない。
+         自己フォローはService層で先に弾く -->
+    <insert id="insertIgnoreDuplicate">
+        INSERT INTO follows (follower_id, following_id)
+        VALUES (#{followerId}, #{followingId})
+        ON CONFLICT (follower_id, following_id) DO NOTHING
+    </insert>
+
+    <delete id="delete">
+        DELETE FROM follows
+        WHERE follower_id = #{followerId} AND following_id = #{followingId}
+    </delete>
+
+    <select id="exists" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM follows WHERE follower_id = #{followerId} AND following_id = #{followingId})
+    </select>
+
+    <select id="countFollowers" resultType="int">
+        SELECT COUNT(*) FROM follows WHERE following_id = #{userId}
+    </select>
+
+    <!-- userId がフォローしている人の一覧。JOIN先は following_id 側 -->
+    <select id="selectFollowing" resultType="com.raisetech.raisetimeline.domain.FollowUserDetail">
+        SELECT
+            u.id AS id,
+            u.username AS username,
+            u.display_name AS display_name,
+            u.icon_image_path AS icon_image_path,
+            EXISTS(SELECT 1 FROM follows f2
+                   WHERE f2.follower_id = #{currentUserId} AND f2.following_id = u.id) AS followed_by_me
+        FROM follows f
+        JOIN users u ON f.following_id = u.id
+        WHERE f.follower_id = #{userId}
+        ORDER BY f.created_at DESC, f.id DESC
+    </select>
+
+    <!-- userId をフォローしている人の一覧。selectFollowing とは JOIN する側とWHERE句が逆になる。
+         条件を切り替える動的SQLにせず、1ステートメント1目的で別々に定義する -->
+    <select id="selectFollowers" resultType="com.raisetech.raisetimeline.domain.FollowUserDetail">
+        SELECT
+            u.id AS id,
+            u.username AS username,
+            u.display_name AS display_name,
+            u.icon_image_path AS icon_image_path,
+            EXISTS(SELECT 1 FROM follows f2
+                   WHERE f2.follower_id = #{currentUserId} AND f2.following_id = u.id) AS followed_by_me
+        FROM follows f
+        JOIN users u ON f.follower_id = u.id
+        WHERE f.following_id = #{userId}
+        ORDER BY f.created_at DESC, f.id DESC
+    </select>
+
+</mapper>

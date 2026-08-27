@@ -28,6 +28,12 @@ public interface PostMapper {
     List<PostDetail> selectByAuthorId(@Param("authorId") Long authorId, @Param("limit") int limit,
                                        @Param("offset") int offset, @Param("currentUserId") Long currentUserId);
 
+    /**
+     * 「フォロー中」タブ用のタイムライン。currentUserId 自身の投稿も含む。
+     */
+    List<PostDetail> selectFollowingTimeline(@Param("limit") int limit, @Param("offset") int offset,
+                                              @Param("currentUserId") Long currentUserId);
+
     Optional<PostDetail> selectDetailById(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
 
     long countNewerThan(@Param("afterId") long afterId);
