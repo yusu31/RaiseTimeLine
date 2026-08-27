@@ -20,6 +20,14 @@
 | スタイリング | Tailwind CSS | 4.x | ユーティリティクラスで素早くUIを組める（今回から追加） |
 | HTTPクライアント | fetch API（標準） | - | 標準機能で十分。追加ライブラリ不要 |
 | 状態管理 | React useState / Context | - | この規模なら外部ライブラリ不要。ログインユーザー情報は Context で保持 |
+| 画像トリミング | react-easy-crop | 6.x | アイコン画像の位置・拡大率の調整に使用（F-11後に追加）。ドラッグ・ピンチ操作と円形の切り抜き枠に対応しており、自前実装より確実。MITライセンス |
+
+> **`package.json` の `overrides` について:** `eslint-plugin-react@7.37.5` は peerDependencies で
+> `eslint ^9.7` までしか宣言しておらず、本プロジェクトの eslint 10 と衝突して
+> **新しいパッケージを一切追加できない状態**だった。実際には eslint 10 で正常に動作しているため、
+> `overrides` で peer の要求をプロジェクトの eslint に読み替えている。
+> `--legacy-peer-deps` はコマンドに付けるだけで記録が残らず、次に `npm install` する人が同じ問題に当たるため採用しなかった。
+> eslint-plugin-react が eslint 10 に対応したら削除してよい。
 
 ## バックエンド
 
