@@ -1,5 +1,6 @@
 import { Link } from 'react-router'
 import { useAuth } from '../hooks/useAuth'
+import { Avatar } from './Avatar'
 
 type AppHeaderProps = {
   onLogout: () => void
@@ -23,9 +24,9 @@ export function AppHeader({ onLogout, isLoggingOut }: AppHeaderProps) {
             to={`/users/${user.username}`}
             title="プロフィール"
             aria-label="プロフィール"
-            className="text-lg text-[#7856ff]"
+            className="rounded-full transition hover:opacity-80"
           >
-            👤
+            <Avatar displayName={user.displayName} iconImageUrl={user.iconImageUrl} size="sm" />
           </Link>
         )}
         <button

@@ -89,10 +89,11 @@ export function ProfileEditPage() {
     setError(null)
     try {
       // アイコンは multipart、テキストは JSON と形式が異なるためAPIを分けている。
-      // 先にアイコンを送るのは、テキスト側のバリデーションで弾かれたときに
-      // 「画像だけ保存された」状態を避けたい場合の順序調整が効くようにするため
+      // APIが2本ある以上「アイコンだけ保存に成功した」状態は必ず起こりうるため、
+      // 成功した時点で即座に画面へ反映する。ここで反映しないと、この後の updateProfile が
+      // 失敗したときに「DBには新しい画像があるのにヘッダーは古い画像のまま」というズレが残る
       if (image) {
-        await updateIcon(authorizedRequest, image)
+        updateUser(await updateIcon(authorizedRequest, image))
       }
       const updated = await updateProfile(authorizedRequest, { displayName, username, bio })
       // ヘッダーなどに出しているログインユーザー情報を最新化する。
