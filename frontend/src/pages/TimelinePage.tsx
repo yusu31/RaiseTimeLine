@@ -53,6 +53,11 @@ export function TimelinePage() {
       setIsLoading(true)
       setError(null)
       setNewPostsCount(0)
+      // API応答を待たずに同期でリセットする。前タブのページ番号が残っていると、
+      // 応答が返る前に無限スクロールが発火したとき、そのページ番号で新しいタブの続きを取りにいってしまう
+      setPosts([])
+      setPage(0)
+      setHasNext(false)
       try {
         const response = await fetchTimeline(authorizedRequest, 0, 20, timelineMode)
         // 読み込み中にタブを切り替えた場合、古い結果で上書きしない
@@ -132,7 +137,8 @@ export function TimelinePage() {
   }
 
   const handleLoadMore = useCallback(async () => {
-    if (isLoadingMoreRef.current || !hasNext) return
+    // 一覧の読み込み中は、まだ page が確定していないため次ページを取りにいかない
+    if (isLoadingMoreRef.current || isLoading || !hasNext) return
     isLoadingMoreRef.current = true
     setIsLoadingMore(true)
     setError(null)
@@ -147,7 +153,7 @@ export function TimelinePage() {
       setIsLoadingMore(false)
       isLoadingMoreRef.current = false
     }
-  }, [authorizedRequest, page, hasNext, timelineMode])
+  }, [authorizedRequest, page, hasNext, isLoading, timelineMode])
 
   // 無限スクロール: リスト末尾のセンチネルが画面内に入ったら次ページを自動取得する
   const sentinelRef = useInfiniteScroll(hasNext, handleLoadMore)
@@ -233,7 +239,8 @@ export function TimelinePage() {
           ))
         )}
 
-        {hasNext && (
+        {/* 読み込み中は一覧が空でセンチネルが画面内に入りきるため、描画自体を止めて監視対象にしない */}
+        {!isLoading && hasNext && (
           <div ref={sentinelRef} className="py-4 text-center text-sm text-gray-500">
             {isLoadingMore ? '読み込み中…' : null}
           </div>
