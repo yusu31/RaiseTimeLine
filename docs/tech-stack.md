@@ -39,7 +39,12 @@
 | ORマッパー | MyBatis | mybatis-spring-boot-starter 3.0.4 | SQLを自分で書くことで、実行されるクエリを意識しながら学べると判断した |
 | DBマイグレーション | Flyway | Boot同梱 | 講義で導入するツール。DBの変更履歴をSQLファイルで管理できる |
 | API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
+| 画像ストレージ | AWS SDK for Java v2（`s3`） | BOM 2.54.9 | 画像のS3保存に使用。v1はメンテナンスモードで新規採用の対象外。個々の依存にバージョンを書かずBOMで一括管理する |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
+
+> **`-Xlint:deprecation` を有効にしている**（`build.gradle` の `compileJava`）。
+> AWS SDK 導入時に `DefaultCredentialsProvider.create()` が非推奨であることをこの警告で検知できたため、
+> 以後も非推奨APIの使用に気づける状態を維持する。現在この警告は0件。
 
 ## SQLの記述方針（MyBatis）
 
@@ -74,7 +79,7 @@
 
 | カテゴリ | 使用技術 | 状態 | 選定理由 |
 |----------|----------|------|---------|
-| 画像ストレージ | S3 | **確定**（本番） | 投稿画像・アイコン画像の保存先。ローカル開発中はファイルシステム保存で代替し、`StorageService`抽象化でS3実装に切替可能な設計にした |
+| 画像ストレージ | S3 | **確定・実装済み**（2026-09-02） | 投稿画像・アイコン画像の保存先。`StorageService` の実装を `app.storage.type` で切り替える方式にした。既定はローカル保存で、設定漏れ時にS3が有効化されて課金が発生しないようにしてある。バケット名・IAM・公開方針は [infrastructure.md](./infrastructure.md) を参照 |
 | クラウド | AWS | 前提 | 講義・前回課題と同じ。転職市場での需要が高い |
 | サーバー構成 | EC2 + RDS（PostgreSQL） + ALB | 前提 | 構成図は [infrastructure.md](./infrastructure.md) を参照。サーバー構築方式の詳細はデプロイフェーズで確定 |
 | IaC | Terraform | 前提 | 前回課題で使用。インフラをコードで管理 |

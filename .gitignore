@@ -1,6 +1,11 @@
 # Claude Code の個人設定（共有しない）
 .claude/settings.local.json
 
+# 秘密情報（AWSのアクセスキー・DBパスワード等を誤ってコミットしないため）
+.env
+.env.*
+!.env.example
+
 # OS
 Thumbs.db
 .DS_Store

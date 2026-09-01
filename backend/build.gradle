@@ -17,6 +17,13 @@ repositories {
     mavenCentral()
 }
 
+dependencyManagement {
+    imports {
+        // AWS SDK for Java v2 の BOM。個々の依存にバージョンを書かず、ここで一括管理する
+        mavenBom 'software.amazon.awssdk:bom:2.54.9'
+    }
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -26,6 +33,7 @@ dependencies {
     implementation 'org.flywaydb:flyway-core'
     runtimeOnly 'org.flywaydb:flyway-database-postgresql'
     runtimeOnly 'org.postgresql:postgresql'
+    implementation 'software.amazon.awssdk:s3'
     implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
@@ -33,6 +41,10 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('compileJava') {
+    options.compilerArgs << '-Xlint:deprecation'
 }
 
 tasks.named('test') {

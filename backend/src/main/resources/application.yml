@@ -19,6 +19,13 @@ mybatis:
 
 app:
   upload-dir: ${UPLOAD_DIR:uploads}
+  storage:
+    # local = サーバーのファイルシステムに保存 / s3 = AWS S3 に保存
+    # 未設定なら local。設定漏れでS3が有効になり課金が発生する事故を防ぐため、安全な側を既定値にしている
+    type: ${APP_STORAGE_TYPE:local}
+    s3:
+      bucket: ${APP_STORAGE_S3_BUCKET:}
+      region: ${APP_STORAGE_S3_REGION:ap-northeast-1}
 
 jwt:
   secret: ${JWT_SECRET:local-dev-only-secret-key-please-change-32chars}

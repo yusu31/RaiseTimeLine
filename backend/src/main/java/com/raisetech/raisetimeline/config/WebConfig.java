@@ -1,6 +1,7 @@
 package com.raisetech.raisetimeline.config;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -8,10 +9,11 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 import java.nio.file.Path;
 
 /**
- * ローカル開発中に画像を {@code /uploads/**} で静的配信するための設定。
- * 本番環境（AWS S3切替後）ではこの設定は不要になる想定。
+ * ローカル保存モードで画像を {@code /uploads/**} として静的配信するための設定。
+ * S3モード（{@code app.storage.type=s3}）では画像をS3から直接配信するため、この設定は登録されない。
  */
 @Configuration
+@ConditionalOnProperty(name = "app.storage.type", havingValue = "local", matchIfMissing = true)
 public class WebConfig implements WebMvcConfigurer {
 
     private final String uploadDir;
