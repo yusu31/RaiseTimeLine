@@ -8,9 +8,12 @@ import com.raisetech.raisetimeline.mapper.UserMapper;
 import com.raisetech.raisetimeline.request.ProfileUpdateRequest;
 import com.raisetech.raisetimeline.response.UserProfileResponse;
 import com.raisetech.raisetimeline.response.UserResponse;
+import com.raisetech.raisetimeline.response.UserSearchResultResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 @Service
 @Transactional
@@ -38,6 +41,23 @@ public class UserService {
                 detail.getFollowingCount(),
                 detail.getFollowerCount(),
                 detail.isFollowedByMe());
+    }
+
+    /**
+     * @ユーザー名・表示名の部分一致でユーザーを検索する。
+     * 検索結果にフォローボタンを出さないため、閲覧者のIDは受け取らない。
+     */
+    @Transactional(readOnly = true)
+    public List<UserSearchResultResponse> searchUsers(String keyword) {
+        String trimmed = keyword == null ? "" : keyword.trim();
+        // 空のキーワードで検索するとLIKE '%%' が全ユーザーに一致してしまうため、DBに問い合わせず空で返す
+        if (trimmed.isEmpty()) {
+            return List.of();
+        }
+        return userMapper.searchByKeyword(escapeLikeWildcards(trimmed)).stream()
+                .map(user -> new UserSearchResultResponse(user.getId(), user.getUsername(),
+                        user.getDisplayName(), toIconUrl(user.getIconImagePath())))
+                .toList();
     }
 
     public UserResponse updateProfile(Long userId, ProfileUpdateRequest request) {
@@ -86,5 +106,16 @@ public class UserService {
 
     private String toIconUrl(String iconImagePath) {
         return iconImagePath != null ? storageService.toPublicUrl(iconImagePath) : null;
+    }
+
+    /**
+     * LIKEのワイルドカード（% と _）とエスケープ文字そのものを無害化する。
+     * エスケープしないと「%」1文字の検索で全ユーザーが一致してしまう。
+     * バックスラッシュを最初に置換するのは、後で足したエスケープ文字を二重に置換しないため。
+     */
+    private String escapeLikeWildcards(String keyword) {
+        return keyword.replace("\\", "\\\\")
+                .replace("%", "\\%")
+                .replace("_", "\\_");
     }
 }

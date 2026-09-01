@@ -6,6 +6,7 @@ import { ProfileEditPage } from './pages/ProfileEditPage'
 import { ProfilePage } from './pages/ProfilePage'
 import { SignupPage } from './pages/SignupPage'
 import { TimelinePage } from './pages/TimelinePage'
+import { UserSearchPage } from './pages/UserSearchPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { GuestRoute } from './components/GuestRoute'
 
@@ -20,6 +21,7 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/timeline" element={<TimelinePage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
+        <Route path="/search" element={<UserSearchPage />} />
         {/* 編集画面のURLに username を入れないのは、編集対象がその username 自身のため。
             保存した瞬間にURLが古い名前を指す状態になるのを避ける */}
         <Route path="/profile/edit" element={<ProfileEditPage />} />

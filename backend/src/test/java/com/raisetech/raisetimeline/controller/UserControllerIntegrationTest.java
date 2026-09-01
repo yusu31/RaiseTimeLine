@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -255,5 +256,78 @@ class UserControllerIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.posts[0].author.iconImageUrl").exists());
+    }
+
+    @Test
+    void 認証なしのユーザー検索は401が返る() throws Exception {
+        mockMvc.perform(get("/api/users").param("q", "suzuki"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void ユーザー名でも表示名でも部分一致で検索できる() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木太郎");
+        signupAndGetAccessToken("takahashi@example.com", "高橋花子");
+
+        // @ユーザー名の一部（前方でも後方でもない位置）で一致する。検索者自身も結果に含める
+        mockMvc.perform(get("/api/users").param("q", "zuk")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username").value("suzuki"))
+                .andExpect(jsonPath("$[0].displayName").value("鈴木太郎"));
+
+        // 表示名の一部でも一致する
+        mockMvc.perform(get("/api/users").param("q", "花子")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username").value("takahashi"));
+    }
+
+    @Test
+    void ユーザー検索は大文字小文字を区別しない() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/users").param("q", "SUZUKI")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].username").value("suzuki"));
+    }
+
+    @Test
+    void 該当者がいないときは空配列が返る() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/users").param("q", "zzz")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+    }
+
+    /**
+     * 空文字とワイルドカードのどちらでも全件が返らないことを確認する。
+     * エスケープしないと「%」の1文字検索がLIKE '%%%'となり、全ユーザーが一致してしまう。
+     */
+    @Test
+    void 空文字やワイルドカードだけの検索で全件は返らない() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        signupAndGetAccessToken("takahashi@example.com", "高橋");
+
+        mockMvc.perform(get("/api/users").param("q", "")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/api/users").param("q", "%")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        mockMvc.perform(get("/api/users").param("q", "_")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
     }
 }

@@ -5,6 +5,7 @@ import com.raisetech.raisetimeline.domain.UserProfileDetail;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -20,6 +21,12 @@ public interface UserMapper {
     Optional<User> findById(@Param("id") Long id);
 
     Optional<User> findByUsername(@Param("username") String username);
+
+    /**
+     * @ユーザー名・表示名の部分一致でユーザーを検索する。
+     * keyword はLIKEのワイルドカードをエスケープ済みの文字列を渡すこと（エスケープはService層の責務）。
+     */
+    List<User> searchByKeyword(@Param("keyword") String keyword);
 
     /**
      * プロフィール画面用。フォロー数・フォロー中フラグを1クエリで同時に取得する。
