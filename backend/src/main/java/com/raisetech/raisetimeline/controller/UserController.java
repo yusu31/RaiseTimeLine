@@ -4,6 +4,7 @@ import com.raisetech.raisetimeline.request.ProfileUpdateRequest;
 import com.raisetech.raisetimeline.response.PostListResponse;
 import com.raisetech.raisetimeline.response.UserProfileResponse;
 import com.raisetech.raisetimeline.response.UserResponse;
+import com.raisetech.raisetimeline.response.UserSearchResultResponse;
 import com.raisetech.raisetimeline.security.AuthenticatedUser;
 import com.raisetech.raisetimeline.service.PostService;
 import com.raisetech.raisetimeline.service.UserService;
@@ -21,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -31,6 +34,17 @@ public class UserController {
     public UserController(UserService userService, PostService postService) {
         this.userService = userService;
         this.postService = postService;
+    }
+
+    /**
+     * ユーザー検索。結果は閲覧者によって変わらないため認証ユーザーを受け取らない。
+     * 認証必須であることは SecurityConfig の anyRequest().authenticated() が担保している。
+     */
+    @GetMapping
+    public ResponseEntity<List<UserSearchResultResponse>> searchUsers(
+            @RequestParam(name = "q", defaultValue = "") String q
+    ) {
+        return ResponseEntity.ok(userService.searchUsers(q));
     }
 
     @GetMapping("/{username}")

@@ -40,6 +40,17 @@
         WHERE u.username = #{username}
     </select>
 
+    <!-- ユーザー検索。ILIKEはPostgreSQLの大文字小文字を区別しないLIKE。
+         keyword は Service 層で % _ \ をエスケープ済みのため、ESCAPE句を明示して意図を残す。
+         ページングは作らない代わりに、返しすぎないよう上限50件で打ち切る -->
+    <select id="searchByKeyword" resultType="com.raisetech.raisetimeline.domain.User">
+        SELECT * FROM users
+        WHERE username ILIKE '%' || #{keyword} || '%' ESCAPE '\'
+           OR display_name ILIKE '%' || #{keyword} || '%' ESCAPE '\'
+        ORDER BY username
+        LIMIT 50
+    </select>
+
     <update id="updateProfile">
         UPDATE users
         SET display_name = #{displayName},

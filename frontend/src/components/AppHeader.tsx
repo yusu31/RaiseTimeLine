@@ -16,9 +16,9 @@ export function AppHeader({ onLogout, isLoggingOut }: AppHeaderProps) {
         RaiseTL
       </Link>
       <nav className="flex items-center gap-3">
-        <button type="button" title="ユーザー検索" aria-label="ユーザー検索" className="text-lg text-[#00b8d9]">
+        <Link to="/search" title="ユーザー検索" aria-label="ユーザー検索" className="text-lg text-[#00b8d9]">
           🔍
-        </button>
+        </Link>
         {user && (
           <Link
             to={`/users/${user.username}`}
