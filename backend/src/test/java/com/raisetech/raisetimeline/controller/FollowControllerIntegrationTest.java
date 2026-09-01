@@ -250,6 +250,25 @@ class FollowControllerIntegrationTest {
                 .andExpect(jsonPath("$.hasNext").value(false));
     }
 
+    /**
+     * 誰もフォローせず自分の投稿も無い状態。
+     * フロントはこの応答のhasNextを見て無限スクロールの監視要素を出すため、trueが返ると余計な追加取得が走る。
+     */
+    @Test
+    void フォロー中タイムラインは対象が無いとき空配列とhasNextのfalseを返す() throws Exception {
+        String suzukiToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        String takahashiToken = signupAndGetAccessToken("takahashi@example.com", "高橋");
+
+        // 全体タイムラインには出る投稿があっても、フォローしていなければ0件になる
+        createPost(takahashiToken, "高橋の投稿");
+
+        mockMvc.perform(get("/api/posts").param("timeline", "following")
+                        .header("Authorization", "Bearer " + suzukiToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts", hasSize(0)))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
     @Test
     void ユーザー削除でフォロー関係も連動削除される() throws Exception {
         String suzukiToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
