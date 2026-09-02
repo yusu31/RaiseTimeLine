@@ -21,10 +21,12 @@ public class UserService {
 
     private final UserMapper userMapper;
     private final StorageService storageService;
+    private final SearchKeyword searchKeyword;
 
-    public UserService(UserMapper userMapper, StorageService storageService) {
+    public UserService(UserMapper userMapper, StorageService storageService, SearchKeyword searchKeyword) {
         this.userMapper = userMapper;
         this.storageService = storageService;
+        this.searchKeyword = searchKeyword;
     }
 
     @Transactional(readOnly = true)
@@ -49,12 +51,12 @@ public class UserService {
      */
     @Transactional(readOnly = true)
     public List<UserSearchResultResponse> searchUsers(String keyword) {
-        String trimmed = keyword == null ? "" : keyword.trim();
+        String normalized = searchKeyword.normalize(keyword);
         // 空のキーワードで検索するとLIKE '%%' が全ユーザーに一致してしまうため、DBに問い合わせず空で返す
-        if (trimmed.isEmpty()) {
+        if (normalized.isEmpty()) {
             return List.of();
         }
-        return userMapper.searchByKeyword(escapeLikeWildcards(trimmed)).stream()
+        return userMapper.searchByKeyword(normalized).stream()
                 .map(user -> new UserSearchResultResponse(user.getId(), user.getUsername(),
                         user.getDisplayName(), toIconUrl(user.getIconImagePath())))
                 .toList();
@@ -106,16 +108,5 @@ public class UserService {
 
     private String toIconUrl(String iconImagePath) {
         return iconImagePath != null ? storageService.toPublicUrl(iconImagePath) : null;
-    }
-
-    /**
-     * LIKEのワイルドカード（% と _）とエスケープ文字そのものを無害化する。
-     * エスケープしないと「%」1文字の検索で全ユーザーが一致してしまう。
-     * バックスラッシュを最初に置換するのは、後で足したエスケープ文字を二重に置換しないため。
-     */
-    private String escapeLikeWildcards(String keyword) {
-        return keyword.replace("\\", "\\\\")
-                .replace("%", "\\%")
-                .replace("_", "\\_");
     }
 }

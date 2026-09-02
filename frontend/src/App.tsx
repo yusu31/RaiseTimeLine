@@ -4,9 +4,9 @@ import { LoginPage } from './pages/LoginPage'
 import { PostDetailPage } from './pages/PostDetailPage'
 import { ProfileEditPage } from './pages/ProfileEditPage'
 import { ProfilePage } from './pages/ProfilePage'
+import { SearchPage } from './pages/SearchPage'
 import { SignupPage } from './pages/SignupPage'
 import { TimelinePage } from './pages/TimelinePage'
-import { UserSearchPage } from './pages/UserSearchPage'
 import { ProtectedRoute } from './components/ProtectedRoute'
 import { GuestRoute } from './components/GuestRoute'
 
@@ -21,7 +21,8 @@ function App() {
       <Route element={<ProtectedRoute />}>
         <Route path="/timeline" element={<TimelinePage />} />
         <Route path="/posts/:id" element={<PostDetailPage />} />
-        <Route path="/search" element={<UserSearchPage />} />
+        {/* 投稿検索（F-09）とユーザー検索（F-10）をタブで切り替える1つの画面 */}
+        <Route path="/search" element={<SearchPage />} />
         {/* 編集画面のURLに username を入れないのは、編集対象がその username 自身のため。
             保存した瞬間にURLが古い名前を指す状態になるのを避ける */}
         <Route path="/profile/edit" element={<ProfileEditPage />} />

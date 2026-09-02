@@ -346,4 +346,87 @@ class PostControllerIntegrationTest {
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound());
     }
+
+    @Test
+    void 投稿検索はキーワードを含む投稿だけを新着順で返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        createPost(accessToken, "今日は良い天気です");
+        createPost(accessToken, "無関係な投稿");
+        createPost(accessToken, "天気が良いので散歩した");
+
+        mockMvc.perform(get("/api/posts").param("q", "天気")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(2))
+                // 新着順のため、後から投稿したものが先頭に来る
+                .andExpect(jsonPath("$.posts[0].content").value("天気が良いので散歩した"))
+                .andExpect(jsonPath("$.posts[1].content").value("今日は良い天気です"))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void 投稿検索は大文字小文字を区別しない() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        createPost(accessToken, "Spring Boot を勉強中");
+
+        mockMvc.perform(get("/api/posts").param("q", "spring boot")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(1));
+    }
+
+    @Test
+    void 投稿検索で該当がないときは空配列とhasNextfalseを返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        createPost(accessToken, "今日は良い天気です");
+
+        mockMvc.perform(get("/api/posts").param("q", "存在しないキーワード")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void 投稿検索でパーセント1文字を渡しても全件は返らない() throws Exception {
+        // % は LIKE のワイルドカード。エスケープしないと LIKE '%%%' となり全投稿に一致してしまう。
+        // この挙動を壊さないための回帰テスト
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        createPost(accessToken, "今日は良い天気です");
+        createPost(accessToken, "無関係な投稿");
+
+        mockMvc.perform(get("/api/posts").param("q", "%")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
+    }
+
+    @Test
+    void 投稿検索で空文字や空白のみのときは全件ではなく空を返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+        createPost(accessToken, "今日は良い天気です");
+
+        mockMvc.perform(get("/api/posts").param("q", "")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
+
+        mockMvc.perform(get("/api/posts").param("q", "   ")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
+    }
+
+    @Test
+    void 認証なしで投稿検索をすると401が返る() throws Exception {
+        mockMvc.perform(get("/api/posts").param("q", "天気"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    /** 投稿を1件作成する。検索テストのように本文だけを用意したい場面で使う */
+    private void createPost(String accessToken, String content) throws Exception {
+        mockMvc.perform(multipart("/api/posts")
+                .param("content", content)
+                .header("Authorization", "Bearer " + accessToken));
+    }
 }
