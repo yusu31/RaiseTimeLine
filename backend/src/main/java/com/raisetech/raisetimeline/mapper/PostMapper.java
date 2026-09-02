@@ -34,6 +34,13 @@ public interface PostMapper {
     List<PostDetail> selectFollowingTimeline(@Param("limit") int limit, @Param("offset") int offset,
                                               @Param("currentUserId") Long currentUserId);
 
+    /**
+     * 投稿検索（F-09）。本文の中間一致で絞り込む。
+     * keyword は LIKE のワイルドカードをエスケープ済みの文字列を渡すこと。
+     */
+    List<PostDetail> selectByKeyword(@Param("keyword") String keyword, @Param("limit") int limit,
+                                      @Param("offset") int offset, @Param("currentUserId") Long currentUserId);
+
     Optional<PostDetail> selectDetailById(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
 
     long countNewerThan(@Param("afterId") long afterId);

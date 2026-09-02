@@ -42,9 +42,16 @@ public class PostController {
             @AuthenticationPrincipal AuthenticatedUser user,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String timeline
+            @RequestParam(required = false) String timeline,
+            @RequestParam(required = false) String q
     ) {
-        // SQLの動的分岐（<if>）は使わず、呼ぶメソッド自体をJavaで切り替える
+        // SQLの動的分岐（<if>）は使わず、呼ぶメソッド自体をJavaで切り替える。
+        // q があれば検索を優先する（利用者が明示的にキーワードを指定した意思表示のため）。
+        // q が空文字のときも検索として扱う。全件返してしまうと、検索欄が空なのに
+        // 全投稿が並ぶという意図しない挙動になるため
+        if (q != null) {
+            return ResponseEntity.ok(postService.searchPosts(q, page, size, user.id()));
+        }
         PostListResponse response = TIMELINE_FOLLOWING.equals(timeline)
                 ? postService.getFollowingTimeline(page, size, user.id())
                 : postService.getTimeline(page, size, user.id());

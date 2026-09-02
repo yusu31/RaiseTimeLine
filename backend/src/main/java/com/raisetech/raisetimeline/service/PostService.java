@@ -29,10 +29,12 @@ public class PostService {
 
     private final PostMapper postMapper;
     private final StorageService storageService;
+    private final SearchKeyword searchKeyword;
 
-    public PostService(PostMapper postMapper, StorageService storageService) {
+    public PostService(PostMapper postMapper, StorageService storageService, SearchKeyword searchKeyword) {
         this.postMapper = postMapper;
         this.storageService = storageService;
+        this.searchKeyword = searchKeyword;
     }
 
     @Transactional(readOnly = true)
@@ -79,6 +81,30 @@ public class PostService {
         int offset = normalizedPage * normalizedSize;
 
         List<PostDetail> rows = postMapper.selectByAuthorId(authorId, normalizedSize + 1, offset, currentUserId);
+        boolean hasNext = rows.size() > normalizedSize;
+        List<PostDetail> pageRows = hasNext ? rows.subList(0, normalizedSize) : rows;
+
+        List<PostResponse> posts = pageRows.stream().map(this::toResponse).toList();
+        return new PostListResponse(posts, normalizedPage, hasNext);
+    }
+
+    /**
+     * 投稿本文のキーワード検索（F-09）。本文の中間一致で絞り込み、新着順で返す。
+     * 空のキーワードは全件に一致してしまうため、DBに問い合わせず空の結果を返す。
+     */
+    @Transactional(readOnly = true)
+    public PostListResponse searchPosts(String keyword, int page, int size, Long currentUserId) {
+        int normalizedPage = Math.max(page, 0);
+        int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
+
+        String normalizedKeyword = searchKeyword.normalize(keyword);
+        if (normalizedKeyword.isEmpty()) {
+            return new PostListResponse(List.of(), normalizedPage, false);
+        }
+
+        int offset = normalizedPage * normalizedSize;
+        List<PostDetail> rows =
+                postMapper.selectByKeyword(normalizedKeyword, normalizedSize + 1, offset, currentUserId);
         boolean hasNext = rows.size() > normalizedSize;
         List<PostDetail> pageRows = hasNext ? rows.subList(0, normalizedSize) : rows;
 

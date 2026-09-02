@@ -15,6 +15,21 @@ export function fetchTimeline(
   return request<PostListResponse>(`/posts?page=${page}&size=${size}${timelineQuery}`)
 }
 
+/**
+ * 投稿本文のキーワード検索（F-09）。
+ * タイムライン取得と同じ `/posts` に q を付けて呼び分ける（レスポンス形式も同じ）。
+ */
+export function searchPosts(
+  request: AuthorizedRequest,
+  keyword: string,
+  page = 0,
+  size = 20,
+): Promise<PostListResponse> {
+  return request<PostListResponse>(
+    `/posts?q=${encodeURIComponent(keyword)}&page=${page}&size=${size}`,
+  )
+}
+
 export function fetchNewPostsCount(request: AuthorizedRequest, afterId: number): Promise<NewPostsCountResponse> {
   return request<NewPostsCountResponse>(`/posts/new-count?afterId=${afterId}`)
 }
