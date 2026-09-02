@@ -120,3 +120,29 @@ npm run dev
 ```
 
 起動後、ブラウザで http://localhost:5173 を開くと新規登録・ログイン画面が表示されます。
+
+### 画像の保存先について
+
+通常の開発では**何も設定する必要はありません**。画像はバックエンドの `backend/uploads/` に保存されます
+（AWSの認証情報も不要です）。
+
+AWS S3 に保存する動作を確認したいときだけ、環境変数を指定して起動します。
+
+```powershell
+# S3モードで起動する（AWSの認証情報が必要）
+cd backend
+$env:APP_STORAGE_TYPE = "s3"
+$env:APP_STORAGE_S3_BUCKET = "raisetimeline-dev-578760237100"
+$env:AWS_PROFILE = "raisetimeline"
+./gradlew bootRun
+```
+
+| 環境変数 | 既定値 | 説明 |
+|---|---|---|
+| `APP_STORAGE_TYPE` | `local` | `local` = ローカル保存 / `s3` = AWS S3 |
+| `APP_STORAGE_S3_BUCKET` | （空） | S3モードでは必須。未設定なら起動時にエラーで止まる |
+| `APP_STORAGE_S3_REGION` | `ap-northeast-1` | バケットのリージョン |
+
+> **`APP_STORAGE_TYPE` を設定しなければ必ずローカル保存になります。**
+> 設定漏れでS3が有効になり、意図しない課金が発生することを防ぐための既定値です。
+> S3側の構成（バケット・IAM・公開範囲）は [docs/infrastructure.md](./docs/infrastructure.md) を参照してください。
