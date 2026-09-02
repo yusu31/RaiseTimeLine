@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -92,6 +93,23 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceeded(MaxUploadSizeExceededException ex) {
         return build(HttpStatus.BAD_REQUEST, "アップロードできるファイルサイズを超えています");
+    }
+
+    /**
+     * 存在しないURLへのアクセスを 404 で返す。
+     *
+     * <p>担当のコントローラも静的リソースも見つからないとき、Spring MVC は
+     * {@link NoResourceFoundException} を投げる。専用のハンドラが無いと下の catch-all に落ち、
+     * 「予期しないエラー」として 500 とスタックトレースを出力してしまうため、ここで拾う。
+     *
+     * <p>ログは WARN でパスのみ1行にとどめる。存在しないファイルへのアクセスは
+     * ブラウザのキャッシュや外部からのスキャンで日常的に発生し、ERROR とスタックトレースは過剰なため。
+     * レスポンス本文にはパスを含めない（サーバー内部の情報をクライアントに返さない）。
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNoResourceFound(NoResourceFoundException ex) {
+        log.warn("存在しないリソースへのアクセス: {} {}", ex.getHttpMethod(), ex.getResourcePath());
+        return build(HttpStatus.NOT_FOUND, "リソースが見つかりません");
     }
 
     @ExceptionHandler(Exception.class)
