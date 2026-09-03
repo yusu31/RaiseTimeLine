@@ -106,8 +106,13 @@ Issue作成 → ブランチ作成 → 実装 → ローカルで動作確認 �
 
 ```powershell
 cd frontend
-npm run lint    # 0 errors, 0 warnings を確認
+npm run lint       # 0 errors, 0 warnings を確認
+npm run test:run   # 自動テストがすべて成功することを確認（件数が表示されることも見る）
+npm run build      # 型チェックとビルドが成功することを確認
 ```
+
+> **テストは「件数が表示されているか」まで確認する。** 対象ファイルが1件も見つからないと
+> テストが0件でも成功扱いになるため、緑色の表示だけで判断しない。
 
 ### バックエンド
 
