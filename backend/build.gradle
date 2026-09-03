@@ -49,4 +49,15 @@ tasks.named('compileJava') {
 
 tasks.named('test') {
     useJUnitPlatform()
+
+    // テストの実行件数をログに出す。
+    // Gradle は既定では結果の件数を表示しないため、テストが 1 件も実行されていなくても
+    // BUILD SUCCESSFUL と表示される。「緑になった」だけで検証されたと誤認しないための保険。
+    // desc.parent == null は「個々のクラスではなく全体の集計結果」を意味する
+    afterSuite { desc, result ->
+        if (desc.parent == null) {
+            println "テスト結果: ${result.resultType} / 実行 ${result.testCount} 件 " +
+                    "(成功 ${result.successfulTestCount} / 失敗 ${result.failedTestCount} / スキップ ${result.skippedTestCount})"
+        }
+    }
 }
