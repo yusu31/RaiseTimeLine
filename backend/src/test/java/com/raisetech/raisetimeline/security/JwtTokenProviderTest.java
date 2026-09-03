@@ -59,4 +59,11 @@ class JwtTokenProviderTest {
 
         assertThat(result).isEmpty();
     }
+
+    // 【CI検証用・次のコミットで削除する】
+    // CIがテストの失敗を検知して赤くなることを確認するための、意図的に失敗するテスト
+    @Test
+    void CI検証用_必ず失敗する() {
+        assertThat(1).isEqualTo(2);
+    }
 }

@@ -80,4 +80,10 @@ describe('formatRelativeTime', () => {
       expect(formatRelativeTime('2025-08-25T10:00:00+09:00')).toBe('2025年8月25日')
     })
   })
+
+  // 【CI検証用・次のコミットで削除する】
+  // CIがテストの失敗を検知して赤くなることを確認するための、意図的に失敗するテスト
+  it('【CI検証用】必ず失敗する', () => {
+    expect(1).toBe(2)
+  })
 })
