@@ -1,0 +1,94 @@
+name: CI
+
+# 実行タイミング
+# - pull_request: main 宛ての PR で実行する。マージする前に壊れていないか確かめるのが主目的
+# - push: main に入った後にも実行する。マージ結果そのものが健全かを確認するため
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  frontend:
+    name: フロントエンド（lint・テスト・ビルド）
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@v7
+
+      - name: Node.js をセットアップする
+        uses: actions/setup-node@v7
+        with:
+          # ローカルの実測値（v24.15.0）に合わせる。手元と CI で結果が食い違わないようにするため
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # npm install ではなく npm ci を使う。package-lock.json のとおりに厳密に入れ直すため、
+      # ローカルとまったく同じバージョンの依存関係になることが保証される
+      - name: 依存関係をインストールする
+        run: npm ci
+
+      - name: Lint を実行する
+        run: npm run lint
+
+      - name: テストを実行する
+        run: npm run test:run
+
+      - name: 型チェックとビルドを実行する
+        run: npm run build
+
+  backend:
+    name: バックエンド（ビルド・テスト）
+    runs-on: ubuntu-latest
+
+    # バックエンドのテストはモックではなく実際の PostgreSQL に接続するため、DB を用意する
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # application-test.yml の接続先（raisetimeline_test / raisetime / password）とそろえる。
+          # ローカルでは docker/postgres/init/01_create_test_db.sql がこの DB を作っているが、
+          # サービスコンテナでは POSTGRES_DB を指定して最初から作らせる
+          POSTGRES_DB: raisetimeline_test
+          POSTGRES_USER: raisetime
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        # DB は起動完了まで数秒かかる。準備が整う前にテストが走ると接続エラーで落ちるため、
+        # pg_isready（接続を受け付けられる状態かを調べるコマンド）が成功するまで待たせる
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@v7
+
+      - name: JDK をセットアップする
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          # build.gradle の toolchain 指定（Java 21）に合わせる
+          java-version: '21'
+
+      - name: Gradle をセットアップする
+        uses: gradle/actions/setup-gradle@v6
+
+      # cleanTest を先に実行する理由:
+      # Gradle は入力が変わっていないとテストを UP-TO-DATE として飛ばすが、飛ばしてもビルドは成功扱いになる。
+      # 「実行件数が表示されない＝実際には検証されていない」状態を防ぐため、毎回テストを強制的に走らせる
+      - name: ビルドとテストを実行する
+        run: ./gradlew cleanTest build
