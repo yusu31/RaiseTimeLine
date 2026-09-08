@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# テストのカバレッジレポート（毎回生成されるためコミットしない）
+coverage
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

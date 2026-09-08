@@ -34,5 +34,15 @@ export default defineConfig({
     env: {
       TZ: 'Asia/Tokyo',
     },
+    // カバレッジ（テストが1度も通っていない行の検出器）。
+    // 閾値（thresholds）は意図的に設定しない。数値を満たすためだけの中身のないテストが生まれるため。
+    // CIにも入れない。ローカルで「抜けを探す道具」として使う
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html'],
+      // テストコード自体や設定ファイルは対象外。測りたいのは製品コードだけ
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/*.test.{ts,tsx}', 'src/test/**', 'src/main.tsx', 'src/vite-env.d.ts'],
+    },
   },
 })
