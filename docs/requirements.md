@@ -273,6 +273,7 @@ Phase 3 より後の検討事項（現時点では設計に含めない）。
 | [screen-design.md](./screen-design.md) | 画面一覧・画面遷移図・ワイヤーフレーム・デザイン方針 | 要件定義時（本書と同時） |
 | [database-design.md](./database-design.md) | ER図・テーブル定義・インデックス設計 | 要件定義時（本書と同時） |
 | [design.md](./design.md) | システム構成・API設計・エラーレスポンス形式 | 要件定義時（本書と同時） |
-| [tech-stack.md](./tech-stack.md) | 使用技術・バージョン・選定理由 | 要件定義時（本書と同時） |
+| [tech-stack.md](./tech-stack.md) | 使用技術・バージョン・選定理由・テストの型と方針 | 要件定義時（本書と同時） |
+| [testing-design.md](./testing-design.md) | テストケース設計（同値分割・境界値分析・デシジョンテーブル） | テスト実装時に作成・機能追加のたびに追記 |
 | docs/features/（機能別詳細） | 各機能の実装レベルの詳細設計 | 各機能の実装直前に順次作成 |
 | [infrastructure.md](./infrastructure.md) | AWS構成図（EC2 + RDS + ALB + S3 前提版）・デプロイ手順 | 前提構成図は作成済み。デプロイフェーズで詳細化 |
