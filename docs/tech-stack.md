@@ -49,6 +49,40 @@
 | 純粋関数 | `src/utils/*` | 入力に対する戻り値。特に境界値 | `formatDateTime.test.ts` |
 | 表示 | コンポーネント | propsを渡したとき画面に何が出るか・何が出ないか | `PostCard.test.tsx` |
 | ユーザー操作 | コンポーネント | クリック・入力の結果、コールバックが呼ばれるか | `LikeButton.test.tsx` |
+| **API層** | `src/api/*` | 組み立てたリクエスト（URL・ヘッダー・本文）と、返事の解釈 | `client.test.ts` / `postApi.test.ts` |
+| **フック** | `src/hooks/*` | 通信そのものではなく、**再試行するかどうかの判断** | `useAuthorizedRequest.test.tsx` |
+
+**外部への依存は、層ごとに違う方法で差し替える。**
+
+| 対象 | 差し替えるもの | 方法 | なぜその方法か |
+|------|--------------|------|--------------|
+| `api/client.ts` | `fetch` | `vi.stubGlobal('fetch', vi.fn())` | `client.ts` 自身の中身を検証したいので、**外向きの境界だけ**を止める |
+| `hooks/useAuthorizedRequest.ts` | `apiRequest` / `refresh` | `vi.mock` でモジュールごと | **フックの判断だけ**を見る。実物を通すと、落ちたときにフックのバグか `client.ts` のバグか区別できない |
+| `api/postApi.ts` | （不要） | 引数の `request` に `vi.fn()` を渡す | もともと通信関数を**外から受け取る**設計なので、`fetch` のモックすら要らない |
+
+> **層ごとに差し替え方を変える理由:** バックエンドで「Service 単体テストでは Mapper をモックにし、実DBを使わない」と
+> 決めたのと同じ考え方。**隣の部品を巻き込むと、失敗したときに原因の切り分けができなくなる。**
+
+> **`vi.mock` で丸ごと差し替えるときの注意:** `vi.mock('../api/client')` と単純に書くと、
+> 同じファイルにある `ApiError` まで偽物になり、`error instanceof ApiError` の判定が成立しなくなる。
+> `importOriginal` で本物を読み込み、**必要な関数だけを差し替える**。
+
+> **MSW（Mock Service Worker）は採用しない。** 依存が増え、モックの定義がテストと別の場所に分かれて
+> 二重管理になる。この規模では `vi.stubGlobal` と `vi.mock` で足りる。
+
+### フロントエンドのカバレッジ
+
+```powershell
+cd frontend
+npm run test:coverage   # build/ ではなく frontend/coverage/index.html に出る（.gitignore 済み）
+```
+
+`@vitest/coverage-v8` を使用。**閾値は設定せず、CIにも入れない**（バックエンドのJaCoCoと同じ方針）。
+数値を満たすためだけの中身のないテストが生まれるため、**「良さの証明」ではなく「テストが通っていない行の検出器」**として使う。
+
+> **バージョンの固定理由:** `@vitest/coverage-v8` は `peerDependencies` で
+> `vitest` のバージョンと**完全一致**を要求する。インストール済みの vitest が 4.1.11 のため、
+> coverage 側も **4.1.11 を明示指定**する（最新の 5.0.0 を入れると壊れる。実測確認済み）。
 
 > **タイムゾーンを固定する理由:** `formatDateTime` は `getFullYear()` / `getHours()` を使うため、
 > 実行するPCの時刻設定で結果が変わる。固定しないと「自分の環境では通るがCIでは落ちる」という

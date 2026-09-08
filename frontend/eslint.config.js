@@ -7,7 +7,9 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // dist はビルド成果物、coverage はテストのカバレッジレポート。
+  // どちらも自動生成されるファイルなので、書き方の検査対象から外す
+  globalIgnores(['dist', 'coverage']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [
