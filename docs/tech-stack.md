@@ -79,6 +79,54 @@
 > AWS SDK 導入時に `DefaultCredentialsProvider.create()` が非推奨であることをこの警告で検知できたため、
 > 以後も非推奨APIの使用に気づける状態を維持する。現在この警告は0件。
 
+### バックエンドのテスト方針
+
+**テストは3つの層に分け、それぞれ別の目的を持たせる。** どの層で何を確かめるかを決めておかないと、
+同じことを3回テストしたり、逆にどこでも確かめていない箇所ができたりする。
+
+| 層 | 付けるアノテーション | 起動するもの | 確かめること | 例 |
+|---|---|---|---|---|
+| **Service 単体** | `@ExtendWith(MockitoExtension.class)` + `@Mock` | 何も起動しない | **判断の正しさ**（境界値・権限判定・呼ばないことの確認） | `PostServiceTest` |
+| **Mapper 単体** | `@MapperTest`（自作） | DB と MyBatis だけ | **SQLの正しさ**（実PostgreSQLに本物のSQLを発行する） | `PostMapperTest` |
+| **Controller 統合** | `@SpringBootTest` + `@AutoConfigureMockMvc` | アプリ全体 | **つながり**（HTTPステータス・JSONの形・認証） | `PostControllerIntegrationTest` |
+
+**`@MapperTest`**（`src/test/java/.../support/MapperTest.java`）は、4つの設定を1つにまとめた自作アノテーション。
+6つの Mapper テストで同じ設定を書き写すと、1か所直し忘れたときにそこだけ挙動が変わるため集約している。
+
+| 含んでいる設定 | 無いとどうなるか |
+|---|---|
+| `@MybatisTest` | ―（本体。各テスト後に自動ロールバックされるので後片付けが不要） |
+| `@AutoConfigureTestDatabase(replace = NONE)` | **必ず失敗する。** 接続先を組み込みDBに差し替えようとするが、H2 を入れていないため落ちる |
+| `@ImportAutoConfiguration(FlywayAutoConfiguration.class)` | **CIで落ちうる。** スライスでは Flyway が動かず、空のDBにテーブルが作られない |
+| `@ActiveProfiles("test")` | 開発用DBに接続してしまう |
+
+**テストデータの用意は `MapperTestSupport` に集約する。** 継承して `insertUser` / `insertPost` などを使う。
+検証（assert）は親クラスに置かない（何を確かめているのかが読めなくなるため）。
+
+> **テストメソッド名は日本語で「入力 → 期待結果」の形にする。** テスト一覧がそのまま仕様書になる。
+> 統合テストはメソッド名自体を日本語にし、単体テストは `@DisplayName` に日本語を書く
+> （`@Nested` で入れ子にしたときに階層が読みやすいため）。
+
+> **PostgreSQL の `CURRENT_TIMESTAMP` はトランザクション開始時刻を返す。**
+> 1つのテスト内で続けて INSERT すると作成日時が全部同じになり、
+> 日時での並べ替えを検証したつもりが id 順を見ているだけになる。
+> 並び順を確かめるときは `insertPostAt` で日時を明示する。
+
+> **MyBatis は同じトランザクション内で同じ検索を同じ引数で呼ぶと、DBに問い合わせ直さない**（一次キャッシュ）。
+> 「取得 → データ変更 → 再取得」を1つのテストでつなげると、実装は正しいのにテストだけが落ちる。
+> 状態が変わる前後を確かめたいときは、テストを2つに分ける。
+
+### カバレッジの見方（JaCoCo）
+
+`build.gradle` に `jacoco` プラグインを入れ、`test` の後に自動でレポートを作る。
+出力先は `backend/build/reports/jacoco/test/html/index.html`。
+
+**閾値（`jacocoTestCoverageVerification`）はあえて設定しない。**
+
+> **理由:** 一定%未満でビルドを失敗させると、数値を満たすためだけの中身のないテストが生まれる。
+> カバレッジ100%でもバグは残る（「全行を通った」と「全行が正しい」は別）。
+> **カバレッジは品質の証明ではなく、「テストが通っていない行」を見つける道具**として使う。
+
 ## SQLの記述方針（MyBatis）
 
 **SQLはすべて Mapper XML に記述する。Javaのアノテーション（`@Select` / `@Insert` / `@Update` / `@Delete`）は使わない。**
@@ -227,3 +275,5 @@
 | WebSocket | リアルタイム更新（通知など）はMVP後に検討 → F-12（タイムラインの新着チェック）で、WebSocketではなく定期チェック＋通知バナー方式（X/Twitter方式）を採用することで決着した |
 | カウンタキャッシュ | いいね数・コメント数はCOUNT集計で十分な規模。数字ずれ事故のリスクを避ける |
 | MyBatisのアノテーション方式（`@Select` 等） | SQLの置き場所がXMLと2か所に分かれて可読性が落ちるため、XML方式に一本化した。詳細は「SQLの記述方針（MyBatis）」を参照 |
+| **H2（テスト用のインメモリDB）** | **テストは本番と同じ PostgreSQL で行う。** ①開発用DBとの分離は `raisetimeline_test` で既に達成済み ②`ON CONFLICT DO NOTHING`（二重いいね・二重フォローを冪等にする中核ロジック）を H2 はサポートせず `MERGE INTO` への書き換えが必要になる ③`ILIKE`（大文字小文字を区別しない検索）も挙動が一致しない。書き換えると本番のSQLとテストのSQLが別物になり、「テストは通るが本番で落ちる」状態を作るため |
+| カバレッジの閾値設定（`jacocoTestCoverageVerification`） | 数値を満たすためだけの中身のないテストが生まれる。詳細は「カバレッジの見方（JaCoCo）」を参照 |

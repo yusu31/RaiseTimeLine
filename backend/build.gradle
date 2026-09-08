@@ -1,5 +1,9 @@
 plugins {
     id 'java'
+    // テストがコードのどこを通ったかを計測する（カバレッジ）。Gradle 標準のプラグインで追加の依存は不要。
+    // toolVersion は指定しない: Gradle 8.14.5 が既定で使う JaCoCo のバージョンに従う。
+    // Gradle のバージョンは gradle-wrapper.properties で固定しているため、これでも結果は毎回同じになる
+    id 'jacoco'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -40,6 +44,9 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    // Mapper だけを読み込む @MybatisTest を使うために必要。
+    // 本体の mybatis-spring-boot-starter と同じ 3.0.4 を指定する（別バージョンだと組み合わせが保証されない）
+    testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -60,4 +67,24 @@ tasks.named('test') {
                     "(成功 ${result.successfulTestCount} / 失敗 ${result.failedTestCount} / スキップ ${result.skippedTestCount})"
         }
     }
+
+    // テストが終わったら続けてカバレッジのレポートを作る。
+    // 別コマンドにすると「テストは流したがレポートを見ていない」状態になりやすいため、自動でつなげる
+    finalizedBy tasks.named('jacocoTestReport')
 }
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+
+    reports {
+        // ブラウザで開いて、通っていない行を赤で確認するためのレポート
+        html.required = true
+        // XML/CSV は外部サービスへ送るための形式。今は使わないので作らない
+        xml.required = false
+        csv.required = false
+    }
+}
+
+// jacocoTestCoverageVerification（一定%未満でビルドを失敗させる仕組み）は、あえて設定しない。
+// 数値を満たすためだけの中身のないテストが生まれるため。
+// カバレッジは「品質の証明」ではなく「テストが通っていない行の検出器」として使う。
