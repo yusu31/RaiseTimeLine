@@ -10,7 +10,8 @@ type PostCardProps = {
   isOwn: boolean
   onEdit: (post: Post) => void
   onDeleteRequest: (postId: number) => void
-  onToggleLike: (post: Post) => void
+  /** 通信の終わりを LikeButton へ伝えるため、Promise をそのまま返す（二重送信の防止に使う） */
+  onToggleLike: (post: Post) => void | Promise<void>
 }
 
 export function PostCard({ post, isOwn, onEdit, onDeleteRequest, onToggleLike }: PostCardProps) {
