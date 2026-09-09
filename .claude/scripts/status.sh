@@ -13,8 +13,8 @@ PHASES="
 01|8|100%|要件定義・設計
 02|8|100%|機能実装（全12機能）
 03|8|100%|土台づくり（CI・Issue/PRテンプレート）
-04|6| 80%|テストの整備          <-- いまここ
-05|0|  0%|品質の詰め（バグ修正・想定外テスト）
+04|8|100%|テストの整備
+05|0|  0%|品質の詰め（バグ修正・想定外テスト）  <-- 次はここ
 06|0|  - |デプロイ（AWS）
 "
 
@@ -23,8 +23,8 @@ SUBPHASES="
 04|04-1|8|100%|バックエンド単体テスト（Service 147 / Mapper 98）  PR #66 済
 04|04-2|8|100%|フロント 土台編（API層・フック 47件）              PR #68 済
 04|04-3|8|100%|フロント 操作編（4部品 71件）                      PR #70 済
-04|04-4|8|100%|フロント 表示編（8部品 66件）  Issue #71           <-- PR確認待ち
-04|04-5|0|  0%|残りの部品とフック（8ファイル・AuthProvider 等）
+04|04-4|8|100%|フロント 表示編（8部品 66件）                      PR #72 済
+04|04-5|8|100%|残りの部品とフック（8ファイル 78件）  Issue #73           <-- PR確認待ち
 "
 
 # テスト対象にしないもの（判断済み。蒸し返さないための記録）
@@ -37,17 +37,16 @@ SUBPHASES="
 
 # ── 次にやること（番号|内容） ────────────────────────────────
 NEXT="
-1|残りの部品とフック（8ファイル）  04-5   <-- 講師指示の未完了部分
-2|LikeButton の二重送信バグ修正
-3|想定外のテスト（二重送信・極端な入力）
-4|ブランチ保護の必須チェック設定
-5|デプロイ（あなたの指示待ち）
+1|LikeButton の二重送信バグ修正   <-- 唯一残っている既知のバグ
+2|想定外のテスト（極端な入力・同時操作）
+3|ブランチ保護の必須チェック設定
+4|デプロイ（あなたの指示待ち）
 "
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
 MEASURED_AT="2026-09-09"
 BACKEND_TESTS=343
-FRONTEND_TESTS=209
+FRONTEND_TESTS=287
 
 bar() { # $1=埋まっている数(0-8)
   local n=$1 i out=""
@@ -65,8 +64,13 @@ commit=$(git log --oneline -1 --format='%h' 2>/dev/null || echo '?')
 dirty=$(git status --porcelain 2>/dev/null | grep -cv '^??' || true)
 issues=$(gh issue list --state open --json number --jq 'length' 2>/dev/null || echo '?')
 prs=$(gh pr list --state open --json number --jq 'length' 2>/dev/null || echo '?')
-comp_all=$(ls frontend/src/components/*.tsx 2>/dev/null | grep -vc '\.test\.' || echo 0)
+# 分母は「テスト対象にすると決めたもの」だけにする。
+# 対象外の2件（Canvas依存の IconCropModal / SVGを返すだけの icons.tsx）を引く
+comp_all=$(( $(ls frontend/src/components/*.tsx 2>/dev/null | grep -vc '\.test\.') - 2 ))
 comp_tested=$(ls frontend/src/components/*.test.tsx 2>/dev/null | wc -l | tr -d ' ')
+# フックと状態管理（AuthContext.ts は型と定義だけなので数えない）
+hook_all=$(ls frontend/src/hooks/*.ts frontend/src/context/AuthProvider.tsx 2>/dev/null | wc -l | tr -d ' ')
+hook_tested=$(ls frontend/src/hooks/*.test.tsx frontend/src/context/AuthProvider.test.tsx 2>/dev/null | wc -l | tr -d ' ')
 
 line
 printf ' RaiseTimeLine  現在地\n'
@@ -99,7 +103,8 @@ printf ' いまの状態（この表示を出した時点で取得）\n'
 line
 printf '  ブランチ      %s (%s)  未コミット %s件\n' "$branch" "$commit" "$dirty"
 printf '  Issue / PR    オープン %s件 / %s件\n' "$issues" "$prs"
-printf '  コンポーネント %s / %s にテストあり  <-- 講師指示の未達部分\n' "$comp_tested" "$comp_all"
+printf '  コンポーネント %s / %s にテストあり  (対象外2件を除く)\n' "$comp_tested" "$comp_all"
+printf '  フック・状態  %s / %s にテストあり\n' "$hook_tested" "$hook_all"
 printf '  テスト件数    backend %s / frontend %s  (最終計測 %s)\n' \
   "$BACKEND_TESTS" "$FRONTEND_TESTS" "$MEASURED_AT"
 line
