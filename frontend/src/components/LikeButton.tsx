@@ -6,25 +6,46 @@ const HEART_PATH =
 type LikeButtonProps = {
   likeCount: number
   likedByMe: boolean
-  onToggle: () => void
+  /**
+   * いいねの付け外しを親へ伝える。通信するのは親（各ページ）なので、
+   * この部品が「通信が終わったこと」を知る手段は親が返す Promise しかない。
+   * 二重送信を防ぐために Promise を受け取れる型にしている
+   */
+  onToggle: () => void | Promise<void>
 }
 
 export function LikeButton({ likeCount, likedByMe, onToggle }: LikeButtonProps) {
   // いいねした瞬間だけkeyを更新してエフェクト用のspanを再マウントし、CSSアニメーションを毎回リプレイさせる
   const [burstId, setBurstId] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleClick = (event: React.MouseEvent) => {
+  const handleClick = async (event: React.MouseEvent) => {
     event.stopPropagation()
     if (!likedByMe) {
       setBurstId((id) => id + 1)
     }
-    onToggle()
+    setIsSubmitting(true)
+    try {
+      await onToggle()
+    } catch {
+      // 失敗をどう見せるかは、通信している親（各ページ）の責任なのでここでは表示しない。
+      // ただし受け取らずに投げっぱなしにすると Unhandled Rejection になるため、ここで止める。
+      // 現状 TimelinePage と PostDetailPage は失敗しても何も表示しない。
+      // これは二重送信とは別の不具合なので docs/testing-design.md に将来課題として記録し、別PRで直す
+    } finally {
+      // 成功・失敗のどちらでも必ず通る。ここを try の外に書くと、
+      // 失敗したときに押せないまま固まってしまう
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <button
       type="button"
       onClick={handleClick}
+      disabled={isSubmitting}
+      // 他の部品と違い disabled:opacity-50 は付けない。いいねは連打される軽い操作で
+      // 通信が数十msで終わるため、その間だけ半透明にすると点滅して見えるだけになる
       className={`like-button flex items-center gap-1 ${likedByMe ? 'is-liked text-[#F91880]' : 'text-gray-500 hover:text-[#F91880]'}`}
     >
       <span key={burstId} className="like-heart-wrap">

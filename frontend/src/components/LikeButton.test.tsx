@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { LikeButton } from './LikeButton'
@@ -46,5 +46,76 @@ describe('LikeButton', () => {
     await user.click(screen.getByRole('button'))
 
     expect(onParentClick).not.toHaveBeenCalled()
+  })
+})
+
+/**
+ * LikeButton は自分では通信しない。通信するのは onToggle の呼び出し元（各ページ）で、
+ * LikeButton が「通信が終わったこと」を知る手段は onToggle が返す Promise だけになる。
+ * ここでは終わらない Promise を返すことで「通信中」の状態を作る。
+ * ケースの選び方は docs/testing-design.md 11-5（二重送信の防止）に揃えている。
+ */
+describe('LikeButton — 二重送信の防止', () => {
+  it('通信中はボタンを押せない', async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn(() => new Promise<void>(() => {}))
+    render(<LikeButton likeCount={0} likedByMe={false} onToggle={onToggle} />)
+
+    await user.click(screen.getByRole('button'))
+
+    expect(screen.getByRole('button')).toBeDisabled()
+  })
+
+  it('通信中に連打しても onToggle は1回しか呼ばれない', async () => {
+    const user = userEvent.setup()
+    const onToggle = vi.fn(() => new Promise<void>(() => {}))
+    render(<LikeButton likeCount={0} likedByMe={false} onToggle={onToggle} />)
+
+    const button = screen.getByRole('button')
+    await user.click(button)
+    await user.click(button)
+    await user.click(button)
+
+    expect(onToggle).toHaveBeenCalledTimes(1)
+  })
+
+  // 無効にする側だけを書くと、押した後ずっと無効のままの実装でも緑になってしまう。
+  // 元に戻る側も対で固定する（成功したとき・失敗したときの両方）
+  it('通信が成功すると、ボタンが再び押せるようになる', async () => {
+    const user = userEvent.setup()
+    let finishToggle: () => void = () => {}
+    const onToggle = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishToggle = resolve
+        }),
+    )
+    render(<LikeButton likeCount={0} likedByMe={false} onToggle={onToggle} />)
+
+    await user.click(screen.getByRole('button'))
+    expect(screen.getByRole('button')).toBeDisabled()
+
+    finishToggle()
+
+    await waitFor(() => expect(screen.getByRole('button')).toBeEnabled())
+  })
+
+  it('通信が失敗しても、ボタンが再び押せるようになる', async () => {
+    const user = userEvent.setup()
+    let failToggle: (reason: Error) => void = () => {}
+    const onToggle = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          failToggle = reject
+        }),
+    )
+    render(<LikeButton likeCount={0} likedByMe={false} onToggle={onToggle} />)
+
+    await user.click(screen.getByRole('button'))
+    expect(screen.getByRole('button')).toBeDisabled()
+
+    failToggle(new Error('通信に失敗しました'))
+
+    await waitFor(() => expect(screen.getByRole('button')).toBeEnabled())
   })
 })
