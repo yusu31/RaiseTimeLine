@@ -19,6 +19,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +32,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -215,6 +217,34 @@ class UserServiceTest {
             userService.updateProfile(USER_ID, request);
 
             verify(userMapper).updateProfile(USER_ID, "新しい表示名", USERNAME, "新しい自己紹介");
+        }
+
+        /**
+         * 「空いているか調べる」と「書き込む」が2手に分かれているため、そのあいだに
+         * 別のリクエストが同じ@ユーザー名を取ると、書き込み時に DB のユニーク制約
+         * （{@code uk_users_username}）に当たる。
+         *
+         * <p>実際の同時実行は再現が不安定になるため、<strong>調べた結果は「空いている」なのに
+         * 書き込みが制約違反で失敗する</strong>という状況をモックで作って確かめる。</p>
+         *
+         * <p><strong>【現状の挙動・Issue #79】</strong>この例外を受け止める場所が無いため、
+         * そのまま外へ出て {@code GlobalExceptionHandler} の catch-all に落ち、500 になる。
+         * 本来は重複を検知したときと同じ 409（{@link UsernameAlreadyExistsException}）を返すべき。
+         * 修正は別Issueで行い、そのときこの期待値を書き換える。</p>
+         */
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】重複チェックをすり抜けた後の制約違反は、変換されずそのまま外に出る")
+        void leaksDuplicateKeyExceptionWhenCheckIsRaced() {
+            when(userMapper.findById(USER_ID)).thenReturn(Optional.of(user(null)));
+            // 調べた時点では空いている
+            when(userMapper.existsByUsernameExcludingSelf(USERNAME, USER_ID)).thenReturn(false);
+            // が、書き込む時点では他の人に取られている
+            doThrow(new DuplicateKeyException("uk_users_username"))
+                    .when(userMapper).updateProfile(anyLong(), anyString(), anyString(), anyString());
+
+            assertThatThrownBy(() -> userService.updateProfile(USER_ID, request))
+                    .isInstanceOf(DuplicateKeyException.class)
+                    .isNotInstanceOf(UsernameAlreadyExistsException.class);
         }
     }
 
