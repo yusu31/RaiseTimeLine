@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.Duration;
@@ -32,6 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -124,6 +126,33 @@ class AuthServiceTest {
                     .isInstanceOf(UsernameAlreadyExistsException.class);
 
             verify(userMapper, never()).insert(any());
+        }
+
+        /**
+         * 新規登録も「登録済みか調べる」→「書き込む」の2手に分かれているため、
+         * そのあいだに同じメールアドレス・@ユーザー名で別の登録が完了すると、
+         * 書き込み時に DB のユニーク制約（{@code uk_users_email} / {@code uk_users_username}）に当たる。
+         *
+         * <p><strong>【現状の挙動・Issue #79】</strong>この例外を受け止める場所が無いため、
+         * catch-all に落ちて 500 になる。本来は 409 を返すべき。
+         * プロフィール更新側にも同じ隙間がある（{@code UserServiceTest} 参照）。</p>
+         */
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】登録済みチェックをすり抜けた後の制約違反は、変換されずそのまま外に出る")
+        void leaksDuplicateKeyExceptionWhenCheckIsRaced() {
+            // 調べた時点ではどちらも未使用
+            when(userMapper.existsByEmail(anyString())).thenReturn(false);
+            when(userMapper.existsByUsername(anyString())).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn(HASHED_PASSWORD);
+            // が、書き込む時点では他の人に取られている
+            doThrow(new DuplicateKeyException("uk_users_email")).when(userMapper).insert(any(User.class));
+
+            assertThatThrownBy(() -> authService.signup(signupRequest()))
+                    .isInstanceOf(DuplicateKeyException.class)
+                    .isNotInstanceOf(EmailAlreadyExistsException.class);
+
+            // 登録できていないのだから、トークンを発行して「成功した」ことにしてはいけない
+            verify(refreshTokenMapper, never()).insert(any(RefreshToken.class));
         }
 
         @Test

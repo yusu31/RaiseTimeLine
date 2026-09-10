@@ -111,6 +111,52 @@ describe('PostComposer — 残り文字数の表示', () => {
   })
 })
 
+/**
+ * 絵文字は JavaScript の文字列では2つ分の長さを占める（サロゲートペア）。
+ * そのため 280文字の上限は「絵文字140個」に相当する。
+ *
+ * ここで確かめたいのは見た目の数え方そのものではなく、フロントとバックエンドで
+ * 数え方が揃っていることのほう。バックエンドも Java の String#length で数えており
+ * （PostService.validateContent）、どちらも同じ「2」として扱う。
+ * もし片方だけ「絵文字は1文字」に変えると、画面では投稿できるのにサーバーが 400 で
+ * 弾く、という食い違いが起きる。その事故を検知するための土台として固定しておく。
+ */
+describe('PostComposer — 絵文字の数え方', () => {
+  const EMOJI = '😀'
+
+  it('絵文字1個は2文字として数える', async () => {
+    const user = userEvent.setup()
+    render(<PostComposer onSubmit={vi.fn()} onClose={vi.fn()} />)
+
+    await user.click(textarea())
+    await user.paste(EMOJI)
+
+    expect(screen.getByText('278')).toBeInTheDocument()
+  })
+
+  it('絵文字140個ちょうどなら残りが0になり投稿できる（上限ちょうど）', async () => {
+    const user = userEvent.setup()
+    render(<PostComposer onSubmit={vi.fn()} onClose={vi.fn()} />)
+
+    await user.click(textarea())
+    await user.paste(EMOJI.repeat(140))
+
+    expect(screen.getByText('0')).toBeInTheDocument()
+    expect(submitButton()).toBeEnabled()
+  })
+
+  it('絵文字141個は282文字ぶんになり投稿できない（上限の外）', async () => {
+    const user = userEvent.setup()
+    render(<PostComposer onSubmit={vi.fn()} onClose={vi.fn()} />)
+
+    await user.click(textarea())
+    await user.paste(EMOJI.repeat(141))
+
+    expect(screen.getByText('-2')).toBeInTheDocument()
+    expect(submitButton()).toBeDisabled()
+  })
+})
+
 describe('PostComposer — 画像の選択', () => {
   it('PNGを選ぶとプレビューが表示される', async () => {
     const user = userEvent.setup()

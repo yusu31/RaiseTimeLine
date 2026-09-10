@@ -423,6 +423,110 @@ class PostControllerIntegrationTest {
                 .andExpect(status().isUnauthorized());
     }
 
+    // ------------------------------------------------------------------
+    // 想定外の入力（Issue #79）
+    //
+    // ブラウザの通常操作では起こらないが、URLを手で書き換えれば誰でも送れる入力を確かめる。
+    // ここに並ぶ「現状500」は、いずれも直すべきバグ。修正は別Issueで行い、
+    // そのときこの期待値を 400 や 200 に書き換える（その書き換えが「赤の確認」になる）。
+    //
+    // なぜ 500 のままではいけないか: 500 は「サーバー側が壊れた」という意味であり、
+    // 送られてきた値の形式が不正なだけの場合は 400 が正しい。取り違えると、
+    // 本当にサーバーが壊れたときにログの中で埋もれて気づけなくなる。
+    // ------------------------------------------------------------------
+
+    @Test
+    void ページ番号が数値でないと現状は500が返る_本来は400() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 型変換の失敗（MethodArgumentTypeMismatchException）専用のハンドラが
+        // GlobalExceptionHandler に無く、catch-all の Exception ハンドラに落ちている
+        mockMvc.perform(get("/api/posts").param("page", "abc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void ページサイズが数値でないと現状は500が返る_本来は400() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts").param("size", "abc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void 投稿IDが数値でないと現状は500が返る_本来は400() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts/abc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void 新着件数のafterIdが数値でないと現状は500が返る_本来は400() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts/new-count").param("afterId", "abc")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void ページ番号がintの範囲を超えると現状は500が返る_本来は400() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 数字ではあるが int に収まらない。これも型変換の失敗として扱われる
+        mockMvc.perform(get("/api/posts").param("page", "99999999999")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void ページ番号がけた溢れの直前なら空ページを正常に返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 107374182 × 20 = 2147483640 で int にぎりぎり収まる。
+        // 該当する投稿は無いので空配列が返るのが正しい
+        mockMvc.perform(get("/api/posts").param("page", "107374182").param("size", "20")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
+    }
+
+    @Test
+    void ページ番号が1つ大きいとけた溢れして現状は500が返る_本来は空ページ() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 107374183 × 20 = 2147483660 は int の範囲を超え、一周して負の数になる。
+        // 負の値がそのまま OFFSET として渡り、PostgreSQL がエラーを返している
+        mockMvc.perform(get("/api/posts").param("page", "107374183").param("size", "20")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void フォロー中タイムラインでもけた溢れで現状は500が返る_本来は空ページ() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts")
+                        .param("timeline", "following").param("page", "107374183").param("size", "20")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
+    @Test
+    void 投稿検索でもけた溢れで現状は500が返る_本来は空ページ() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        mockMvc.perform(get("/api/posts")
+                        .param("q", "天気").param("page", "107374183").param("size", "20")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isInternalServerError());
+    }
+
     /** 投稿を1件作成する。検索テストのように本文だけを用意したい場面で使う */
     private void createPost(String accessToken, String content) throws Exception {
         mockMvc.perform(multipart("/api/posts")

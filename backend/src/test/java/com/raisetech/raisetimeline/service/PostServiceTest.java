@@ -58,6 +58,9 @@ class PostServiceTest {
     private static final int MAX_CONTENT_LENGTH = 280;
     private static final int DEFAULT_PAGE_SIZE = 20;
 
+    /** サロゲートペアの絵文字（U+1F600）。Java の String では長さ2として数えられる */
+    private static final String EMOJI = "😀";
+
     @Mock
     private PostMapper postMapper;
 
@@ -398,6 +401,112 @@ class PostServiceTest {
             postService.getPostsByAuthor(OTHER_USER_ID, 1, 10, USER_ID);
 
             verify(postMapper).selectByAuthorId(OTHER_USER_ID, 11, 10, USER_ID);
+        }
+    }
+
+    /**
+     * ブラウザの通常操作では起こらないが、URLを手で書き換えれば誰でも送れる入力を確かめる（Issue #79）。
+     *
+     * <p><strong>けた溢れについて。</strong>{@code offset} は {@code page × size} で計算しているが、
+     * {@code page} には上限が無い（{@code Math.max(page, 0)} で下限だけ押さえている）。
+     * {@code int} は約21億までしか表せないため、掛け算の結果が範囲を超えると
+     * 一周して負の数になる。負の {@code OFFSET} は PostgreSQL が受け付けないため、
+     * 実際のAPIでは 500 になる。<strong>これはバグであり、修正は別Issueで行う。</strong>
+     * ここでは「いま何が起きているか」を記録し、修正時にこの期待値を正しい値へ書き換える
+     * （その書き換えがそのまま「赤の確認」になる）。</p>
+     */
+    @Nested
+    @DisplayName("想定外の入力（極端なページ番号・絵文字）")
+    class UnexpectedInput {
+
+        /** けた溢れが起きない最大のページ番号（× 20 = 2147483640 で int に収まる） */
+        private static final int LARGEST_SAFE_PAGE = 107374182;
+
+        /** けた溢れが起きる最小のページ番号（× 20 = 2147483660 で int の範囲を超える） */
+        private static final int SMALLEST_OVERFLOWING_PAGE = 107374183;
+
+        @Test
+        @DisplayName("けた溢れの直前のページ番号なら、正しい offset を渡す（境界の内側）")
+        void passesCorrectOffsetJustBeforeOverflow() {
+            int safeOffset = LARGEST_SAFE_PAGE * DEFAULT_PAGE_SIZE;
+            // 前提の明示: ここはまだ int に収まっている
+            assertThat(safeOffset).isPositive();
+
+            postService.getTimeline(LARGEST_SAFE_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+
+            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, safeOffset, USER_ID);
+        }
+
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】ページ番号が1つ大きくなるとけた溢れし、負の offset を渡してしまう")
+        void passesNegativeOffsetOnOverflow() {
+            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+            // 前提の明示: この掛け算は int の範囲を超え、一周して負の数になる
+            assertThat(overflowedOffset).isNegative();
+
+            postService.getTimeline(SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+
+            // 本来は「その位置に投稿は無い」として空ページを返すべきところ、
+            // 負の値がそのまま OFFSET として SQL に渡っている
+            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+        }
+
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】フォロー中タイムラインでも同じけた溢れが起きる")
+        void followingTimelineOverflowsTheSameWay() {
+            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+
+            postService.getFollowingTimeline(SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+
+            verify(postMapper).selectFollowingTimeline(DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+        }
+
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】プロフィールの投稿一覧でも同じけた溢れが起きる")
+        void postsByAuthorOverflowsTheSameWay() {
+            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+
+            postService.getPostsByAuthor(OTHER_USER_ID, SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+
+            verify(postMapper).selectByAuthorId(OTHER_USER_ID, DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+        }
+
+        @Test
+        @DisplayName("【現状の挙動・Issue #79】投稿検索でも同じけた溢れが起きる")
+        void searchPostsOverflowsTheSameWay() {
+            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+            when(searchKeyword.normalize("天気")).thenReturn("天気");
+
+            postService.searchPosts("天気", SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+
+            verify(postMapper).selectByKeyword("天気", DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+        }
+
+        @Test
+        @DisplayName("絵文字は2文字として数えるため、140個ちょうどなら保存できる（上限ちょうど）")
+        void acceptsExactlyMaxLengthOfEmoji() {
+            // 絵文字は Java の String では2つ分の長さを占める（サロゲートペア）。
+            // 280文字の上限は「絵文字140個」に相当する。フロントの残り文字数表示も
+            // JavaScript の String#length を使っており、同じ数え方になっている。
+            String content = EMOJI.repeat(MAX_CONTENT_LENGTH / 2);
+            assertThat(content.length()).isEqualTo(MAX_CONTENT_LENGTH);
+            when(postMapper.selectDetailById(any(), any())).thenReturn(Optional.of(detail(POST_ID, null)));
+
+            postService.create(USER_ID, new PostCreateRequest(content, null));
+
+            verify(postMapper).insert(any(Post.class));
+        }
+
+        @Test
+        @DisplayName("絵文字141個は282文字ぶんになるため拒否し、保存しない（上限の外）")
+        void rejectsEmojiOverMaxLength() {
+            String content = EMOJI.repeat(MAX_CONTENT_LENGTH / 2 + 1);
+            assertThat(content.length()).isEqualTo(MAX_CONTENT_LENGTH + 2);
+
+            assertThatThrownBy(() -> postService.create(USER_ID, new PostCreateRequest(content, null)))
+                    .isInstanceOf(InvalidPostContentException.class);
+
+            verify(postMapper, never()).insert(any());
         }
     }
 

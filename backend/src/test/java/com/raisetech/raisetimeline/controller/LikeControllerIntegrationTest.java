@@ -67,10 +67,16 @@ class LikeControllerIntegrationTest {
     }
 
     @Test
-    void 存在しない投稿へのいいねは404が返る() throws Exception {
+    void 存在しない投稿へのいいねも解除も404が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(post("/api/posts/999/likes")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+
+        // 解除side も対で確認する。いいねは「押していない状態で解除しても成功する」冪等な作りのため、
+        // 存在確認を忘れると「存在しない投稿の解除」まで黙って成功しかねない
+        mockMvc.perform(delete("/api/posts/999/likes")
                         .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound());
     }
