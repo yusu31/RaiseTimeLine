@@ -88,12 +88,18 @@ export function PostDetailPage() {
     setDeletingCommentId(null)
   }
 
+  // 通信しているのはこの画面であり、失敗を最初に知るのもここになる。
+  // 受け取らないと LikeButton 側に握られて画面には何も出ない（Issue #77）
   const handleToggleLike = async () => {
     if (!post) return
-    const updated = post.likedByMe
-      ? await unlikePost(authorizedRequest, post.id)
-      : await likePost(authorizedRequest, post.id)
-    setPost((current) => (current ? { ...current, ...updated } : current))
+    try {
+      const updated = post.likedByMe
+        ? await unlikePost(authorizedRequest, post.id)
+        : await likePost(authorizedRequest, post.id)
+      setPost((current) => (current ? { ...current, ...updated } : current))
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : '通信中にエラーが発生しました')
+    }
   }
 
   return (
