@@ -29,9 +29,9 @@ export function LikeButton({ likeCount, likedByMe, onToggle }: LikeButtonProps) 
       await onToggle()
     } catch {
       // 失敗をどう見せるかは、通信している親（各ページ）の責任なのでここでは表示しない。
-      // ただし受け取らずに投げっぱなしにすると Unhandled Rejection になるため、ここで止める。
-      // 現状 TimelinePage と PostDetailPage は失敗しても何も表示しない。
-      // これは二重送信とは別の不具合なので docs/testing-design.md に将来課題として記録し、別PRで直す
+      // 呼び出し元の4画面はいずれも自分で受け取ってエラーを表示する（Issue #77 で揃えた）。
+      // ここは、将来 catch を書き忘れた呼び出し元が現れたときに
+      // Unhandled Rejection（誰も受け取らないエラー）になるのを防ぐ受け皿として残している
     } finally {
       // 成功・失敗のどちらでも必ず通る。ここを try の外に書くと、
       // 失敗したときに押せないまま固まってしまう
