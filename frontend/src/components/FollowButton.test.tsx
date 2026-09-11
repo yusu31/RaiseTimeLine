@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
@@ -223,5 +223,31 @@ describe('FollowButton — 二重送信の防止', () => {
     await user.click(screen.getByRole('button', { name: 'フォロー中…' }))
 
     expect(followUserMock).toHaveBeenCalledTimes(1)
+  })
+})
+
+/**
+ * 一度伝えたエラーを、次の操作をやり直したときに消せているか（Issue #85）。
+ *
+ * このボタンは自分で通信するため、エラーを最初に知るのもここになる。
+ * ただしエラーを画面に出すのは親なので、「消して」も親へ伝えないと
+ * 親の画面には前のエラーが残り続ける（onError に null を渡す）。
+ */
+describe('FollowButton — 失敗したあとにやり直したとき', () => {
+  it('もう一度押したとき、前のエラーを消すために onError へ null を渡す', async () => {
+    const user = userEvent.setup()
+    const onError = vi.fn()
+    followUserMock
+      .mockRejectedValueOnce(new ApiError(404, 'ユーザーが見つかりません'))
+      .mockResolvedValueOnce(followingStatus)
+
+    renderButton({ followedByMe: false, onError })
+    await user.click(screen.getByRole('button', { name: 'フォローする' }))
+    // 1回目の失敗が親へ届いたことを確かめてから、2回目に進む
+    await waitFor(() => expect(onError).toHaveBeenCalledWith('ユーザーが見つかりません'))
+
+    await user.click(screen.getByRole('button', { name: 'フォローする' }))
+
+    await waitFor(() => expect(onError).toHaveBeenCalledWith(null))
   })
 })

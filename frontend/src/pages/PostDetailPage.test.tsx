@@ -148,3 +148,26 @@ describe('PostDetailPage — いいねに失敗したとき', () => {
     expect(await screen.findByText('通信中にエラーが発生しました')).toBeInTheDocument()
   })
 })
+
+/**
+ * 一度出したエラーを、次の操作が成功したときに消せているか（Issue #85）。
+ * 判定の前に「何かが起きたこと」をいいね数の更新で待つ（PR #78 の教訓）。
+ */
+describe('PostDetailPage — 失敗したあとに操作をやり直したとき', () => {
+  it('いいねをやり直して成功すると、前のエラーメッセージが消える', async () => {
+    const user = userEvent.setup()
+    likePostMock
+      .mockRejectedValueOnce(new ApiError(404, '投稿が見つかりません'))
+      .mockResolvedValueOnce({ likeCount: 4, likedByMe: true })
+
+    renderPostDetail()
+    await clickLikeButton(user)
+    await screen.findByText('投稿が見つかりません')
+
+    // 失敗しているのでいいね数は3のまま。同じボタンをもう一度押せる
+    await clickLikeButton(user)
+    await screen.findByRole('button', { name: /4/ })
+
+    expect(screen.queryByText('投稿が見つかりません')).not.toBeInTheDocument()
+  })
+})

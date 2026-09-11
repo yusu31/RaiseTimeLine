@@ -77,6 +77,8 @@ export function ProfilePage() {
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || !hasNext) return
     setIsLoadingMore(true)
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const response = await fetchUserPosts(authorizedRequest, username, page + 1)
       setPosts((current) => [...current, ...response.posts])
@@ -100,6 +102,8 @@ export function ProfilePage() {
   }
 
   const handleToggleLike = async (post: Post) => {
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const status = post.likedByMe
         ? await unlikePost(authorizedRequest, post.id)

@@ -125,6 +125,8 @@ export function TimelinePage() {
 
   const handleShowNewPosts = async () => {
     setIsFetchingNewPosts(true)
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const response = await fetchNewPosts(authorizedRequest, latestKnownId)
       setPosts((current) => [...response.posts, ...current])
@@ -180,6 +182,8 @@ export function TimelinePage() {
   // 通信しているのはこの画面であり、失敗を最初に知るのもここになる。
   // 受け取らないと LikeButton 側に握られて画面には何も出ない（Issue #77）
   const handleToggleLike = async (post: Post) => {
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const updated = post.likedByMe
         ? await unlikePost(authorizedRequest, post.id)
