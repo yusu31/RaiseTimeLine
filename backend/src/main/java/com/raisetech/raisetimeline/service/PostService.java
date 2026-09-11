@@ -41,7 +41,8 @@ public class PostService {
     public PostListResponse getTimeline(int page, int size, Long currentUserId) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
-        int offset = normalizedPage * normalizedSize;
+        // (long) を落とすと page × size が int の範囲（約21億）を超えて負になる（Issue #82）
+        long offset = (long) normalizedPage * normalizedSize;
 
         // size+1件取得してhasNextを判定する（COUNT(*)を別途発行しない軽量な方式）
         List<PostDetail> rows = postMapper.selectTimeline(normalizedSize + 1, offset, currentUserId);
@@ -60,7 +61,8 @@ public class PostService {
     public PostListResponse getFollowingTimeline(int page, int size, Long currentUserId) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
-        int offset = normalizedPage * normalizedSize;
+        // (long) を落とすと page × size が int の範囲（約21億）を超えて負になる（Issue #82）
+        long offset = (long) normalizedPage * normalizedSize;
 
         List<PostDetail> rows = postMapper.selectFollowingTimeline(normalizedSize + 1, offset, currentUserId);
         boolean hasNext = rows.size() > normalizedSize;
@@ -78,7 +80,8 @@ public class PostService {
     public PostListResponse getPostsByAuthor(Long authorId, int page, int size, Long currentUserId) {
         int normalizedPage = Math.max(page, 0);
         int normalizedSize = (size < 1 || size > MAX_PAGE_SIZE) ? DEFAULT_PAGE_SIZE : size;
-        int offset = normalizedPage * normalizedSize;
+        // (long) を落とすと page × size が int の範囲（約21億）を超えて負になる（Issue #82）
+        long offset = (long) normalizedPage * normalizedSize;
 
         List<PostDetail> rows = postMapper.selectByAuthorId(authorId, normalizedSize + 1, offset, currentUserId);
         boolean hasNext = rows.size() > normalizedSize;
@@ -102,7 +105,8 @@ public class PostService {
             return new PostListResponse(List.of(), normalizedPage, false);
         }
 
-        int offset = normalizedPage * normalizedSize;
+        // (long) を落とすと page × size が int の範囲（約21億）を超えて負になる（Issue #82）
+        long offset = (long) normalizedPage * normalizedSize;
         List<PostDetail> rows =
                 postMapper.selectByKeyword(normalizedKeyword, normalizedSize + 1, offset, currentUserId);
         boolean hasNext = rows.size() > normalizedSize;

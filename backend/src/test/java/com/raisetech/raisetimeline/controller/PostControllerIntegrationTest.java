@@ -498,7 +498,7 @@ class PostControllerIntegrationTest {
     }
 
     @Test
-    void ページ番号がけた溢れの直前なら空ページを正常に返す() throws Exception {
+    void 掛け算がintに収まる範囲のページ番号では空ページを正常に返す() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         // 107374182 × 20 = 2147483640 で int にぎりぎり収まる。
@@ -511,34 +511,49 @@ class PostControllerIntegrationTest {
     }
 
     @Test
-    void ページ番号が1つ大きいとけた溢れして現状は500が返る_本来は空ページ() throws Exception {
+    void ページ番号が1つ大きく掛け算がintの範囲を超えても空ページを正常に返す() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
-        // 107374183 × 20 = 2147483660 は int の範囲を超え、一周して負の数になる。
-        // 負の値がそのまま OFFSET として渡り、PostgreSQL がエラーを返している
+        // 107374183 × 20 = 2147483660。int で計算していたら一周して負になり、
+        // 負の OFFSET を PostgreSQL が拒否して 500 になっていた（Issue #82）
         mockMvc.perform(get("/api/posts").param("page", "107374183").param("size", "20")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0))
+                .andExpect(jsonPath("$.hasNext").value(false));
     }
 
     @Test
-    void フォロー中タイムラインでもけた溢れで現状は500が返る_本来は空ページ() throws Exception {
+    void ページ番号がintの最大値でも空ページを正常に返す() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 最初に症状として報告された値。ページサイズの上限100と組み合わせても壊れない
+        mockMvc.perform(get("/api/posts").param("page", "2147483647").param("size", "100")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
+    }
+
+    @Test
+    void フォロー中タイムラインでもintの範囲を超える位置で空ページを正常に返す() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(get("/api/posts")
                         .param("timeline", "following").param("page", "107374183").param("size", "20")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
     }
 
     @Test
-    void 投稿検索でもけた溢れで現状は500が返る_本来は空ページ() throws Exception {
+    void 投稿検索でもintの範囲を超える位置で空ページを正常に返す() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(get("/api/posts")
                         .param("q", "天気").param("page", "107374183").param("size", "20")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.posts.length()").value(0));
     }
 
     /** 投稿を1件作成する。検索テストのように本文だけを用意したい場面で使う */

@@ -22,16 +22,19 @@ public interface PostMapper {
 
     void deleteById(@Param("id") Long id);
 
-    List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") int offset,
+    // offset を long で受けるのは、page × size が int の範囲（約21億）を超えうるため。
+    // int で受けると呼び出し側の掛け算が一周して負になり、PostgreSQL が
+    // 「OFFSET must not be negative」で落ちる（Issue #82）。SQL 側は #{offset} なので変更不要。
+    List<PostDetail> selectTimeline(@Param("limit") int limit, @Param("offset") long offset,
                                      @Param("currentUserId") Long currentUserId);
 
     List<PostDetail> selectByAuthorId(@Param("authorId") Long authorId, @Param("limit") int limit,
-                                       @Param("offset") int offset, @Param("currentUserId") Long currentUserId);
+                                       @Param("offset") long offset, @Param("currentUserId") Long currentUserId);
 
     /**
      * 「フォロー中」タブ用のタイムライン。currentUserId 自身の投稿も含む。
      */
-    List<PostDetail> selectFollowingTimeline(@Param("limit") int limit, @Param("offset") int offset,
+    List<PostDetail> selectFollowingTimeline(@Param("limit") int limit, @Param("offset") long offset,
                                               @Param("currentUserId") Long currentUserId);
 
     /**
@@ -39,7 +42,7 @@ public interface PostMapper {
      * keyword は LIKE のワイルドカードをエスケープ済みの文字列を渡すこと。
      */
     List<PostDetail> selectByKeyword(@Param("keyword") String keyword, @Param("limit") int limit,
-                                      @Param("offset") int offset, @Param("currentUserId") Long currentUserId);
+                                      @Param("offset") long offset, @Param("currentUserId") Long currentUserId);
 
     Optional<PostDetail> selectDetailById(@Param("id") Long id, @Param("currentUserId") Long currentUserId);
 
