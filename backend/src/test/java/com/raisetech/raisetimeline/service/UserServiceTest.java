@@ -227,14 +227,18 @@ class UserServiceTest {
          * <p>実際の同時実行は再現が不安定になるため、<strong>調べた結果は「空いている」なのに
          * 書き込みが制約違反で失敗する</strong>という状況をモックで作って確かめる。</p>
          *
-         * <p><strong>【現状の挙動・Issue #79】</strong>この例外を受け止める場所が無いため、
-         * そのまま外へ出て {@code GlobalExceptionHandler} の catch-all に落ち、500 になる。
-         * 本来は重複を検知したときと同じ 409（{@link UsernameAlreadyExistsException}）を返すべき。
-         * 修正は別Issueで行い、そのときこの期待値を書き換える。</p>
+         * <p><strong>Service はこの例外を変換しない。そのまま外へ出すのが正しい。</strong>
+         * 409 への変換は {@code GlobalExceptionHandler} の {@code handleDuplicateKey} が担当する
+         * （Issue #81 で追加）。ここで {@link UsernameAlreadyExistsException} に包み直すと、
+         * 同じ形の {@code try/catch} が {@code AuthService} にも要る＝**同じ知識が2か所に散る**。
+         * ユニーク制約はDBが持つものなので、その翻訳もDBに近い1か所にまとめる。</p>
+         *
+         * <p>この経路が返すHTTPステータスは {@code GlobalExceptionHandlerIntegrationTest}
+         * 「重複チェックをすり抜けた制約違反は409を返す」で確認している。</p>
          */
         @Test
-        @DisplayName("【現状の挙動・Issue #79】重複チェックをすり抜けた後の制約違反は、変換されずそのまま外に出る")
-        void leaksDuplicateKeyExceptionWhenCheckIsRaced() {
+        @DisplayName("重複チェックをすり抜けた後の制約違反は、Service では変換せずそのまま外に出す")
+        void propagatesDuplicateKeyExceptionToHandler() {
             when(userMapper.findById(USER_ID)).thenReturn(Optional.of(user(null)));
             // 調べた時点では空いている
             when(userMapper.existsByUsernameExcludingSelf(USERNAME, USER_ID)).thenReturn(false);

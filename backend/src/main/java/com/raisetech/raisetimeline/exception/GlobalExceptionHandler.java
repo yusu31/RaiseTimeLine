@@ -3,11 +3,13 @@ package com.raisetech.raisetimeline.exception;
 import com.raisetech.raisetimeline.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -25,6 +27,26 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message);
     }
 
+    /**
+     * クエリパラメータやパス変数を引数の型へ変換できないときに 400 を返す。
+     *
+     * <p>{@code ?page=abc} や {@code /api/posts/abc} のように、数値のはずの場所に
+     * 数値でない値が来ると Spring MVC は {@link MethodArgumentTypeMismatchException} を投げる。
+     * 専用のハンドラが無いと下の catch-all に落ち、<strong>500</strong>（サーバー側が壊れた）を
+     * 返してしまう。実際は送られてきた値の形式が不正なだけなので 400 が正しい。
+     *
+     * <p>取り違えると、監視が見る 5xx が日常的に鳴り、本当にサーバーが壊れたときに埋もれる。
+     *
+     * <p><strong>受け取った値そのものは本文に含めない。</strong>リクエストに仕込まれた文字列を
+     * そのまま返すことになるため。どの項目が不正かだけを伝える。
+     * ログも WARN 1行にとどめる（外部からのスキャンで日常的に発生し、スタックトレースは過剰）。
+     */
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        log.warn("パラメータの型変換に失敗しました: name={}", ex.getName());
+        return build(HttpStatus.BAD_REQUEST, "パラメータ " + ex.getName() + " の形式が正しくありません");
+    }
+
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
         return build(HttpStatus.CONFLICT, ex.getMessage());
@@ -33,6 +55,29 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
         return build(HttpStatus.CONFLICT, ex.getMessage());
+    }
+
+    /**
+     * DBのユニーク制約に違反したときに 409 を返す。
+     *
+     * <p>Service は書き込む前に「重複していないか」を調べているが、
+     * <strong>調べてから書き込むまでのあいだ</strong>に別のリクエストが同じ値を取ると、
+     * 書き込みの時点で制約違反になる（{@code uk_users_email} / {@code uk_users_username}）。
+     * 専用のハンドラが無いと catch-all に落ち、500 を返してしまう。
+     *
+     * <p><strong>ここは事前チェックの代わりではなく、その隙間の受け皿。</strong>
+     * ふだんの重複は Service が {@link UsernameAlreadyExistsException} などで弾いており、
+     * そちらは「@ユーザー名」「メールアドレス」と項目名の入った文言を返す。
+     * このハンドラに到達するのは競合したときだけなので、
+     * <strong>どの制約に違反したかは推測せず</strong>、一般的な文言にとどめる。
+     *
+     * <p>制約名（{@code uk_users_username}）はDBの内部構造なので本文に含めない。
+     * ログには残す（どの制約で競合したかは運用側では知りたいため）。
+     */
+    @ExceptionHandler(DuplicateKeyException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateKey(DuplicateKeyException ex) {
+        log.warn("ユニーク制約違反が発生しました（重複チェックとの競合の可能性）", ex);
+        return build(HttpStatus.CONFLICT, "入力された値は既に使われています。入力内容を確認してください");
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)

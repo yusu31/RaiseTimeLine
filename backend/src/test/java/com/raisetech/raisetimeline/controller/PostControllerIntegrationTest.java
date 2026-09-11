@@ -12,6 +12,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -424,63 +425,76 @@ class PostControllerIntegrationTest {
     }
 
     // ------------------------------------------------------------------
-    // 想定外の入力（Issue #79）
+    // 想定外の入力（Issue #79 で発見）
     //
     // ブラウザの通常操作では起こらないが、URLを手で書き換えれば誰でも送れる入力を確かめる。
-    // ここに並ぶ「現状500」は、いずれも直すべきバグ。修正は別Issueで行い、
-    // そのときこの期待値を 400 や 200 に書き換える（その書き換えが「赤の確認」になる）。
     //
-    // なぜ 500 のままではいけないか: 500 は「サーバー側が壊れた」という意味であり、
-    // 送られてきた値の形式が不正なだけの場合は 400 が正しい。取り違えると、
-    // 本当にサーバーが壊れたときにログの中で埋もれて気づけなくなる。
+    // 型変換の失敗は Issue #81 で 400 に直した。
+    // 500 は「サーバー側が壊れた」という意味であり、送られてきた値の形式が不正なだけの場合は
+    // 400 が正しい。取り違えると、本当にサーバーが壊れたときにログの中で埋もれて気づけなくなる。
+    //
+    // けた溢れ（下記）はまだ 500 のまま。Issue #82 で直す。
     // ------------------------------------------------------------------
 
     @Test
-    void ページ番号が数値でないと現状は500が返る_本来は400() throws Exception {
+    void ページ番号が数値でないと400が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
-        // 型変換の失敗（MethodArgumentTypeMismatchException）専用のハンドラが
-        // GlobalExceptionHandler に無く、catch-all の Exception ハンドラに落ちている
         mockMvc.perform(get("/api/posts").param("page", "abc")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400));
     }
 
     @Test
-    void ページサイズが数値でないと現状は500が返る_本来は400() throws Exception {
+    void ページサイズが数値でないと400が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(get("/api/posts").param("size", "abc")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void 投稿IDが数値でないと現状は500が返る_本来は400() throws Exception {
+    void 投稿IDが数値でないと400が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(get("/api/posts/abc")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void 新着件数のafterIdが数値でないと現状は500が返る_本来は400() throws Exception {
+    void 新着件数のafterIdが数値でないと400が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         mockMvc.perform(get("/api/posts/new-count").param("afterId", "abc")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
-    void ページ番号がintの範囲を超えると現状は500が返る_本来は400() throws Exception {
+    void ページ番号がintの範囲を超えると400が返る() throws Exception {
         String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
 
         // 数字ではあるが int に収まらない。これも型変換の失敗として扱われる
         mockMvc.perform(get("/api/posts").param("page", "99999999999")
                         .header("Authorization", "Bearer " + accessToken))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 投稿IDが数値でないときエラー本文に送信された値をそのまま含めない() throws Exception {
+        String accessToken = signupAndGetAccessToken("suzuki@example.com", "鈴木");
+
+        // 受け取った値をそのまま返すと、リクエストに仕込まれた文字列を画面へ持ち帰ることになる。
+        // どの項目が不正かは伝えるが、送られてきた中身は返さない
+        String body = mockMvc.perform(get("/api/posts/should-not-be-echoed")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(body).doesNotContain("should-not-be-echoed");
     }
 
     @Test
