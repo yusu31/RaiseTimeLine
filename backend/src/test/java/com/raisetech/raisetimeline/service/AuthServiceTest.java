@@ -133,13 +133,15 @@ class AuthServiceTest {
          * そのあいだに同じメールアドレス・@ユーザー名で別の登録が完了すると、
          * 書き込み時に DB のユニーク制約（{@code uk_users_email} / {@code uk_users_username}）に当たる。
          *
-         * <p><strong>【現状の挙動・Issue #79】</strong>この例外を受け止める場所が無いため、
-         * catch-all に落ちて 500 になる。本来は 409 を返すべき。
-         * プロフィール更新側にも同じ隙間がある（{@code UserServiceTest} 参照）。</p>
+         * <p><strong>Service はこの例外を変換しない。そのまま外へ出すのが正しい。</strong>
+         * 409 への変換は {@code GlobalExceptionHandler} の {@code handleDuplicateKey} が担当する
+         * （Issue #81 で追加）。プロフィール更新側にも同じ隙間があり
+         * （{@code UserServiceTest} 参照）、<strong>2か所で同じ翻訳を書かないため</strong>に
+         * ハンドラ側へ寄せた。</p>
          */
         @Test
-        @DisplayName("【現状の挙動・Issue #79】登録済みチェックをすり抜けた後の制約違反は、変換されずそのまま外に出る")
-        void leaksDuplicateKeyExceptionWhenCheckIsRaced() {
+        @DisplayName("登録済みチェックをすり抜けた後の制約違反は、Service では変換せずそのまま外に出す")
+        void propagatesDuplicateKeyExceptionToHandler() {
             // 調べた時点ではどちらも未使用
             when(userMapper.existsByEmail(anyString())).thenReturn(false);
             when(userMapper.existsByUsername(anyString())).thenReturn(false);
