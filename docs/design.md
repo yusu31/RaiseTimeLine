@@ -228,6 +228,12 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
 > **ポイント:** `page`フィールドを持たない（`GET /api/posts`のoffsetページネーションとは別の概念のため）。
 > `hasMore`は取得件数が上限（50件）を超えた場合に`true`になる。
 
+> **【厳守】offset は `long` で計算する**（Issue #82）。`page` に上限を設けていないため、
+> `page × size` は `int` の範囲（約21億）を超えうる。`int` で計算すると**エラーも出ずに
+> 一周して負の数になり**、負の `OFFSET` を PostgreSQL が拒否して 500 になる。
+> `PostService` の4か所と `PostMapper` の引数を `long` にしてある。**`(long)` のキャストを外さない。**
+> ケース設計と境界値は `docs/testing-design.md` 14-2 が正本。
+
 ### GET /api/posts?q={keyword}（投稿検索）
 
 レスポンス形式はタイムライン取得（`GET /api/posts`）と同じ（`posts` / `page` / `hasNext`）。

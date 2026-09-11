@@ -350,7 +350,7 @@ class PostServiceTest {
         @Test
         @DisplayName("取得件数が表示件数と同じなら、次のページは無いと判定する（20件 → hasNext=false）")
         void hasNextIsFalseWhenExactlyPageSize() {
-            when(postMapper.selectTimeline(anyInt(), anyInt(), any())).thenReturn(rows(DEFAULT_PAGE_SIZE));
+            when(postMapper.selectTimeline(anyInt(), anyLong(), any())).thenReturn(rows(DEFAULT_PAGE_SIZE));
 
             PostListResponse response = postService.getTimeline(0, DEFAULT_PAGE_SIZE, USER_ID);
 
@@ -361,7 +361,7 @@ class PostServiceTest {
         @Test
         @DisplayName("表示件数より1件多く取得できたら、次のページがあると判定し、余分な1件は返さない（21件 → hasNext=true・20件）")
         void hasNextIsTrueWhenOneMoreRowExists() {
-            when(postMapper.selectTimeline(anyInt(), anyInt(), any())).thenReturn(rows(DEFAULT_PAGE_SIZE + 1));
+            when(postMapper.selectTimeline(anyInt(), anyLong(), any())).thenReturn(rows(DEFAULT_PAGE_SIZE + 1));
 
             PostListResponse response = postService.getTimeline(0, DEFAULT_PAGE_SIZE, USER_ID);
 
@@ -373,7 +373,7 @@ class PostServiceTest {
         @Test
         @DisplayName("投稿が1件も無ければ、空のリストと hasNext=false を返す")
         void returnsEmptyResultWhenNoPosts() {
-            when(postMapper.selectTimeline(anyInt(), anyInt(), any())).thenReturn(List.of());
+            when(postMapper.selectTimeline(anyInt(), anyLong(), any())).thenReturn(List.of());
 
             PostListResponse response = postService.getTimeline(0, DEFAULT_PAGE_SIZE, USER_ID);
 
@@ -407,79 +407,91 @@ class PostServiceTest {
     /**
      * ブラウザの通常操作では起こらないが、URLを手で書き換えれば誰でも送れる入力を確かめる（Issue #79）。
      *
-     * <p><strong>けた溢れについて。</strong>{@code offset} は {@code page × size} で計算しているが、
-     * {@code page} には上限が無い（{@code Math.max(page, 0)} で下限だけ押さえている）。
-     * {@code int} は約21億までしか表せないため、掛け算の結果が範囲を超えると
-     * 一周して負の数になる。負の {@code OFFSET} は PostgreSQL が受け付けないため、
-     * 実際のAPIでは 500 になる。<strong>これはバグであり、修正は別Issueで行う。</strong>
-     * ここでは「いま何が起きているか」を記録し、修正時にこの期待値を正しい値へ書き換える
-     * （その書き換えがそのまま「赤の確認」になる）。</p>
+     * <p><strong>ページ位置のけた溢れについて（Issue #82 で修正）。</strong>
+     * {@code offset} は {@code page × size} で求めるが、{@code page} には上限が無い
+     * （{@code Math.max(page, 0)} で下限だけ押さえている）。
+     * {@code int} は約21億までしか表せないため、以前は掛け算の結果が範囲を超えると
+     * <strong>一周して負の数になり</strong>、負の {@code OFFSET} を PostgreSQL が拒否して 500 になっていた。
+     *
+     * <p>いまは {@code long} で計算しているので、けた溢れる余地そのものが無い
+     * （{@code int} の最大値 × ページサイズの上限100 でも約2,147億で、{@code long} の上限の
+     * 100万分の1にも届かない）。<strong>ここで守っているのは「大きなページ番号でも
+     * 正しい位置を渡すこと」。</strong>境目の前後を対で置いて、片方だけ壊れたときに気づけるようにする。</p>
      */
     @Nested
     @DisplayName("想定外の入力（極端なページ番号・絵文字）")
     class UnexpectedInput {
 
-        /** けた溢れが起きない最大のページ番号（× 20 = 2147483640 で int に収まる） */
-        private static final int LARGEST_SAFE_PAGE = 107374182;
+        /** 掛け算の結果が int に収まる最大のページ番号（× 20 = 2147483640） */
+        private static final int LARGEST_PAGE_FITTING_IN_INT = 107374182;
 
-        /** けた溢れが起きる最小のページ番号（× 20 = 2147483660 で int の範囲を超える） */
-        private static final int SMALLEST_OVERFLOWING_PAGE = 107374183;
+        /** 掛け算の結果が int の範囲を超える最小のページ番号（× 20 = 2147483660） */
+        private static final int SMALLEST_PAGE_EXCEEDING_INT = 107374183;
 
         @Test
-        @DisplayName("けた溢れの直前のページ番号なら、正しい offset を渡す（境界の内側）")
-        void passesCorrectOffsetJustBeforeOverflow() {
-            int safeOffset = LARGEST_SAFE_PAGE * DEFAULT_PAGE_SIZE;
+        @DisplayName("掛け算の結果が int に収まる範囲では、正しい offset を渡す（境界の内側）")
+        void passesCorrectOffsetWhenProductFitsInInt() {
+            long expected = (long) LARGEST_PAGE_FITTING_IN_INT * DEFAULT_PAGE_SIZE;
             // 前提の明示: ここはまだ int に収まっている
-            assertThat(safeOffset).isPositive();
+            assertThat(expected).isLessThanOrEqualTo(Integer.MAX_VALUE);
 
-            postService.getTimeline(LARGEST_SAFE_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+            postService.getTimeline(LARGEST_PAGE_FITTING_IN_INT, DEFAULT_PAGE_SIZE, USER_ID);
 
-            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, safeOffset, USER_ID);
+            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
         }
 
         @Test
-        @DisplayName("【現状の挙動・Issue #79】ページ番号が1つ大きくなるとけた溢れし、負の offset を渡してしまう")
-        void passesNegativeOffsetOnOverflow() {
-            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
-            // 前提の明示: この掛け算は int の範囲を超え、一周して負の数になる
-            assertThat(overflowedOffset).isNegative();
+        @DisplayName("ページ番号が1つ大きく、掛け算が int の範囲を超えても、正しい offset を渡す（境界の外側）")
+        void passesCorrectOffsetWhenProductExceedsInt() {
+            long expected = (long) SMALLEST_PAGE_EXCEEDING_INT * DEFAULT_PAGE_SIZE;
+            // 前提の明示: int で計算していたら一周して負になっていた値
+            assertThat(expected).isGreaterThan(Integer.MAX_VALUE);
+            assertThat(SMALLEST_PAGE_EXCEEDING_INT * DEFAULT_PAGE_SIZE).isNegative();
 
-            postService.getTimeline(SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+            postService.getTimeline(SMALLEST_PAGE_EXCEEDING_INT, DEFAULT_PAGE_SIZE, USER_ID);
 
-            // 本来は「その位置に投稿は無い」として空ページを返すべきところ、
-            // 負の値がそのまま OFFSET として SQL に渡っている
-            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
         }
 
         @Test
-        @DisplayName("【現状の挙動・Issue #79】フォロー中タイムラインでも同じけた溢れが起きる")
-        void followingTimelineOverflowsTheSameWay() {
-            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+        @DisplayName("ページ番号が int の最大値でも、正しい offset を渡す")
+        void passesCorrectOffsetForMaxIntPage() {
+            long expected = (long) Integer.MAX_VALUE * DEFAULT_PAGE_SIZE;
 
-            postService.getFollowingTimeline(SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+            postService.getTimeline(Integer.MAX_VALUE, DEFAULT_PAGE_SIZE, USER_ID);
 
-            verify(postMapper).selectFollowingTimeline(DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+            verify(postMapper).selectTimeline(DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
         }
 
         @Test
-        @DisplayName("【現状の挙動・Issue #79】プロフィールの投稿一覧でも同じけた溢れが起きる")
-        void postsByAuthorOverflowsTheSameWay() {
-            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+        @DisplayName("フォロー中タイムラインでも、int の範囲を超える位置で正しい offset を渡す")
+        void followingTimelineHandlesLargeOffset() {
+            long expected = (long) SMALLEST_PAGE_EXCEEDING_INT * DEFAULT_PAGE_SIZE;
 
-            postService.getPostsByAuthor(OTHER_USER_ID, SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+            postService.getFollowingTimeline(SMALLEST_PAGE_EXCEEDING_INT, DEFAULT_PAGE_SIZE, USER_ID);
 
-            verify(postMapper).selectByAuthorId(OTHER_USER_ID, DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+            verify(postMapper).selectFollowingTimeline(DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
         }
 
         @Test
-        @DisplayName("【現状の挙動・Issue #79】投稿検索でも同じけた溢れが起きる")
-        void searchPostsOverflowsTheSameWay() {
-            int overflowedOffset = SMALLEST_OVERFLOWING_PAGE * DEFAULT_PAGE_SIZE;
+        @DisplayName("プロフィールの投稿一覧でも、int の範囲を超える位置で正しい offset を渡す")
+        void postsByAuthorHandlesLargeOffset() {
+            long expected = (long) SMALLEST_PAGE_EXCEEDING_INT * DEFAULT_PAGE_SIZE;
+
+            postService.getPostsByAuthor(OTHER_USER_ID, SMALLEST_PAGE_EXCEEDING_INT, DEFAULT_PAGE_SIZE, USER_ID);
+
+            verify(postMapper).selectByAuthorId(OTHER_USER_ID, DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
+        }
+
+        @Test
+        @DisplayName("投稿検索でも、int の範囲を超える位置で正しい offset を渡す")
+        void searchPostsHandlesLargeOffset() {
+            long expected = (long) SMALLEST_PAGE_EXCEEDING_INT * DEFAULT_PAGE_SIZE;
             when(searchKeyword.normalize("天気")).thenReturn("天気");
 
-            postService.searchPosts("天気", SMALLEST_OVERFLOWING_PAGE, DEFAULT_PAGE_SIZE, USER_ID);
+            postService.searchPosts("天気", SMALLEST_PAGE_EXCEEDING_INT, DEFAULT_PAGE_SIZE, USER_ID);
 
-            verify(postMapper).selectByKeyword("天気", DEFAULT_PAGE_SIZE + 1, overflowedOffset, USER_ID);
+            verify(postMapper).selectByKeyword("天気", DEFAULT_PAGE_SIZE + 1, expected, USER_ID);
         }
 
         @Test
@@ -524,7 +536,7 @@ class PostServiceTest {
             assertThat(response.posts()).isEmpty();
             assertThat(response.hasNext()).isFalse();
             // 空文字で検索すると ILIKE '%%' が全投稿に一致してしまう
-            verify(postMapper, never()).selectByKeyword(anyString(), anyInt(), anyInt(), any());
+            verify(postMapper, never()).selectByKeyword(anyString(), anyInt(), anyLong(), any());
         }
 
         @Test
@@ -541,7 +553,7 @@ class PostServiceTest {
         @DisplayName("検索結果でも「次のページがあるか」を同じ規則で判定する")
         void appliesSamePagingRule() {
             when(searchKeyword.normalize(anyString())).thenReturn("テスト");
-            when(postMapper.selectByKeyword(anyString(), anyInt(), anyInt(), any()))
+            when(postMapper.selectByKeyword(anyString(), anyInt(), anyLong(), any()))
                     .thenReturn(rows(DEFAULT_PAGE_SIZE + 1));
 
             PostListResponse response = postService.searchPosts("テスト", 0, DEFAULT_PAGE_SIZE, USER_ID);
