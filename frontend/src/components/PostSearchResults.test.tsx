@@ -1,7 +1,9 @@
 import { render, screen, waitFor } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
+import { likePost } from '../api/likeApi'
 import { searchPosts } from '../api/postApi'
 import type { AuthContextValue } from '../context/AuthContext'
 import { useAuth } from '../hooks/useAuth'
@@ -20,6 +22,11 @@ vi.mock('../api/postApi', () => ({
   updatePost: vi.fn(),
 }))
 
+vi.mock('../api/likeApi', () => ({
+  likePost: vi.fn(),
+  unlikePost: vi.fn(),
+}))
+
 const { authorizedRequestMock } = vi.hoisted(() => ({ authorizedRequestMock: vi.fn() }))
 vi.mock('../hooks/useAuthorizedRequest', () => ({
   useAuthorizedRequest: () => authorizedRequestMock,
@@ -34,8 +41,15 @@ vi.mock('../hooks/useAuth', () => ({
  * テストを動かす jsdom にはこの仕組みが無いため、何もしない偽物を置いて描画できるようにする。
  * 全テスト共通の setup.ts ではなくこのファイルに閉じ込めるのは、
  * 関係のないテストにまで偽物を持ち込まないためである。
+ *
+ * さらに、渡された関数を覚えておくことで「リスト末尾が画面に入った」状況を
+ * テストから作れるようにする（jsdom ではスクロールが起きないため）。
  */
+let triggerScrollToBottom: (() => void) | null = null
 class IntersectionObserverStub {
+  constructor(callback: IntersectionObserverCallback) {
+    triggerScrollToBottom = () => callback([{ isIntersecting: true }] as never, this as never)
+  }
   observe() {}
   unobserve() {}
   disconnect() {}
@@ -43,6 +57,7 @@ class IntersectionObserverStub {
 vi.stubGlobal('IntersectionObserver', IntersectionObserverStub)
 
 const searchPostsMock = vi.mocked(searchPosts)
+const likePostMock = vi.mocked(likePost)
 const useAuthMock = vi.mocked(useAuth)
 
 const LOGIN_USER_ID = 10
@@ -65,6 +80,12 @@ const otherPost: Post = {
   author: { id: 99, username: 'user1', displayName: '鈴木', iconImageUrl: null },
 }
 
+/** いいね数3。ボタンを名前で特定するための目印も兼ねる */
+const likeablePost: Post = { ...otherPost, id: 3, content: 'いいねできる投稿', likeCount: 3 }
+
+/** 2ページ目として返す投稿。一覧に増えたことで「通信が終わった」と判定できる */
+const secondPagePost: Post = { ...otherPost, id: 4, content: '2ページ目の投稿' }
+
 function listOf(posts: Post[]): PostListResponse {
   return { posts, page: 0, hasNext: false }
 }
@@ -77,8 +98,24 @@ function renderResults(keyword: string) {
   )
 }
 
+/**
+ * リスト末尾が画面に入った状況を作る。
+ *
+ * **監視が始まるのを待ってから呼ぶ。** 検索結果が表示された直後はまだ
+ * 「次のページがある」状態が反映されておらず、監視が始まっていないことがある。
+ * 待たずに呼ぶと、たまに落ちるテスト（フレーキーテスト）になる（実際に発生した）。
+ *
+ * いつまでも始まらない場合は黙って素通りせず失敗させる。
+ */
+async function scrollToBottom() {
+  await waitFor(() => expect(triggerScrollToBottom).not.toBeNull())
+  triggerScrollToBottom?.()
+}
+
 beforeEach(() => {
   searchPostsMock.mockReset()
+  likePostMock.mockReset()
+  triggerScrollToBottom = null
   useAuthMock.mockReturnValue({
     user: { id: LOGIN_USER_ID, username: 'demo_user', displayName: 'デモ太郎', email: 'demo@example.com' },
     accessToken: 'dummy',
@@ -210,5 +247,50 @@ describe('PostSearchResults — 通信の追い越し', () => {
 
     await waitFor(() => expect(screen.queryByText('他の人が書いた投稿')).not.toBeInTheDocument())
     expect(screen.getByText('テストの書き方を調べた')).toBeInTheDocument()
+  })
+})
+
+/**
+ * 一度出したエラーを、次の操作が成功したときに消せているか（Issue #85）。
+ *
+ * 消していないと、通信が回復して操作が成功しても前のエラーが残り続け、
+ * 利用者からは成功したのか失敗したのか判断できない。
+ * 判定の前に「何かが起きたこと」を待つ（PR #78 の教訓）。
+ */
+describe('PostSearchResults — 失敗したあとに操作をやり直したとき', () => {
+  it('いいねをやり直して成功すると、前のエラーメッセージが消える', async () => {
+    const user = userEvent.setup()
+    searchPostsMock.mockResolvedValue(listOf([likeablePost]))
+    likePostMock
+      .mockRejectedValueOnce(new ApiError(404, '投稿が見つかりません'))
+      .mockResolvedValueOnce({ likeCount: 4, likedByMe: true })
+
+    renderResults('いいね')
+    await user.click(await screen.findByRole('button', { name: /3/ }))
+    await screen.findByText('投稿が見つかりません')
+
+    // 失敗しているのでいいね数は3のまま。同じボタンをもう一度押せる
+    await user.click(await screen.findByRole('button', { name: /3/ }))
+    await screen.findByRole('button', { name: /4/ })
+
+    expect(screen.queryByText('投稿が見つかりません')).not.toBeInTheDocument()
+  })
+
+  it('次のページの読み込みをやり直して成功すると、前のエラーメッセージが消える', async () => {
+    searchPostsMock.mockResolvedValueOnce({ posts: [otherPost], page: 0, hasNext: true })
+    searchPostsMock.mockRejectedValueOnce(new ApiError(500, '検索に失敗しました'))
+    searchPostsMock.mockResolvedValueOnce({ posts: [secondPagePost], page: 1, hasNext: false })
+
+    renderResults('投稿')
+    await screen.findByText('他の人が書いた投稿')
+
+    await scrollToBottom()
+    await screen.findByText('検索に失敗しました')
+
+    await scrollToBottom()
+    // 2回目の通信が終わったことを、2ページ目が一覧に増えたことで確かめる
+    await screen.findByText('2ページ目の投稿')
+
+    expect(screen.queryByText('検索に失敗しました')).not.toBeInTheDocument()
   })
 })

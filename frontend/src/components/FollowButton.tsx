@@ -13,7 +13,12 @@ type FollowButtonProps = {
   followedByMe: boolean
   /** フォロー状態が変わったときに最新の状態を親へ伝える */
   onChanged: (status: FollowStatus) => void
-  onError: (message: string) => void
+  /**
+   * 失敗したら文言を、やり直したら `null` を渡す。
+   * このボタンは自分で通信するため失敗を最初に知るのはここだが、
+   * 画面に出すのは親なので「消して」も親へ伝えないと前のエラーが残り続ける（Issue #85）。
+   */
+  onError: (message: string | null) => void
   size?: 'sm' | 'md'
 }
 
@@ -40,6 +45,8 @@ export function FollowButton({
 
   const handleFollow = async () => {
     setIsSubmitting(true)
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    onError(null)
     try {
       onChanged(await followUser(authorizedRequest, username))
     } catch (err) {

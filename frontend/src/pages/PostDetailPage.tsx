@@ -92,6 +92,8 @@ export function PostDetailPage() {
   // 受け取らないと LikeButton 側に握られて画面には何も出ない（Issue #77）
   const handleToggleLike = async () => {
     if (!post) return
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const updated = post.likedByMe
         ? await unlikePost(authorizedRequest, post.id)

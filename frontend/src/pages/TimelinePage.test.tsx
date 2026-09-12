@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../api/client'
 import { likePost } from '../api/likeApi'
-import { fetchNewPostsCount, fetchTimeline } from '../api/postApi'
+import { fetchNewPosts, fetchNewPostsCount, fetchTimeline } from '../api/postApi'
 import type { AuthContextValue } from '../context/AuthContext'
 import { useAuth } from '../hooks/useAuth'
 import type { Post, PostListResponse } from '../types/post'
@@ -54,6 +54,7 @@ vi.stubGlobal('IntersectionObserver', IntersectionObserverStub)
 
 const fetchTimelineMock = vi.mocked(fetchTimeline)
 const fetchNewPostsCountMock = vi.mocked(fetchNewPostsCount)
+const fetchNewPostsMock = vi.mocked(fetchNewPosts)
 const likePostMock = vi.mocked(likePost)
 const useAuthMock = vi.mocked(useAuth)
 
@@ -69,6 +70,18 @@ const notLikedPost: Post = {
   commentCount: 0,
   likedByMe: false,
   createdAt: '2026-06-15T12:00:00+09:00',
+}
+
+/** 新着として後から届く投稿。一覧に増えたことで「通信が終わった」と判定できる */
+const newerPost: Post = {
+  id: 2,
+  content: 'あとから届いた投稿',
+  imageUrl: null,
+  author: { id: 98, username: 'user2', displayName: '佐藤', iconImageUrl: null },
+  likeCount: 0,
+  commentCount: 0,
+  likedByMe: false,
+  createdAt: '2026-06-15T13:00:00+09:00',
 }
 
 function listOf(posts: Post[]): PostListResponse {
@@ -91,6 +104,8 @@ async function clickLikeButton(user: ReturnType<typeof userEvent.setup>) {
 beforeEach(() => {
   fetchTimelineMock.mockReset()
   likePostMock.mockReset()
+  fetchNewPostsMock.mockReset()
+  fetchNewPostsCountMock.mockReset()
   fetchTimelineMock.mockResolvedValue(listOf([notLikedPost]))
   // 新着チェックは30秒ごとのポーリングで、テスト中に発火することはない。
   // それでも呼ばれたときに落ちないよう、件数0を返しておく
@@ -159,5 +174,58 @@ describe('TimelinePage — いいねに失敗したとき', () => {
     await clickLikeButton(user)
 
     expect(await screen.findByText('通信中にエラーが発生しました')).toBeInTheDocument()
+  })
+})
+
+/**
+ * 一度出したエラーを、次の操作が成功したときに消せているか（Issue #85）。
+ *
+ * 消していないと、通信が回復して操作が成功しても「通信中にエラーが発生しました」が
+ * 残り続け、利用者からは成功したのか失敗したのか判断できない。
+ *
+ * **判定の前に「何かが起きたこと」を待つ。** クリック直後に queryByText を見ると、
+ * エラーが消えたのではなく「まだ次の通信が終わっていないだけ」で緑になる（PR #78 の教訓）。
+ */
+describe('TimelinePage — 失敗したあとに操作をやり直したとき', () => {
+  it('いいねをやり直して成功すると、前のエラーメッセージが消える', async () => {
+    const user = userEvent.setup()
+    likePostMock
+      .mockRejectedValueOnce(new ApiError(404, '投稿が見つかりません'))
+      .mockResolvedValueOnce({ likeCount: 4, likedByMe: true })
+
+    renderTimeline()
+    await clickLikeButton(user)
+    // 1回目の失敗が画面に出たことを確かめてから、2回目に進む
+    await screen.findByText('投稿が見つかりません')
+
+    // 失敗しているのでいいね数は3のまま。同じボタンをもう一度押せる
+    await clickLikeButton(user)
+    // 2回目の通信が終わったことを、いいね数の更新で確かめる
+    await screen.findByRole('button', { name: /4/ })
+
+    expect(screen.queryByText('投稿が見つかりません')).not.toBeInTheDocument()
+  })
+
+  it('新着の読み込みをやり直して成功すると、前のエラーメッセージが消える', async () => {
+    const user = userEvent.setup()
+    // 新着バナーを出す。タブに戻ったときの即時チェックを利用する（30秒待たない）
+    fetchNewPostsCountMock.mockResolvedValue({ count: 2 })
+    fetchNewPostsMock
+      .mockRejectedValueOnce(new ApiError(500, '新着の取得に失敗しました'))
+      .mockResolvedValueOnce({ posts: [newerPost], hasMore: false })
+
+    renderTimeline()
+    await screen.findByRole('button', { name: /3/ })
+    document.dispatchEvent(new Event('visibilitychange'))
+
+    const banner = await screen.findByRole('button', { name: /2件の新着を表示/ })
+    await user.click(banner)
+    await screen.findByText('新着の取得に失敗しました')
+
+    await user.click(await screen.findByRole('button', { name: /件の新着を表示/ }))
+    // 2回目の通信が終わったことを、新着の投稿が一覧に増えたことで確かめる
+    await screen.findByText('あとから届いた投稿')
+
+    expect(screen.queryByText('新着の取得に失敗しました')).not.toBeInTheDocument()
   })
 })

@@ -71,6 +71,8 @@ export function PostSearchResults({ keyword }: PostSearchResultsProps) {
   const handleLoadMore = useCallback(async () => {
     if (isLoadingMore || isLoading || !hasNext) return
     setIsLoadingMore(true)
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const response = await searchPosts(authorizedRequest, keyword, page + 1)
       setPosts((current) => [...current, ...response.posts])
@@ -86,6 +88,8 @@ export function PostSearchResults({ keyword }: PostSearchResultsProps) {
   const sentinelRef = useInfiniteScroll(hasNext, handleLoadMore)
 
   const handleToggleLike = async (post: Post) => {
+    // やり直したときに前のエラーを消す。消さないと成功しても古い文言が残り続ける（Issue #85）
+    setError(null)
     try {
       const status = post.likedByMe
         ? await unlikePost(authorizedRequest, post.id)
