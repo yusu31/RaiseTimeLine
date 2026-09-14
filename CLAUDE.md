@@ -95,6 +95,7 @@ Issue作成 → ブランチ作成 → 実装 → ローカルで動作確認 �
 - ブランチ命名: `{type}/{説明}-#{Issue番号}`（例: `feature/timeline-api-#5`）
 - コミットメッセージ: `{type}: {日本語説明}` + `Closes #番号`
 - **mainへの直接プッシュ禁止・force push禁止**（ブランチ保護ルールで強制済み）
+- **CIが緑でないとマージできない**（2026-09-14 に必須チェックを設定。詳細は `docs/tech-stack.md`）
 - **PRのマージはユーザー自身がGitHub上で確認して行う**（Claude/AIはマージ操作をしない）
 - マージ後のクリーンアップはClaudeが行う: `git checkout main` → `git pull` → `git branch -d 作業ブランチ` → `git remote prune origin`
 
