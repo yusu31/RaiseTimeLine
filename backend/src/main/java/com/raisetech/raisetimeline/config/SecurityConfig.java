@@ -1,5 +1,6 @@
 package com.raisetech.raisetimeline.config;
 
+import com.raisetech.raisetimeline.logging.RequestIdFilter;
 import com.raisetech.raisetimeline.security.JsonAccessDeniedHandler;
 import com.raisetech.raisetimeline.security.JsonAuthenticationEntryPoint;
 import com.raisetech.raisetimeline.security.JwtAuthenticationFilter;
@@ -24,15 +25,18 @@ import java.util.List;
 @EnableWebSecurity
 public class SecurityConfig {
 
+    private final RequestIdFilter requestIdFilter;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint;
     private final JsonAccessDeniedHandler jsonAccessDeniedHandler;
 
     public SecurityConfig(
+            RequestIdFilter requestIdFilter,
             JwtAuthenticationFilter jwtAuthenticationFilter,
             JsonAuthenticationEntryPoint jsonAuthenticationEntryPoint,
             JsonAccessDeniedHandler jsonAccessDeniedHandler
     ) {
+        this.requestIdFilter = requestIdFilter;
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.jsonAuthenticationEntryPoint = jsonAuthenticationEntryPoint;
         this.jsonAccessDeniedHandler = jsonAccessDeniedHandler;
@@ -53,7 +57,8 @@ public class SecurityConfig {
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint(jsonAuthenticationEntryPoint)
                         .accessDeniedHandler(jsonAccessDeniedHandler))
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestIdFilter, JwtAuthenticationFilter.class);
         return http.build();
     }
 

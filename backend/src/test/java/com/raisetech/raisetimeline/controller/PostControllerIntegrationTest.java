@@ -20,6 +20,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -59,6 +60,15 @@ class PostControllerIntegrationTest {
     void 認証なしで投稿一覧を取得すると401が返る() throws Exception {
         mockMvc.perform(get("/api/posts"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void レスポンスに相関IDのヘッダーが付く() throws Exception {
+        // 認証の有無に関わらず全リクエストに相関ID（X-Request-Id）が付くことを確認する。
+        // 未認証（401）のリクエストで確認することで「認証を通過したリクエストだけ」ではなく
+        // フィルタチェーンの最初の方で全リクエストがカバーされていることを検証できる
+        mockMvc.perform(get("/api/posts"))
+                .andExpect(header().exists("X-Request-Id"));
     }
 
     @Test

@@ -91,6 +91,10 @@ tasks.register('structuredLoggingTest', Test) {
     }
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+    // クラスごとに新しいJVMで実行する。このタスク内には異なる logging プロファイルを
+    // 検証するテストクラスが複数あり、同じJVMで連続実行すると、先に起動した方の
+    // ログ設定（Logback の LoggerContext はJVM内で共有）が後続に引き継がれてしまう
+    forkEvery = 1
     afterSuite(printTestSummary)
 }
 
