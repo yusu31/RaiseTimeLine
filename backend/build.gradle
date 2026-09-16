@@ -54,23 +54,48 @@ tasks.named('compileJava') {
     options.compilerArgs << '-Xlint:deprecation'
 }
 
-tasks.named('test') {
-    useJUnitPlatform()
-
-    // テストの実行件数をログに出す。
-    // Gradle は既定では結果の件数を表示しないため、テストが 1 件も実行されていなくても
-    // BUILD SUCCESSFUL と表示される。「緑になった」だけで検証されたと誤認しないための保険。
-    // desc.parent == null は「個々のクラスではなく全体の集計結果」を意味する
-    afterSuite { desc, result ->
-        if (desc.parent == null) {
-            println "テスト結果: ${result.resultType} / 実行 ${result.testCount} 件 " +
-                    "(成功 ${result.successfulTestCount} / 失敗 ${result.failedTestCount} / スキップ ${result.skippedTestCount})"
-        }
+// テストの実行件数をログに出す。afterSuite の中身は複数の Test タスクで共通利用する。
+// Gradle は既定では結果の件数を表示しないため、テストが 1 件も実行されていなくても
+// BUILD SUCCESSFUL と表示される。「緑になった」だけで検証されたと誤認しないための保険。
+// desc.parent == null は「個々のクラスではなく全体の集計結果」を意味する
+def printTestSummary = { desc, result ->
+    if (desc.parent == null) {
+        println "テスト結果: ${result.resultType} / 実行 ${result.testCount} 件 " +
+                "(成功 ${result.successfulTestCount} / 失敗 ${result.failedTestCount} / スキップ ${result.skippedTestCount})"
     }
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        // requiresIsolatedJvm は別タスク（structuredLoggingTest）で専用JVMで実行するため、
+        // ここでは除外する。理由は StructuredLoggingConfigTest のクラスコメント参照
+        excludeTags 'requiresIsolatedJvm'
+    }
+
+    afterSuite(printTestSummary)
 
     // テストが終わったら続けてカバレッジのレポートを作る。
     // 別コマンドにすると「テストは流したがレポートを見ていない」状態になりやすいため、自動でつなげる
     finalizedBy tasks.named('jacocoTestReport')
+}
+
+// ロギングの実体（Logback の LoggerContext）はJVM内で1つの共有状態のため、
+// 異なる logging プロファイルを検証するテストは他のテストと同じJVMで動かすと
+// 初期化が競合し、実行順序によって結果が変わってしまう（実機で確認済み）。
+// そのため専用のタスクを切り、別JVMで実行する
+tasks.register('structuredLoggingTest', Test) {
+    description = '構造化ログのプロファイル切り替えを検証する（他のテストとログシステムの初期化が競合するため、専用JVMで実行する）'
+    group = 'verification'
+    useJUnitPlatform {
+        includeTags 'requiresIsolatedJvm'
+    }
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    afterSuite(printTestSummary)
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('structuredLoggingTest')
 }
 
 tasks.named('jacocoTestReport') {
