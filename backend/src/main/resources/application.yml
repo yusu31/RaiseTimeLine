@@ -31,3 +31,8 @@ jwt:
   secret: ${JWT_SECRET:local-dev-only-secret-key-please-change-32chars}
   access-token-validity: ${JWT_ACCESS_VALIDITY:30m}
   refresh-token-validity: ${JWT_REFRESH_VALIDITY:14d}
+
+logging:
+  level:
+    root: INFO
+    com.raisetech.raisetimeline: DEBUG

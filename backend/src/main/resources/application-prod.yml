@@ -1,0 +1,12 @@
+# 本番運用（SPRING_PROFILES_ACTIVE=prod）用のログ設定。
+# ローカル開発（application.yml）はDEBUGレベル・人間可読なコンソール出力のままにし、
+# 本番だけINFOレベル・JSON形式（Logstash構造化ログ）に切り替える。
+#
+# 実際にEC2側でこのプロファイルを有効化する配線は、デプロイフェーズの作業として別途行う。
+logging:
+  level:
+    root: INFO
+    com.raisetech.raisetimeline: INFO
+  structured:
+    format:
+      console: logstash
