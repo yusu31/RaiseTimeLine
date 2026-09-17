@@ -57,4 +57,18 @@ class LocalProfileLoggingTest {
 
         assertThat(output).contains("test-request-id-12345");
     }
+
+    @Test
+    void MDCに積んだuserIdがコンソール出力に含まれる(CapturedOutput output) {
+        // requestId と同じ理由でパターンへの明示的な組み込みが必要。
+        // JwtAuthenticationFilter が積むキー "userId" と一致させる
+        MDC.put("userId", "777");
+        try {
+            log.info("MDC-userId確認用メッセージ");
+        } finally {
+            MDC.remove("userId");
+        }
+
+        assertThat(output).contains("[userId:777]");
+    }
 }

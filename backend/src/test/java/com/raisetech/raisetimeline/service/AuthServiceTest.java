@@ -22,6 +22,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -46,7 +48,7 @@ import static org.mockito.Mockito.when;
  * 攻撃者に<strong>どのメールアドレスが登録済みかを教えてしまう</strong>。
  * メールが無い場合とパスワードが違う場合で、同じ文言を返すことをテストで固定する。</p>
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class AuthServiceTest {
 
     private static final long USER_ID = 10L;
@@ -282,6 +284,37 @@ class AuthServiceTest {
 
             assertThat(response.user().iconImageUrl()).isNull();
             verify(storageService, never()).toPublicUrl(any());
+        }
+
+        // --- ここから: 認証イベントのログ。「誰がいつログインしたか」を運用側が追えるようにする ---
+
+        @Test
+        @DisplayName("ログイン成功で INFO ログに userId を出す。メールアドレスは出さない")
+        void logsUserIdOnSuccessWithoutEmail(CapturedOutput output) {
+            when(userMapper.findByEmail(anyString())).thenReturn(Optional.of(existingUser(null)));
+            when(passwordEncoder.matches(RAW_PASSWORD, HASHED_PASSWORD)).thenReturn(true);
+            givenTokenIssued();
+
+            authService.login(new LoginRequest("suzuki@example.com", RAW_PASSWORD));
+
+            assertThat(output).contains("INFO");
+            assertThat(output).contains("ログインに成功しました: userId=" + USER_ID);
+            // メールアドレスは個人情報。ログ基盤（将来はCloudWatch等）の閲覧者に見せる必要はない
+            assertThat(output).doesNotContain("suzuki@example.com");
+        }
+
+        @Test
+        @DisplayName("ログイン失敗時、Service 層は何もログを出さない（WARN は GlobalExceptionHandler の責務）")
+        void doesNotLogOnFailure(CapturedOutput output) {
+            when(userMapper.findByEmail(anyString())).thenReturn(Optional.of(existingUser(null)));
+            when(passwordEncoder.matches("wrong", HASHED_PASSWORD)).thenReturn(false);
+
+            assertThatThrownBy(() -> authService.login(new LoginRequest("suzuki@example.com", "wrong")))
+                    .isInstanceOf(InvalidCredentialsException.class);
+
+            // Service と Handler の両方で出すと同じ失敗が2行になり、件数を数える監視が狂う
+            assertThat(output).doesNotContain("ログインに成功しました");
+            assertThat(output).doesNotContain("WARN");
         }
     }
 

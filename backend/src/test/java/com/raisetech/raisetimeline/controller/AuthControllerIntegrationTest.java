@@ -4,18 +4,23 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ExtendWith(OutputCaptureExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -133,6 +138,33 @@ class AuthControllerIntegrationTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.accessToken").exists());
+    }
+
+    /**
+     * MDC（リクエスト単位のメモ帳）に積んだ requestId が、Service 層の INFO ログにも
+     * 自動で載ることを確認する。Service の単体テストでは Filter が動かないため
+     * MDC 由来の項目は検証できず、この確認は Controller 統合テストでしか行えない。
+     */
+    @Test
+    void login成功のINFOログにrequestIdが載る(CapturedOutput output) throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(signupBody("suzuki@example.com", "鈴木", "password123")));
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"email":"suzuki@example.com","password":"password123"}
+                                """))
+                .andExpect(status().isOk());
+
+        String line = output.getOut().lines()
+                .filter(l -> l.contains("ログインに成功しました: userId=1"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("ログイン成功のINFOログが出力されていない"));
+        assertThat(line).contains("INFO");
+        // "[reqId:]" のように空で載っているだけでは意味がないので、値が入っていることまで見る
+        assertThat(line).matches(".*\\[reqId:[0-9a-f-]{36}\\].*");
     }
 
     @Test
