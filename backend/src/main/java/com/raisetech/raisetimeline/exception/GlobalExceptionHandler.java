@@ -47,13 +47,21 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "パラメータ " + ex.getName() + " の形式が正しくありません");
     }
 
+    /**
+     * 想定内の業務ルール違反（起きても正常だが、頻発したら運用側が気付きたい）はWARNで
+     * パス代わりにメッセージを1行残す。原因はメッセージ自体に出ているためスタックトレースは
+     * 付けない（{@link #handleDuplicateKey} のような競合の受け皿とは違い、事前チェックで
+     * 弾いている想定内の失敗のため）。
+     */
     @ExceptionHandler(EmailAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleEmailAlreadyExists(EmailAlreadyExistsException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(UsernameAlreadyExistsException.class)
     public ResponseEntity<ErrorResponse> handleUsernameAlreadyExists(UsernameAlreadyExistsException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.CONFLICT, ex.getMessage());
     }
 
@@ -82,26 +90,31 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(InvalidRefreshTokenException.class)
     public ResponseEntity<ErrorResponse> handleInvalidRefreshToken(InvalidRefreshTokenException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleUserNotFound(UserNotFoundException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(PostNotFoundException.class)
     public ResponseEntity<ErrorResponse> handlePostNotFound(PostNotFoundException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(PostAccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handlePostAccessDenied(PostAccessDeniedException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
@@ -117,11 +130,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CommentNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleCommentNotFound(CommentNotFoundException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(CommentAccessDeniedException.class)
     public ResponseEntity<ErrorResponse> handleCommentAccessDenied(CommentAccessDeniedException ex) {
+        log.warn(ex.getMessage());
         return build(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
