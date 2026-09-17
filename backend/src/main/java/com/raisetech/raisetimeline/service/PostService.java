@@ -13,6 +13,8 @@ import com.raisetech.raisetimeline.response.NewPostsResponse;
 import com.raisetech.raisetimeline.response.PostAuthorResponse;
 import com.raisetech.raisetimeline.response.PostListResponse;
 import com.raisetech.raisetimeline.response.PostResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +23,8 @@ import java.util.List;
 @Service
 @Transactional
 public class PostService {
+
+    private static final Logger log = LoggerFactory.getLogger(PostService.class);
 
     private static final int MAX_CONTENT_LENGTH = 280;
     private static final int DEFAULT_PAGE_SIZE = 20;
@@ -156,6 +160,8 @@ public class PostService {
         post.setImagePath(imagePath);
         postMapper.insert(post);
 
+        // 「いつ誰が何を投稿したか」を後から追えるようにする。本文は出さない（ログ基盤に個人の発言を複製しない）
+        log.info("投稿を作成しました: postId={}, userId={}", post.getId(), userId);
         return getPost(post.getId(), userId);
     }
 
@@ -168,6 +174,9 @@ public class PostService {
     public void delete(Long userId, Long postId) {
         Post post = findOwnedPostOrThrow(userId, postId);
         postMapper.deleteById(postId);
+        // 取り消せない操作は DB 削除の直後に記録する。画像ファイルの削除はその後片付けで、
+        // そこで例外が起きても「投稿は削除された」という事実はログに残っているべき
+        log.info("投稿を削除しました: postId={}, userId={}", postId, userId);
         if (post.getImagePath() != null) {
             storageService.delete(post.getImagePath());
         }

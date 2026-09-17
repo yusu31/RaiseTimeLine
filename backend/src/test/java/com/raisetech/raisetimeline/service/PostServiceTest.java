@@ -21,6 +21,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.system.CapturedOutput;
+import org.springframework.boot.test.system.OutputCaptureExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -35,6 +37,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,7 +52,7 @@ import static org.mockito.Mockito.when;
  * <p>本文の長さは1〜280文字。{@code null} / 空 / 1文字 / 280文字 / 281文字 の
  * 境目を確認する。中間の値（100文字など）をいくつ試しても、この種の不具合は見つからない。</p>
  */
-@ExtendWith(MockitoExtension.class)
+@ExtendWith({MockitoExtension.class, OutputCaptureExtension.class})
 class PostServiceTest {
 
     private static final long USER_ID = 10L;
@@ -191,6 +194,34 @@ class PostServiceTest {
             // 検証より先に保存していると、投稿されなかった画像がストレージに溜まり続ける
             verify(storageService, never()).store(any());
         }
+
+        // --- ここから: 業務イベントのログ。「いつ誰が何を投稿したか」を後から追えるようにする ---
+
+        @Test
+        @DisplayName("作成に成功すると INFO ログに postId と userId を出す")
+        void logsPostIdAndUserIdOnSuccess(CapturedOutput output) {
+            // 本物の MyBatis は insert 時に自動採番した id を Post に書き戻す（useGeneratedKeys）。
+            // モックはそれをしないので、同じ振る舞いをここで再現する
+            doAnswer(invocation -> {
+                invocation.getArgument(0, Post.class).setId(POST_ID);
+                return null;
+            }).when(postMapper).insert(any(Post.class));
+            when(postMapper.selectDetailById(any(), any())).thenReturn(Optional.of(detail(POST_ID, null)));
+
+            postService.create(USER_ID, new PostCreateRequest("投稿本文", null));
+
+            assertThat(output).contains("INFO");
+            assertThat(output).contains("投稿を作成しました: postId=" + POST_ID + ", userId=" + USER_ID);
+        }
+
+        @Test
+        @DisplayName("本文が不正で失敗したときは、作成完了のログを出さない")
+        void doesNotLogWhenCreateFails(CapturedOutput output) {
+            assertThatThrownBy(() -> postService.create(USER_ID, new PostCreateRequest("", null)))
+                    .isInstanceOf(InvalidPostContentException.class);
+
+            assertThat(output).doesNotContain("投稿を作成しました");
+        }
     }
 
     @Nested
@@ -274,6 +305,30 @@ class PostServiceTest {
 
             verify(postMapper).deleteById(POST_ID);
             verify(storageService, never()).delete(any());
+        }
+
+        // --- ここから: 業務イベントのログ。削除は取り消せない操作なので、誰が消したかを必ず残す ---
+
+        @Test
+        @DisplayName("delete: 削除に成功すると INFO ログに postId と userId を出す")
+        void logsPostIdAndUserIdOnDelete(CapturedOutput output) {
+            when(postMapper.findById(POST_ID)).thenReturn(Optional.of(ownedPost(USER_ID, null)));
+
+            postService.delete(USER_ID, POST_ID);
+
+            assertThat(output).contains("INFO");
+            assertThat(output).contains("投稿を削除しました: postId=" + POST_ID + ", userId=" + USER_ID);
+        }
+
+        @Test
+        @DisplayName("delete: 他人の投稿で失敗したときは、削除完了のログを出さない")
+        void doesNotLogWhenDeleteIsDenied(CapturedOutput output) {
+            when(postMapper.findById(POST_ID)).thenReturn(Optional.of(ownedPost(OTHER_USER_ID, null)));
+
+            assertThatThrownBy(() -> postService.delete(USER_ID, POST_ID))
+                    .isInstanceOf(PostAccessDeniedException.class);
+
+            assertThat(output).doesNotContain("投稿を削除しました");
         }
     }
 
