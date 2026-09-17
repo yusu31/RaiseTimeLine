@@ -16,6 +16,8 @@ import com.raisetech.raisetimeline.response.RefreshResponse;
 import com.raisetech.raisetimeline.response.UserResponse;
 import com.raisetech.raisetimeline.security.AuthenticatedUser;
 import com.raisetech.raisetimeline.security.JwtTokenProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +28,8 @@ import java.util.UUID;
 @Service
 @Transactional
 public class AuthService {
+
+    private static final Logger log = LoggerFactory.getLogger(AuthService.class);
 
     private static final String LOGIN_ERROR_MESSAGE = "メールアドレスまたはパスワードが正しくありません";
 
@@ -78,6 +82,9 @@ public class AuthService {
             throw new InvalidCredentialsException(LOGIN_ERROR_MESSAGE);
         }
 
+        // 失敗時のWARNはGlobalExceptionHandlerが出すので、ここでは成功だけを記録する。
+        // メールアドレスは個人情報のため出さず、userIdだけを残す
+        log.info("ログインに成功しました: userId={}", user.getId());
         return issueTokens(user);
     }
 

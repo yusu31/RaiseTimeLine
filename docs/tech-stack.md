@@ -150,6 +150,16 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 > 「取得 → データ変更 → 再取得」を1つのテストでつなげると、実装は正しいのにテストだけが落ちる。
 > 状態が変わる前後を確かめたいときは、テストを2つに分ける。
 
+**ログの検証も上の3層に沿って役割を分ける。** ログの内容は `@ExtendWith(OutputCaptureExtension.class)` と
+`CapturedOutput` 引数でコンソール出力を捕まえて確かめる。
+
+| 確かめること | 層 | 理由 |
+|---|---|---|
+| 「このメッセージを出す／出さない」 | Service 単体（`AuthServiceTest` 等） | ログを書いた本人の責務。失敗パスで**出ないこと**も固定する |
+| Filter 自身の振る舞い（MDC に積む・処理後に消す・WARN の文言） | Filter 単体（`JwtAuthenticationFilterTest` / `RequestIdFilterTest`） | `doFilterInternal` を直接呼び、モックの `FilterChain` の中で MDC を覗く |
+| MDC 由来の項目（`requestId` / `userId`）がログ行に**実際に載る** | Controller 統合（`AuthControllerIntegrationTest` / `GlobalExceptionHandlerIntegrationTest`） | Filter → Service / Handler が本当につながって動くときにしか観測できない。単体テストでは Filter が動かない |
+| ログの形式・パターン設定そのもの（プロファイル別） | `structuredLoggingTest` タスク（別JVM） | Logback の設定は JVM 内で共有されるため、通常の `test` タスクに混ぜると他のテストと干渉する |
+
 ### カバレッジの見方（JaCoCo）
 
 `build.gradle` に `jacoco` プラグインを入れ、`test` の後に自動でレポートを作る。

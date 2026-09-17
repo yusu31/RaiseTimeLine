@@ -36,9 +36,10 @@ logging:
   level:
     root: INFO
     com.raisetech.raisetimeline: DEBUG
-  # ログレベル表示のすぐ後ろに相関ID（requestId）を差し込む。
+  # ログレベル表示のすぐ後ろに相関ID（requestId）と操作者（userId）を差し込む。
   # MDCに積むだけでは人間可読なコンソール出力には表示されないため、
   # 明示的にパターンへ組み込む必要がある（Spring Boot公式の推奨方法）。
+  # userIdはJwtAuthenticationFilterが有効なトークンのときだけ積むので、未ログインのリクエストでは空になる。
   # 本番プロファイル（JSON形式）はMDCの値が自動でフィールドに乗るためこの設定は不要
   pattern:
-    level: "%5p [reqId:%X{requestId}]"
+    level: "%5p [reqId:%X{requestId}] [userId:%X{userId}]"

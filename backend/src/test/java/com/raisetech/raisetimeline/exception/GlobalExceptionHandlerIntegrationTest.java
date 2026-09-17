@@ -257,6 +257,28 @@ class GlobalExceptionHandlerIntegrationTest {
         assertThat(output).contains("投稿が見つかりません");
     }
 
+    /**
+     * JwtAuthenticationFilter が MDC に積んだ userId が、ハンドラの WARN 行にも自動で載ることを確認する。
+     * ハンドラ自身は userId を書いていない。「誰の操作で起きた警告か」を後から追えるのは MDC のおかげ。
+     * MDC 由来の項目は Filter → Handler が実際に連なって動く統合テストでしか検証できない。
+     */
+    @Test
+    void 認証済みリクエストのWARNログにrequestIdとuserIdの両方が載る(CapturedOutput output) throws Exception {
+        String accessToken = signupAndGetAccessToken();
+
+        mockMvc.perform(get("/api/posts/999999")
+                        .header("Authorization", "Bearer " + accessToken))
+                .andExpect(status().isNotFound());
+
+        String line = output.getOut().lines()
+                .filter(l -> l.contains("投稿が見つかりません"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("WARNログが出力されていない"));
+        assertThat(line).matches(".*\\[reqId:[0-9a-f-]{36}\\].*");
+        // TRUNCATE ... RESTART IDENTITY で毎回IDが1から振り直されるため、最初に登録したユーザーは必ず1
+        assertThat(line).contains("[userId:1]");
+    }
+
     @Test
     void 他人の投稿の削除はWARNログを出し403を返す(CapturedOutput output) throws Exception {
         String ownerToken = signupAndGetAccessToken("owner@example.com", "postowner", "投稿主");
