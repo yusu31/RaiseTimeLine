@@ -53,7 +53,16 @@ class JwtTokenProviderTest {
     void 改ざんされたトークンは拒否される() {
         AuthenticatedUser user = new AuthenticatedUser(1L, "suzuki@example.com", "鈴木");
         String token = provider.generateAccessToken(user);
-        String tampered = token.substring(0, token.length() - 1) + (token.endsWith("a") ? "b" : "a");
+        // 署名部分（最後の "." 以降）の【先頭】1文字を書き換える。
+        // 以前は末尾1文字を書き換えていたが、Base64url の末尾文字は下位2ビットが意味を持たない詰め物のため、
+        // 末尾が a/b/c/d 等のときは書き換え前と同じ署名にデコードされて検証が通ってしまい、
+        // 発行時刻次第で約6%の確率で落ちるフレーキーテストになっていた（Issue #99）。
+        // 先頭文字は上位6ビットをそのまま担うので、書き換えれば必ず署名が変わる
+        int signatureStart = token.lastIndexOf('.') + 1;
+        char first = token.charAt(signatureStart);
+        String tampered = token.substring(0, signatureStart)
+                + (first == 'a' ? 'b' : 'a')
+                + token.substring(signatureStart + 1);
 
         Optional<AuthenticatedUser> result = provider.validateAndGetUser(tampered);
 
