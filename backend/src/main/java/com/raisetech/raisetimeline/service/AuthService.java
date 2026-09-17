@@ -71,6 +71,8 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         userMapper.insert(user);
 
+        // 一度きり・監査価値の高い操作なので INFO で残す。メールアドレスは個人情報のため出さない
+        log.info("ユーザー登録が完了しました: userId={}", user.getId());
         return issueTokens(user);
     }
 

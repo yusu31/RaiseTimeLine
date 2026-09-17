@@ -35,6 +35,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -209,6 +210,41 @@ class AuthServiceTest {
                     .isAfter(LocalDateTime.now().plusDays(13))
                     .isBefore(LocalDateTime.now().plusDays(15));
         }
+
+        // --- ここから: 業務イベントのログ。「いつ誰が登録されたか」を後から追えるようにする ---
+
+        @Test
+        @DisplayName("登録に成功すると INFO ログに userId を出す。メールアドレスは出さない")
+        void logsUserIdOnSuccessWithoutEmail(CapturedOutput output) {
+            when(userMapper.existsByEmail(anyString())).thenReturn(false);
+            when(userMapper.existsByUsername(anyString())).thenReturn(false);
+            when(passwordEncoder.encode(anyString())).thenReturn(HASHED_PASSWORD);
+            // 本物の MyBatis は insert 時に自動採番した id を User に書き戻す（useGeneratedKeys）。
+            // モックはそれをしないので、同じ振る舞いをここで再現する
+            doAnswer(invocation -> {
+                invocation.getArgument(0, User.class).setId(USER_ID);
+                return null;
+            }).when(userMapper).insert(any(User.class));
+            givenTokenIssued();
+
+            authService.signup(signupRequest());
+
+            assertThat(output).contains("INFO");
+            assertThat(output).contains("ユーザー登録が完了しました: userId=" + USER_ID);
+            assertThat(output).doesNotContain("suzuki@example.com");
+        }
+
+        @Test
+        @DisplayName("メールアドレス重複で失敗したときは、登録完了のログを出さない")
+        void doesNotLogWhenSignupFails(CapturedOutput output) {
+            when(userMapper.existsByEmail("suzuki@example.com")).thenReturn(true);
+
+            assertThatThrownBy(() -> authService.signup(signupRequest()))
+                    .isInstanceOf(EmailAlreadyExistsException.class);
+
+            // 「完了しました」が出ているのに登録されていない、という嘘のログは調査を誤らせる
+            assertThat(output).doesNotContain("ユーザー登録が完了しました");
+        }
     }
 
     @Nested
@@ -312,9 +348,12 @@ class AuthServiceTest {
             assertThatThrownBy(() -> authService.login(new LoginRequest("suzuki@example.com", "wrong")))
                     .isInstanceOf(InvalidCredentialsException.class);
 
-            // Service と Handler の両方で出すと同じ失敗が2行になり、件数を数える監視が狂う
+            // Service と Handler の両方で出すと同じ失敗が2行になり、件数を数える監視が狂う。
+            // "WARN" のような汎用文字列で doesNotContain すると、Mockito が JVM 起動後の最初のモック作成時に
+            // 1回だけ出す "WARNING: A Java agent has been loaded dynamically" に反応して実行順で落ちる
+            // （実機で発見）。ログ行に必ず含まれるロガー名で「この Service からのログが無い」ことを確かめる
             assertThat(output).doesNotContain("ログインに成功しました");
-            assertThat(output).doesNotContain("WARN");
+            assertThat(output).doesNotContain("AuthService");
         }
     }
 
