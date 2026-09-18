@@ -107,6 +107,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | DBマイグレーション | Flyway | Boot同梱 | 講義で導入するツール。DBの変更履歴をSQLファイルで管理できる |
 | API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
 | 画像ストレージ | AWS SDK for Java v2（`s3`） | BOM 2.54.9 | 画像のS3保存に使用。v1はメンテナンスモードで新規採用の対象外。個々の依存にバージョンを書かずBOMで一括管理する |
+| ログ | Spring Boot構造化ログ（Logstash JSON形式） | Boot同梱 | 追加ライブラリ不要でJSON構造化ログを出力できる。詳細は [operations.md](./operations.md) |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
 
 > **`-Xlint:deprecation` を有効にしている**（`build.gradle` の `compileJava`）。
