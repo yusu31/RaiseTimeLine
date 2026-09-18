@@ -277,3 +277,4 @@ Phase 3 より後の検討事項（現時点では設計に含めない）。
 | [testing-design.md](./testing-design.md) | テストケース設計（同値分割・境界値分析・デシジョンテーブル） | テスト実装時に作成・機能追加のたびに追記 |
 | docs/features/（機能別詳細） | 各機能の実装レベルの詳細設計 | 各機能の実装直前に順次作成 |
 | [infrastructure.md](./infrastructure.md) | AWS構成図（EC2 + RDS + ALB + S3 前提版）・デプロイ手順 | 前提構成図は作成済み。デプロイフェーズで詳細化 |
+| [operations.md](./operations.md) | ログ設計・監視項目・障害対応フロー | 講義No.32を受けて作成 |
