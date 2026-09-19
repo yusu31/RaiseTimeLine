@@ -304,6 +304,26 @@ class GlobalExceptionHandlerIntegrationTest {
     }
 
     @Test
+    void 構文が壊れたJSONを送ると500ではなく400を返す() throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ この文字列はJSONとして壊れている"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value(400))
+                .andExpect(jsonPath("$.error").value("Bad Request"));
+    }
+
+    @Test
+    void 壊れたJSONのWARNログにリクエストボディの内容を含めない(CapturedOutput output) throws Exception {
+        mockMvc.perform(post("/api/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{ この文字列はJSONとして壊れている"))
+                .andExpect(status().isBadRequest());
+
+        assertThat(output).doesNotContain("この文字列はJSONとして壊れている");
+    }
+
+    @Test
     void 他人のコメントの削除はWARNログを出し403を返す(CapturedOutput output) throws Exception {
         String postOwnerToken = signupAndGetAccessToken("postowner@example.com", "postowner2", "投稿主");
         String commentOwnerToken = signupAndGetAccessToken("commentowner@example.com", "commentowner", "コメント主");
