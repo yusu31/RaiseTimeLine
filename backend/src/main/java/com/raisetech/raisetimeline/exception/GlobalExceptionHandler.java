@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -45,6 +46,21 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         log.warn("パラメータの型変換に失敗しました: name={}", ex.getName());
         return build(HttpStatus.BAD_REQUEST, "パラメータ " + ex.getName() + " の形式が正しくありません");
+    }
+
+    /**
+     * リクエストボディがJSONとして壊れている、または型が一致しないときに 400 を返す。
+     *
+     * <p>{@link MethodArgumentTypeMismatchException} と同じ理由で専用のハンドラが必要。
+     * 送られてきたボディの形式が不正なだけで、サーバー側は壊れていない。
+     *
+     * <p><strong>ボディの内容そのものはログにもレスポンスにも含めない。</strong>
+     * リクエストに仕込まれた文字列をそのまま出すことになるため。
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleMessageNotReadable(HttpMessageNotReadableException ex) {
+        log.warn("リクエストボディの読み取りに失敗しました");
+        return build(HttpStatus.BAD_REQUEST, "リクエストの形式が正しくありません");
     }
 
     /**
