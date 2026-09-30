@@ -146,3 +146,11 @@ $env:AWS_PROFILE = "raisetimeline"
 > **`APP_STORAGE_TYPE` を設定しなければ必ずローカル保存になります。**
 > 設定漏れでS3が有効になり、意図しない課金が発生することを防ぐための既定値です。
 > S3側の構成（バケット・IAM・公開範囲）は [docs/infrastructure.md](./docs/infrastructure.md) を参照してください。
+
+---
+
+## 課題提出ファイル（RaiseTech）
+
+| ファイル | 内容 |
+|----------|------|
+| [理解度チェック（中級編No.34）](docs/assignments/understanding-check-intermediate.md) | 認証・アーキテクチャ・インフラ・テスト等に関する中級編理解度チェック回答 |
