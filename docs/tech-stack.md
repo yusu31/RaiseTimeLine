@@ -161,6 +161,38 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | MDC 由来の項目（`requestId` / `userId`）がログ行に**実際に載る** | Controller 統合（`AuthControllerIntegrationTest` / `GlobalExceptionHandlerIntegrationTest`） | Filter → Service / Handler が本当につながって動くときにしか観測できない。単体テストでは Filter が動かない |
 | ログの形式・パターン設定そのもの（プロファイル別） | `structuredLoggingTest` タスク（別JVM） | Logback の設定は JVM 内で共有されるため、通常の `test` タスクに混ぜると他のテストと干渉する |
 
+### パフォーマンステスト（負荷試験）
+
+単体・結合テストが「機能要件」（何ができるか）を検証するのに対し、パフォーマンステストは「非機能要件」（どれくらいの品質で動くか）を検証する。実行時間が長く頻繁には回さないテストのため、単体・結合テストとは別の仕組みとして `perf/`（プロジェクトルート直下）に独立配置し、**CIでは自動実行せず、任意のタイミングで手動実行する**。
+
+| 項目 | 内容 |
+|------|------|
+| 実行コマンド | `perf/` で `npm run test:load`（通常負荷） / `npm run test:stress`（限界探索） / `npm run test:spike`（急激な負荷変動） |
+| 対象 | バックエンドAPIのみ。フロントエンドのブラウザ側パフォーマンス（Core Web Vitals等）は対象外（詳細は `docs/performance-testing.md`） |
+| 詳細 | シナリオ設計・しきい値の根拠・実行手順・クリーンアップ手順は `docs/performance-testing.md` が正本 |
+
+#### 負荷試験ツールの比較
+
+| 観点 | **k6**（採用） | Gatling | JMeter |
+|---|---|---|---|
+| 言語 | JavaScript/TypeScript | Java/Scala DSL | XML（GUI操作） |
+| 利用者・コミュニティ | 非常に多い（GitHub 27k+ stars） | 中程度（6k+ stars） | 多い（レガシー） |
+| 開発元 | Grafana Labs（活発） | Gatling Corp | Apache（更新頻度低め） |
+| 学習コスト | 低（JS知識で書ける） | 中（Java/Scala DSL独自API） | 中（GUIだが複雑） |
+| インストール | シングルバイナリ（`winget`/`choco`） | Gradleプラグイン | 別途インストール |
+| レポート | CLI出力＋HTML（k6-reporter） | HTML自動生成 | HTML生成可能 |
+| CI/CD統合 | 非常に容易 | Gradle経由 | やや面倒 |
+
+**k6を選んだ理由:**
+
+- フロントエンドが React + TypeScript のため、JavaScriptで書けるk6はそのまま読み書きできる。プロジェクト内の共通言語になる
+- Go製シングルバイナリで依存関係が少なく、`backend/build.gradle` を無改変で導入できる（Gradle/JVMに縛られない）
+- パフォーマンステストツールとして最も広く使われており、情報・事例が豊富
+
+> **インストール（Windows）:** `winget install k6.k6`
+
+---
+
 ### カバレッジの見方（JaCoCo）
 
 `build.gradle` に `jacoco` プラグインを入れ、`test` の後に自動でレポートを作る。

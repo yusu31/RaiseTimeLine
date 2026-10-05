@@ -1,0 +1,11 @@
+{
+  "name": "raisetimeline-perf",
+  "private": true,
+  "scripts": {
+    "seed": "psql -h localhost -U raisetime -d raisetimeline_loadtest -f data/seed-perf-data.sql",
+    "cleanup": "psql -h localhost -U raisetime -d raisetimeline_loadtest -f data/cleanup-perf-data.sql",
+    "test:load": "k6 run scripts/load-test.js",
+    "test:stress": "k6 run scripts/stress-test.js",
+    "test:spike": "k6 run scripts/spike-test.js"
+  }
+}
