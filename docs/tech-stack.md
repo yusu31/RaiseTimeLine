@@ -189,7 +189,8 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 - Go製シングルバイナリで依存関係が少なく、`backend/build.gradle` を無改変で導入できる（Gradle/JVMに縛られない）
 - パフォーマンステストツールとして最も広く使われており、情報・事例が豊富
 
-> **インストール（Windows）:** `winget install k6.k6`
+> **インストール（Windows）:** `winget install GrafanaLabs.k6`
+> （`winget search k6`で確認したIDは`GrafanaLabs.k6`。`k6.k6`というIDは存在しない）
 
 ---
 
