@@ -23,3 +23,6 @@ backend/build/
 backend/uploads/
 *.log
 logs/
+
+# パフォーマンステスト（k6）のレポート出力
+perf/results/
