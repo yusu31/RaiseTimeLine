@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"c:/Users/3fort/RaiseTech/RaiseTimeLine\" && git checkout -b \"docs/requirements-and-design-#1\" 2>&1 && mkdir -p docs)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 0 > .claude/.teach-reminder-count 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\".claude/.teach-reminder-count\"; c=$(cat \"$f\" 2>/dev/null || echo 0); c=$((c+1)); echo \"$c\" > \"$f\"; if [ $((c % 3)) -eq 0 ]; then printf '{\"hookSpecificOutput\":{\"hookEventName\":\"PostToolUse\",\"additionalContext\":\"[Teaching reminder] %d technical operations (Bash/Edit/Write) in a row. This project requires a brief Japanese explanation of WHY and WHAT-is-happening after technical steps, not just results. If you already explained recently, a short line is enough -- just do not skip it silently.\"}}' \"$c\"; fi"
+          }
+        ]
+      }
+    ]
+  }
+}

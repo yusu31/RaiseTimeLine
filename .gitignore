@@ -1,5 +1,6 @@
 # Claude Code の個人設定（共有しない）
 .claude/settings.local.json
+.claude/.teach-reminder-count
 
 # 秘密情報（AWSのアクセスキー・DBパスワード等を誤ってコミットしないため）
 .env
