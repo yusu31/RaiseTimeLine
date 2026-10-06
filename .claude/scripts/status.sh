@@ -88,7 +88,7 @@ NEXT="
 # なので番号はそのまま07に残し、08を新設して「いまここ」を移した。
 # 08-4（2026-10-06）は stress-test・spike-test を本番の時間設定（各18分・8分）で実行し、
 # k6-reporterのHTMLレポートの読み方（Breached Thresholds・P95しきい値・平均の罠）を学んだ回。
-# 詳細はObsidianの ClaudeCode-School「2026-10-06_本番実行とレポートの読み方」を参照。
+# 詳細はObsidianの ClaudeCode-School「2026-10-06_パフォーマンステストの実行とレポートの読み方」を参照。
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
 MEASURED_AT="2026-09-19"
