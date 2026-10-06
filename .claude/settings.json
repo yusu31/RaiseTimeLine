@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"c:/Users/3fort/RaiseTech/RaiseTimeLine\" && git checkout -b \"docs/requirements-and-design-#1\" 2>&1 && mkdir -p docs)"
+    ]
+  }
+}
