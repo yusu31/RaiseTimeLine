@@ -38,14 +38,14 @@ export function CommentForm({ onSubmit }: CommentFormProps) {
           value={content}
           onChange={(event) => setContent(event.target.value)}
           placeholder="コメントを入力…"
-          className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+          className="flex-1 rounded-full border border-gray-300 px-4 py-2 text-sm text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
         />
         <button
           type="submit"
           disabled={isSubmitting}
           title="コメントを送信"
           aria-label="コメントを送信"
-          className="rounded-full p-2 text-[#1D9BF0] transition hover:bg-blue-50 disabled:opacity-50"
+          className="rounded-full p-2 text-[#1a73c2] transition hover:bg-blue-50 disabled:opacity-50"
         >
           <SendIcon />
         </button>

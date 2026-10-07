@@ -20,7 +20,11 @@ export function CommentList({ comments, currentUserId, onDeleteRequest }: Commen
       {comments.map((comment) => (
         <li key={comment.id} className="rounded-2xl bg-white p-4 shadow-sm">
           <div className="flex items-start gap-3">
-            <Link to={`/users/${comment.author.username}`} className="transition hover:opacity-80">
+            <Link
+              to={`/users/${comment.author.username}`}
+              aria-label={`${comment.author.displayName}のプロフィール`}
+              className="transition hover:opacity-80"
+            >
               <Avatar
                 displayName={comment.author.displayName}
                 iconImageUrl={comment.author.iconImageUrl}

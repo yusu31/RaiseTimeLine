@@ -142,7 +142,7 @@ export function ProfilePage() {
         {!isLoading && error && !profile && (
           <div className="rounded-2xl bg-white p-8 text-center shadow-sm">
             <p className="text-gray-500">{error}</p>
-            <Link to="/timeline" className="mt-4 inline-block text-sm font-bold text-[#1D9BF0] hover:underline">
+            <Link to="/timeline" className="mt-4 inline-block text-sm font-bold text-[#1a73c2] hover:underline">
               タイムラインに戻る
             </Link>
           </div>

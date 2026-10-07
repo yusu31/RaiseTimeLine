@@ -112,7 +112,7 @@ export function PostDetailPage() {
       <main className="mx-auto flex max-w-xl flex-col gap-4 px-4 py-6">
         <Link
           to="/timeline"
-          className="flex items-center gap-3 text-lg font-bold text-[#0F1419] transition hover:text-[#1D9BF0]"
+          className="flex items-center gap-3 text-lg font-bold text-[#0F1419] transition hover:text-[#1a73c2]"
         >
           <span aria-hidden="true">←</span>
           投稿

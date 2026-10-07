@@ -153,14 +153,14 @@ export function SignupPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-full bg-[#1D9BF0] py-2 font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+            className="mt-2 rounded-full bg-[#1a73c2] py-2 font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
           >
             {isSubmitting ? '登録中…' : '登録する'}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-gray-500">
           アカウントをお持ちの方は{' '}
-          <Link to="/login" className="font-medium text-[#1D9BF0] hover:underline">
+          <Link to="/login" className="font-medium text-[#1a73c2] hover:underline">
             ログイン
           </Link>
         </p>

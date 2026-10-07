@@ -43,8 +43,8 @@ k6によるHTTPレベルの負荷試験。APIのレスポンスタイム・ス�
 「速いアプリ」を保証できない。
 
 **今回はバックエンドAPIの負荷試験（k6）のみを対象とする。** ブラウザ側のパフォーマンス測定
-（Core Web Vitals・Lighthouseなど）は、次回予定されているPlaywright E2Eテストの文脈、または
-別の専用タスクで扱う。
+（FCP・LCP・CLS・DOMContentLoaded）はPlaywright E2Eテスト（`docs/e2e-testing.md`7章）内で
+しきい値付きの計測として実装済み。
 
 ---
 

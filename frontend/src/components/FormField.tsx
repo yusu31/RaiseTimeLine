@@ -20,7 +20,7 @@ export function FormField({ id, label, type, autoComplete, value, onChange, erro
         autoComplete={autoComplete}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className="rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+        className="rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
       />
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

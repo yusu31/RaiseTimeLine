@@ -56,14 +56,14 @@ export function LoginPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="mt-2 rounded-full bg-[#1D9BF0] py-2 font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+            className="mt-2 rounded-full bg-[#1a73c2] py-2 font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
           >
             {isSubmitting ? 'ログイン中…' : 'ログイン'}
           </button>
         </form>
         <p className="mt-6 text-center text-sm text-gray-500">
           アカウントをお持ちでない方は{' '}
-          <Link to="/signup" className="font-medium text-[#1D9BF0] hover:underline">
+          <Link to="/signup" className="font-medium text-[#1a73c2] hover:underline">
             新規登録
           </Link>
         </p>
