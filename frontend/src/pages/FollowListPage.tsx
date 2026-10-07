@@ -71,7 +71,7 @@ export function FollowListPage({ mode }: FollowListPageProps) {
 
   const tabClass = (isActive: boolean) =>
     isActive
-      ? 'border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]'
+      ? 'border-b-2 border-[#1a73c2] px-1 py-3 text-sm font-bold text-[#0F1419]'
       : 'border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-500 transition hover:text-[#0F1419]'
 
   const emptyMessage = mode === 'following' ? 'まだ誰もフォローしていません' : 'まだフォロワーがいません'
@@ -81,7 +81,7 @@ export function FollowListPage({ mode }: FollowListPageProps) {
       <AppHeader onLogout={handleLogout} isLoggingOut={isLoggingOut} />
 
       <main className="mx-auto max-w-2xl px-4 py-6">
-        <Link to={`/users/${encodeURIComponent(username)}`} className="text-sm text-[#1D9BF0] hover:underline">
+        <Link to={`/users/${encodeURIComponent(username)}`} className="text-sm text-[#1a73c2] hover:underline">
           ← @{username} のプロフィールに戻る
         </Link>
 

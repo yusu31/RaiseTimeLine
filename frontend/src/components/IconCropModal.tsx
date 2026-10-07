@@ -98,7 +98,7 @@ export function IconCropModal({ file, onCancel, onCropped }: IconCropModalProps)
           step={0.05}
           value={zoom}
           onChange={(event) => setZoom(Number(event.target.value))}
-          className="flex-1 accent-[#1D9BF0]"
+          className="flex-1 accent-[#1a73c2]"
         />
       </div>
 
@@ -117,7 +117,7 @@ export function IconCropModal({ file, onCancel, onCropped }: IconCropModalProps)
           type="button"
           onClick={handleApply}
           disabled={isProcessing || !croppedArea}
-          className="rounded-full bg-[#1D9BF0] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+          className="rounded-full bg-[#1a73c2] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
         >
           {isProcessing ? '処理中…' : '適用する'}
         </button>

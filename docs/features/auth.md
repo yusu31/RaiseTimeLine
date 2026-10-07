@@ -100,4 +100,5 @@ ORマッパーは **Spring Data JPA ではなく MyBatis** を使用する。SQL
 - 呼び出し先が401を返したら、保持している`refreshToken`で`POST /api/auth/refresh`を呼び、新しい`accessToken`を取得して**元のリクエストを1回だけ自動的に再試行する**
 - リフレッシュ自体も失敗する場合（リフレッシュトークンが無効・期限切れ）は`logout()`でログイン状態を破棄する。`ProtectedRoute`が反応して自動的に`/login`へ戻る
 - 現時点で認証必須APIは`GET /api/hello`のみだが、Phase 2以降で投稿・いいね・コメントなど認証必須APIが増える前提で、特定のAPIに依存しない汎用フックとして作った
-- 動作確認は、正規にログイン後に`localStorage`の`accessToken`だけを不正な値に書き換えて再アクセスし、「401→自動リフレッシュ→再試行成功」を確認。さらに`refreshToken`も無効な値にして、「refresh自体が401→自動ログアウト→`/login`へリダイレクト」も確認した（Playwrightでの自動テストによる）
+- 動作確認は、正規にログイン後に`localStorage`の`accessToken`だけを不正な値に書き換えて再アクセスし、「401→自動リフレッシュ→再試行成功」を確認。さらに`refreshToken`も無効な値にして、「refresh自体が401→自動ログアウト→`/login`へリダイレクト」も確認した（Playwrightでの手動確認による）
+- 新規登録・ログイン成功/失敗・未認証リダイレクト・ログアウトの基本フローは `e2e/scenarios/auth.spec.ts` で自動E2Eテスト化済み（`docs/e2e-testing.md`参照）。トークン自動リフレッシュ自体の自動テスト化は未実施

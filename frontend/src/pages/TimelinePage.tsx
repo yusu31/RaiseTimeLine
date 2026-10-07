@@ -20,7 +20,7 @@ const POLL_INTERVAL_MS = 30_000
 
 const tabClass = (isActive: boolean) =>
   isActive
-    ? 'border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]'
+    ? 'border-b-2 border-[#1a73c2] px-1 py-3 text-sm font-bold text-[#0F1419]'
     : 'border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-500 transition hover:text-[#0F1419]'
 
 export function TimelinePage() {
@@ -215,7 +215,7 @@ export function TimelinePage() {
           <button
             type="button"
             onClick={() => setIsComposerOpen(true)}
-            className="rounded-full bg-[#1D9BF0] px-4 py-1.5 text-sm font-bold text-white transition hover:bg-[#1a8cd8]"
+            className="rounded-full bg-[#1a73c2] px-4 py-1.5 text-sm font-bold text-white transition hover:bg-[#1a8cd8]"
           >
             ＋投稿する
           </button>

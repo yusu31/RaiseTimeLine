@@ -37,6 +37,8 @@ e2e/
   scenarios/              # シナリオテスト（*.spec.ts）
   accessibility/          # アクセシビリティテスト（axe-core）
   performance/            # ブラウザパフォーマンス計測
+  utils/
+    webVitals.ts           # Performance APIを直接読むヘルパー（FCP/LCP/CLS/DOMContentLoaded）
   data/                   # シード/クリーンアップSQL
   auth/                   # storageState保存先（.gitignore対象）
   results/                # レポート・動画・スクリーンショット（.gitignore対象）
@@ -76,18 +78,32 @@ k6（パフォーマンステスト）と同じ「専用DB・専用Spring Profil
 | `timeline.spec.ts` | 実装済み | UC-03, UC-09 |
 | `search.spec.ts` | 実装済み | UC-14, UC-15 |
 
-`npm run test`は33本中32本（`@slow`を除く）を実行する。新着投稿バナー（`timeline.spec.ts`の該当ケースに`@slow`タグを付与）は
-30秒のポーリング待機を伴うため既定実行から外し、`npm run test:slow`で個別実行する。
+`npm run test`は`scenarios/`のみを対象に33本中32本（`@slow`を除く）を実行する。新着投稿バナー
+（`timeline.spec.ts`の該当ケースに`@slow`タグを付与）は30秒のポーリング待機を伴うため既定実行から
+外し、`npm run test:slow`で個別実行する。
+
+**`npm run test`・`npm run test:perf`・`npm run test:a11y`は対象ディレクトリを分けて独立実行する。**
+`performance/`の一部テスト（固定投稿のいいね状態を変更する）が`scenarios/like.spec.ts`と同じ
+固定投稿を共有しており、全ディレクトリを一括実行すると並列実行で競合してflakyになることが
+実装時に判明したため。各コマンドは`playwright test <ディレクトリ>`の形でCLI引数にディレクトリを
+指定しており、`playwright.config.ts`の`testMatch`では絞り込んでいない。
 
 ## 6. アクセシビリティテスト
 
-（PR3で実装予定）`@axe-core/playwright`で`login`/`signup`/`timeline`/`post-detail`/`profile`/`search`
-の主要6ページをWCAG 2.1 AA基準でチェックする。
+`@axe-core/playwright`で`login`/`signup`/`timeline`/`post-detail`/`profile`/`search`の主要6ページを
+WCAG 2.1 AA基準でチェックする（`npm run test:a11y`）。
+
+**実装時にプロダクトコードの実際の違反を2件検出し、その場で修正した。**
+
+| 違反 | 内容 | 対応 |
+|---|---|---|
+| `color-contrast` | ブランドカラー`#1D9BF0`（白背景・白文字との組み合わせ）のコントラスト比が3:1で、WCAG AA基準の4.5:1を満たしていなかった | `#1A73C2`（同系統でコントラスト比約5:1）に変更。16ファイルに影響（`docs/screen-design.md`のカラーパレットも合わせて更新） |
+| `link-name` | `PostCard`・`CommentList`の著者アバターへのリンクが、中身がアイコン（`aria-hidden`付き）のみでスクリーンリーダー向けの名前を持たなかった | リンクに`aria-label={`${displayName}のプロフィール`}`を追加 |
 
 ## 7. ブラウザパフォーマンス計測
 
-（PR3で実装予定）`page.evaluate()`でブラウザ標準のPerformance APIを直接読み、しきい値を超えたら
-テストを失敗させる。
+`page.evaluate()`でブラウザ標準のPerformance APIを直接読み（`e2e/utils/webVitals.ts`）、しきい値を
+超えたらテストを失敗させる（`npm run test:perf`）。
 
 **page-load.perf.spec.ts**
 
@@ -108,6 +124,12 @@ k6（パフォーマンステスト）と同じ「専用DB・専用Spring Profil
 | 検索入力→結果表示 | < 1s |
 
 しきい値はローカル実行で頻繁にflaky化する場合は調整する（調整したら理由と日付をここに追記する）。
+
+**`test:perf`は`--workers=1`で直列実行する。** 実装時、既定の並列実行（6 workers）では複数のブラウザが
+同時にCPU・ネットワークを取り合い、実際より遅い実測値が出て`page-load.perf.spec.ts`「タイムライン画面」
+（FCP 2000ms超過）・`interaction.perf.spec.ts`の2件がしきい値を超過して失敗することを確認した。
+直列実行に変更したところ全件パスしたため、パフォーマンス計測は公平な計測のため直列実行を既定にした
+（2026-10-08）。
 
 ## 8. 記録設定
 

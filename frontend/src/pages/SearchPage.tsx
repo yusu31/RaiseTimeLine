@@ -11,7 +11,7 @@ type SearchTab = 'posts' | 'users'
 
 const tabClass = (isActive: boolean) =>
   isActive
-    ? 'border-b-2 border-[#1D9BF0] px-1 py-3 text-sm font-bold text-[#0F1419]'
+    ? 'border-b-2 border-[#1a73c2] px-1 py-3 text-sm font-bold text-[#0F1419]'
     : 'border-b-2 border-transparent px-1 py-3 text-sm font-bold text-gray-500 transition hover:text-[#0F1419]'
 
 /**
@@ -47,7 +47,7 @@ export function SearchPage() {
           onChange={(event) => setKeyword(event.target.value)}
           placeholder="キーワード・ユーザー名で検索"
           aria-label="キーワード・ユーザー名で検索"
-          className="mt-4 w-full rounded-full border border-gray-300 px-4 py-2 text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+          className="mt-4 w-full rounded-full border border-gray-300 px-4 py-2 text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
         />
 
         <div className="mt-2 flex gap-6 border-b border-gray-200">

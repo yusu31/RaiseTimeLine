@@ -44,7 +44,7 @@ export function PostEditModal({ post, onCancel, onSave }: PostEditModalProps) {
           value={content}
           onChange={(event) => setContent(event.target.value)}
           rows={4}
-          className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+          className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
         />
         <p className={`text-right text-xs ${remaining < 0 ? 'text-red-600' : 'text-gray-500'}`}>{remaining}</p>
 
@@ -62,7 +62,7 @@ export function PostEditModal({ post, onCancel, onSave }: PostEditModalProps) {
           <button
             type="submit"
             disabled={isInvalid || isSubmitting}
-            className="rounded-full bg-[#1D9BF0] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+            className="rounded-full bg-[#1a73c2] px-4 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
           >
             {isSubmitting ? '保存中…' : '保存'}
           </button>

@@ -7,7 +7,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   testDir: '.',
-  testMatch: ['scenarios/**/*.spec.ts', 'accessibility/**/*.spec.ts', 'performance/**/*.spec.ts'],
+  // scenarios/ と performance/ は固定投稿（aliceの検索用投稿）のいいね状態など共有データに
+  // 触れるテストを含み、同時に並列実行すると競合する。testMatchでは絞らず、
+  // 各npmスクリプト（test / test:perf / test:a11y）側で対象ディレクトリをCLI引数として
+  // 指定し、独立して実行できるようにしている
   // 新着投稿バナーのテスト（30秒ポーリングの実時間待機）は既定実行から除外する
   grepInvert: process.env.E2E_INCLUDE_SLOW ? undefined : /@slow/,
   timeout: 30_000,

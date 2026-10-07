@@ -167,7 +167,7 @@ export function ProfileEditPage() {
                 value={bio}
                 onChange={(event) => setBio(event.target.value)}
                 rows={4}
-                className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+                className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
               />
               <p className={`self-end text-xs ${bioLength > MAX_BIO_LENGTH ? 'text-red-600' : 'text-gray-500'}`}>
                 {bioLength} / {MAX_BIO_LENGTH}
@@ -187,7 +187,7 @@ export function ProfileEditPage() {
               <button
                 type="submit"
                 disabled={isSaving || bioLength > MAX_BIO_LENGTH}
-                className="rounded-full bg-[#1D9BF0] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+                className="rounded-full bg-[#1a73c2] px-5 py-2 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
               >
                 {isSaving ? '保存中…' : '保存する'}
               </button>

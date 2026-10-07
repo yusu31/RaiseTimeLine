@@ -64,7 +64,7 @@ export function DeleteConfirmDialog({
           type="button"
           onClick={onCancel}
           disabled={isDeleting}
-          className="rounded-full border border-[#1D9BF0] px-4 py-2 text-sm font-bold text-[#1D9BF0] transition hover:bg-blue-50 disabled:opacity-50"
+          className="rounded-full border border-[#1a73c2] px-4 py-2 text-sm font-bold text-[#1a73c2] transition hover:bg-blue-50 disabled:opacity-50"
         >
           キャンセル
         </button>

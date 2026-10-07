@@ -101,7 +101,7 @@ export function PostComposer({ onSubmit, onClose }: PostComposerProps) {
           onChange={(event) => setContent(event.target.value)}
           placeholder="いまどうしてる？"
           rows={3}
-          className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1D9BF0] focus:ring-1 focus:ring-[#1D9BF0]"
+          className="resize-none rounded-lg border border-gray-300 px-3 py-2 text-[#0F1419] outline-none focus:border-[#1a73c2] focus:ring-1 focus:ring-[#1a73c2]"
         />
 
         {previewUrl && (
@@ -137,7 +137,7 @@ export function PostComposer({ onSubmit, onClose }: PostComposerProps) {
             <button
               type="submit"
               disabled={isInvalid || isSubmitting}
-              className="rounded-full bg-[#1D9BF0] px-5 py-1.5 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
+              className="rounded-full bg-[#1a73c2] px-5 py-1.5 text-sm font-bold text-white transition hover:bg-[#1a8cd8] disabled:opacity-50"
             >
               {isSubmitting ? '投稿中…' : '投稿する'}
             </button>

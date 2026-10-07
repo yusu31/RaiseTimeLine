@@ -30,6 +30,7 @@ export function PostCard({ post, isOwn, onEdit, onDeleteRequest, onToggleLike }:
           <Link
             to={`/users/${post.author.username}`}
             onClick={(event) => event.stopPropagation()}
+            aria-label={`${post.author.displayName}のプロフィール`}
             className="shrink-0 rounded-full transition hover:opacity-80"
           >
             <Avatar displayName={post.author.displayName} iconImageUrl={post.author.iconImageUrl} />
@@ -57,7 +58,7 @@ export function PostCard({ post, isOwn, onEdit, onDeleteRequest, onToggleLike }:
                 event.stopPropagation()
                 onEdit(post)
               }}
-              className="rounded-full p-2 text-gray-400 transition hover:bg-blue-50 hover:text-[#1D9BF0]"
+              className="rounded-full p-2 text-gray-400 transition hover:bg-blue-50 hover:text-[#1a73c2]"
             >
               <PencilIcon />
             </button>
