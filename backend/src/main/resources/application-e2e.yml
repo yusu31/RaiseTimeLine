@@ -1,0 +1,24 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/raisetimeline_e2e
+    username: ${DB_USER:raisetime}
+    password: ${DB_PASSWORD:password}
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+  mapper-locations: classpath:mapper/*.xml
+
+app:
+  upload-dir: ${UPLOAD_DIR:build/e2e-uploads}
+
+jwt:
+  secret: ${JWT_SECRET:e2e-only-secret-key-for-jwt-signing-32chars}
+  access-token-validity: 30m
+  refresh-token-validity: 14d
