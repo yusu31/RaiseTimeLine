@@ -68,13 +68,16 @@ k6（パフォーマンステスト）と同じ「専用DB・専用Spring Profil
 | spec | 状態 | 対応UC/F |
 |---|---|---|
 | `auth.spec.ts` | 実装済み | F-06, UC-01, UC-06 |
-| `post-lifecycle.spec.ts` | 未実装（PR2予定） | UC-02, UC-07, UC-08 |
-| `comment-lifecycle.spec.ts` | 未実装（PR2予定） | UC-05 |
-| `like.spec.ts` | 未実装（PR2予定） | UC-04 |
-| `follow.spec.ts` | 未実装（PR2予定） | UC-12, UC-13 |
-| `profile.spec.ts` | 未実装（PR2予定） | UC-10, UC-11 |
-| `timeline.spec.ts` | 未実装（PR2予定） | UC-03, UC-09 |
-| `search.spec.ts` | 未実装（PR2予定） | UC-14, UC-15 |
+| `post-lifecycle.spec.ts` | 実装済み | UC-02, UC-07, UC-08 |
+| `comment-lifecycle.spec.ts` | 実装済み | UC-05 |
+| `like.spec.ts` | 実装済み | UC-04 |
+| `follow.spec.ts` | 実装済み | UC-12, UC-13 |
+| `profile.spec.ts` | 実装済み | UC-10, UC-11 |
+| `timeline.spec.ts` | 実装済み | UC-03, UC-09 |
+| `search.spec.ts` | 実装済み | UC-14, UC-15 |
+
+`npm run test`は33本中32本（`@slow`を除く）を実行する。新着投稿バナー（`timeline.spec.ts`の該当ケースに`@slow`タグを付与）は
+30秒のポーリング待機を伴うため既定実行から外し、`npm run test:slow`で個別実行する。
 
 ## 6. アクセシビリティテスト
 

@@ -5,6 +5,7 @@
   "scripts": {
     "test": "playwright test --project=chromium",
     "test:all": "playwright test --project=chromium --project=firefox --project=webkit",
+    "test:slow": "cross-env E2E_INCLUDE_SLOW=1 playwright test --project=chromium --grep @slow",
     "test:perf": "playwright test performance/ --project=chromium",
     "test:a11y": "playwright test accessibility/ --project=chromium",
     "test:headed": "playwright test --project=chromium --headed",
@@ -17,6 +18,7 @@
     "@playwright/test": "^1.49.0",
     "@axe-core/playwright": "^4.10.0",
     "@types/node": "^22.10.0",
+    "cross-env": "^10.1.0",
     "typescript": "~6.0.0"
   }
 }
