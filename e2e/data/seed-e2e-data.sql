@@ -27,6 +27,25 @@ INSERT INTO posts (user_id, content, created_at, updated_at)
 SELECT id, 'E2Eテストの固定投稿その2です。', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
 FROM users WHERE username = 'e2euser_alice';
 
+-- bobの投稿を25件（timeline.spec.tsの無限スクロールシナリオ用。1ページ20件のため21件以上必要）
+INSERT INTO posts (user_id, content, created_at, updated_at)
+SELECT
+    id,
+    'E2Eテスト用タイムライン投稿 ' || gs,
+    CURRENT_TIMESTAMP - (gs || ' minutes')::interval,
+    CURRENT_TIMESTAMP - (gs || ' minutes')::interval
+FROM users, generate_series(1, 25) AS gs
+WHERE username = 'e2euser_bob';
+
+-- charlieの投稿を2件（timeline.spec.tsの「フォロー中」タブ表示確認用。aliceがcharlieをフォロー済みのため）
+INSERT INTO posts (user_id, content, created_at, updated_at)
+SELECT id, 'E2Eテスト用フォロー中タイムライン投稿1', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users WHERE username = 'e2euser_charlie';
+
+INSERT INTO posts (user_id, content, created_at, updated_at)
+SELECT id, 'E2Eテスト用フォロー中タイムライン投稿2', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+FROM users WHERE username = 'e2euser_charlie';
+
 -- alice -> charlie のフォロー関係を1件事前投入（follow解除シナリオの初期状態として使う）
 INSERT INTO follows (follower_id, following_id)
 SELECT a.id, c.id

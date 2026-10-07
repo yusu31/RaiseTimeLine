@@ -29,6 +29,7 @@ npm ci
 npx playwright install --with-deps chromium
 npm run test            # 既定シナリオ（@slowを除く）をChromiumで実行
 npm run test:all        # Firefox/WebKitも含めて実行
+npm run test:slow       # @slowタグ付きシナリオ（新着投稿バナー等）のみ実行
 npm run test:perf       # パフォーマンステストのみ
 npm run test:a11y       # アクセシビリティテストのみ
 npm run test:headed     # ブラウザ表示付きで目視確認

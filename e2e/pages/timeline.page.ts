@@ -9,6 +9,8 @@ export class TimelinePage {
   readonly newPostsBanner: Locator
   readonly postComposerTextarea: Locator
   readonly postComposerSubmitButton: Locator
+  readonly postComposerImageInput: Locator
+  readonly postComposerCloseButton: Locator
   readonly searchLink: Locator
   readonly profileLink: Locator
 
@@ -20,9 +22,20 @@ export class TimelinePage {
     this.logoutButton = page.getByRole('button', { name: 'ログアウト' })
     this.newPostsBanner = page.getByText(/件の新着を表示/)
     this.postComposerTextarea = page.getByPlaceholder('いまどうしてる？')
-    this.postComposerSubmitButton = page.getByRole('button', { name: '投稿する' })
+    this.postComposerSubmitButton = page.getByRole('button', { name: '投稿する', exact: true })
+    this.postComposerImageInput = page.locator('input[type="file"]')
+    this.postComposerCloseButton = page.getByRole('button', { name: '閉じる' })
     this.searchLink = page.getByRole('link', { name: '検索' })
     this.profileLink = page.getByRole('link', { name: 'プロフィール' })
+  }
+
+  async createPost(content: string, imagePath?: string) {
+    await this.composeButton.click()
+    await this.postComposerTextarea.fill(content)
+    if (imagePath) {
+      await this.postComposerImageInput.setInputFiles(imagePath)
+    }
+    await this.postComposerSubmitButton.click()
   }
 
   async goto() {
