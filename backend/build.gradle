@@ -4,6 +4,8 @@ plugins {
     // toolVersion は指定しない: Gradle 8.14.5 が既定で使う JaCoCo のバージョンに従う。
     // Gradle のバージョンは gradle-wrapper.properties で固定しているため、これでも結果は毎回同じになる
     id 'jacoco'
+    // Javaの静的解析（命名規則・import順などコードスタイルをチェックする）。フロントエンドのESLintに相当する
+    id 'checkstyle'
     id 'org.springframework.boot' version '3.4.5'
     id 'io.spring.dependency-management' version '1.1.7'
 }
@@ -48,6 +50,22 @@ dependencies {
     // 本体の mybatis-spring-boot-starter と同じ 3.0.4 を指定する（別バージョンだと組み合わせが保証されない）
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.4'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+checkstyle {
+    // CIとローカルで結果が変わらないよう、Checkstyle本体のバージョンを固定する(既存の固定方針に合わせる)
+    toolVersion = '10.20.2'
+    // Google社が公開している標準ルールセットをベースにする(このプロジェクトのインデント幅に合わせて調整済み)
+    configFile = file('config/checkstyle/checkstyle.xml')
+    maxWarnings = Integer.MAX_VALUE
+    // 第一段階: 違反は警告として可視化するだけに留め、ビルドは失敗させない。
+    // 既存の本番コード全体を一度に直すとスコープが膨らみすぎるため、違反解消は別Issueで段階的に行う
+    ignoreFailures = true
+}
+
+tasks.named('checkstyleTest') {
+    // テストコードは対象外にする(学習コストを抑えるため、まずは本番コードのスタイルから揃える)
+    enabled = false
 }
 
 tasks.named('compileJava') {
