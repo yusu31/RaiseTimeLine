@@ -87,6 +87,11 @@ jobs:
       - name: Gradle をセットアップする
         uses: gradle/actions/setup-gradle@v6
 
+      # 静的解析(コードを実行せずに文法・命名規則・import順などを機械的にチェックすること)。
+      # 現時点では ignoreFailures=true (build.gradle 参照) のため、違反があってもここでは失敗しない
+      - name: 静的解析(Checkstyle)を実行する
+        run: ./gradlew checkstyleMain
+
       # cleanTest を先に実行する理由:
       # Gradle は入力が変わっていないとテストを UP-TO-DATE として飛ばすが、飛ばしてもビルドは成功扱いになる。
       # 「実行件数が表示されない＝実際には検証されていない」状態を防ぐため、毎回テストを強制的に走らせる

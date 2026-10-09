@@ -284,7 +284,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | ジョブ | 実行内容 | ローカルでの対応コマンド |
 |--------|---------|------------------------|
 | `frontend` | `npm ci` → `npm run lint` → `npm run test:run` → `npm run build` | 品質チェック（フロントエンド）と同じ |
-| `backend` | PostgreSQL 17 のサービスコンテナを起動 → `./gradlew cleanTest build` | 品質チェック（バックエンド）と同じ |
+| `backend` | PostgreSQL 17 のサービスコンテナを起動 → `./gradlew checkstyleMain` → `./gradlew cleanTest build` | 品質チェック（バックエンド）と同じ |
 
 2つのジョブは並列に実行される。互いに依存しないため、直列にする理由がない。
 
@@ -379,6 +379,26 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 > ワークフロー内で `chmod +x` する方法もあるが、実行権限はファイル自体の属性であって
 > CIの手順ではない。ワークフローが増えるたびに書き足す必要が出るため、リポジトリ側の記録を直した。
 > 修正コマンド: `git update-index --chmod=+x backend/gradlew`
+
+### 静的解析（Checkstyle）
+
+**設定ファイル:** `backend/build.gradle`（`checkstyle` ブロック）、`backend/config/checkstyle/checkstyle.xml`
+
+フロントエンドのESLintに相当するものがバックエンドには無かったため、Checkstyle（Javaの静的解析ツール。
+コードを実行せずに命名規則・import順などのスタイルを機械的にチェックする）を導入した（2026-10-10）。
+
+| 項目 | 値 | 理由 |
+|------|-----|------|
+| ベースのルールセット | `google_checks.xml`（Checkstyle公式同梱） | ゼロからルールを書く必要がなく、デファクトスタンダードとして妥当 |
+| `toolVersion` | `10.20.2`（固定） | CIとローカルで結果が変わらないようにする（既存のバージョン固定方針と同じ考え方） |
+| インデント設定 | 4スペースに変更 | `google_checks.xml` の既定値（2スペース）はこのプロジェクトの実際のコードと合わないため調整 |
+| 対象 | `main` ソースのみ（`checkstyleTest` は無効化） | テストコードまで対象にすると学習コストが上がりすぎるため、まずは本番コードに絞る |
+
+> **`ignoreFailures = true` にしている理由（段階導入）:** 導入した時点で既存の本番コード全体に対して
+> 違反ゼロを求めると、376件のテストが通っているコード全体を一度に直すことになりスコープが膨らみすぎる。
+> まずは **警告として違反件数を可視化するだけ** にとどめ、ビルドは失敗させない。
+> 違反を実際に解消し終えたら、別Issueで `ignoreFailures = false` に切り替えて「違反があれば止める」運用に移行する。
+> それまでは、CIの `backend` ジョブで `./gradlew checkstyleMain` が走り、ログに違反件数が出ることを確認する。
 
 ---
 
