@@ -97,3 +97,109 @@ jobs:
       # 「実行件数が表示されない＝実際には検証されていない」状態を防ぐため、毎回テストを強制的に走らせる
       - name: ビルドとテストを実行する
         run: ./gradlew cleanTest build
+
+  e2e:
+    name: E2E（Playwright）
+    runs-on: ubuntu-latest
+
+    # E2Eは実際の画面操作を再現するため、backend/frontendとは別のDBインスタンスを使う
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          # application-e2e.yml の接続先（raisetimeline_e2e / raisetime / password）とそろえる
+          POSTGRES_DB: raisetimeline_e2e
+          POSTGRES_USER: raisetime
+          POSTGRES_PASSWORD: password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: リポジトリを取得する
+        uses: actions/checkout@v7
+
+      - name: PostgreSQLクライアント(psql)をインストールする
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: JDK をセットアップする
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Gradle をセットアップする
+        uses: gradle/actions/setup-gradle@v6
+
+      # SPRING_PROFILES_ACTIVE=e2e で application-e2e.yml を読み込ませ、
+      # raisetimeline_e2e データベースに接続させた状態でバックグラウンド起動する
+      - name: バックエンドを起動する
+        working-directory: backend
+        env:
+          SPRING_PROFILES_ACTIVE: e2e
+        run: nohup ./gradlew bootRun > backend.log 2>&1 &
+
+      # bootRun はバックグラウンドですぐ戻るため、ポート8080が実際に応答するまで待つ。
+      # 待たずに次のステップへ進むと、起動完了前にテストが走って接続エラーになる
+      - name: バックエンドの起動完了を待つ
+        run: |
+          for i in $(seq 1 60); do
+            if curl -s -o /dev/null http://localhost:8080/; then
+              echo "バックエンドが起動しました"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "バックエンドの起動がタイムアウトしました"
+          cat backend/backend.log
+          exit 1
+
+      - name: Node.js をセットアップする
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+
+      # フロントエンドはPlaywrightのwebServerが `npm run dev` で起動するため、依存関係が必要
+      - name: フロントエンドの依存関係をインストールする
+        working-directory: frontend
+        run: npm ci
+
+      - name: E2Eの依存関係をインストールする
+        working-directory: e2e
+        run: npm ci
+
+      - name: Playwright のブラウザをインストールする
+        working-directory: e2e
+        run: npx playwright install --with-deps chromium
+
+      - name: テストデータを投入する
+        working-directory: e2e
+        run: npm run seed:ci
+
+      - name: E2Eシナリオテストを実行する
+        working-directory: e2e
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:5173
+          E2E_API_BASE_URL: http://localhost:8080
+        run: npm run test
+
+      - name: アクセシビリティテストを実行する
+        working-directory: e2e
+        env:
+          CI: true
+          E2E_BASE_URL: http://localhost:5173
+          E2E_API_BASE_URL: http://localhost:8080
+        run: npm run test:a11y
+
+      - name: 失敗時にテスト結果をアップロードする
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-results
+          path: e2e/results/
+          retention-days: 7

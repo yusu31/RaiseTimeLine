@@ -20,8 +20,13 @@ const USERS = [
 ] as const
 
 export default async function globalSetup() {
-  console.log('[global-setup] テストデータを投入します...')
-  execSync('npm run seed', { cwd: E2E_DIR, stdio: 'inherit' })
+  if (process.env.CI) {
+    // CI上ではワークフロー側のステップで npm run seed:ci を先に実行済みのため、ここでは投入しない
+    console.log('[global-setup] CI環境のため、テストデータ投入をスキップします（ワークフロー側で投入済み）')
+  } else {
+    console.log('[global-setup] テストデータを投入します...')
+    execSync('npm run seed', { cwd: E2E_DIR, stdio: 'inherit' })
+  }
 
   // 各ユーザーでAPIにログインし、トークンをブラウザのlocalStorageへ直接書き込んでstorageStateとして保存する。
   // UIのログインフォームを毎回操作するより大幅に速く、各specがこのファイルを再利用できる
