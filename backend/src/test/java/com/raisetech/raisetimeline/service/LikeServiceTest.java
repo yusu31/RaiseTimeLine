@@ -117,6 +117,21 @@ class LikeServiceTest {
     }
 
     @Test
+    @DisplayName("unlike: 自分のいいねを取り消しても、他人がいいねしていれば件数は0にならない")
+    void unlikeReturnsViewerSpecificStatusWhenOthersStillLike() {
+        givenPostExists();
+        when(likeMapper.countByPostId(POST_ID)).thenReturn(2);
+        when(likeMapper.exists(POST_ID, USER_ID)).thenReturn(false);
+
+        LikeStatusResponse response = likeService.unlike(USER_ID, POST_ID);
+
+        // 件数（みんなの合計）と likedByMe（自分の状態）は別の情報。like側の対称ケースとして確認する
+        verify(likeMapper).delete(POST_ID, USER_ID);
+        assertThat(response.likeCount()).isEqualTo(2);
+        assertThat(response.likedByMe()).isFalse();
+    }
+
+    @Test
     @DisplayName("like: 投稿の存在確認を先に行ってから、いいねを登録する")
     void checksPostExistenceBeforeInserting() {
         when(postMapper.findById(POST_ID)).thenReturn(Optional.empty());

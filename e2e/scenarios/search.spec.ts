@@ -30,6 +30,18 @@ test.describe('検索', () => {
     await expect(searchPage.postNoResultsText).toBeVisible()
   })
 
+  test('該当する投稿がない場合、入力したキーワード自体がメッセージに表示される', async ({ page }) => {
+    // 固定文言（「見つかりませんでした」の部分）だけでなく、
+    // 検索したキーワードがそのままメッセージに反映されることまで確認する
+    const searchPage = new SearchPage(page)
+    const keyword = '存在しないはずのキーワードxyz123'
+
+    await searchPage.goto()
+    await searchPage.search(keyword)
+
+    await expect(page.getByText(`「${keyword}」を含む投稿は見つかりませんでした`)).toBeVisible()
+  })
+
   test('ユーザー検索でユーザー名に一致するユーザーが表示される', async ({ page }) => {
     const searchPage = new SearchPage(page)
 
