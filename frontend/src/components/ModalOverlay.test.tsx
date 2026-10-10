@@ -53,4 +53,18 @@ describe('ModalOverlay', () => {
 
     expect(screen.getByRole('dialog').firstElementChild).toHaveClass('max-w-lg')
   })
+
+  it('複数の要素を渡しても、すべて表示される', () => {
+    // children は単一要素とは限らない。1つだけを渡すケースだけでは、
+    // 2つ目以降が黙って欠落する実装も緑になってしまう
+    render(
+      <ModalOverlay>
+        <p>1つ目</p>
+        <p>2つ目</p>
+      </ModalOverlay>,
+    )
+
+    expect(screen.getByText('1つ目')).toBeInTheDocument()
+    expect(screen.getByText('2つ目')).toBeInTheDocument()
+  })
 })
