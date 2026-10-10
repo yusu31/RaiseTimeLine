@@ -12,6 +12,7 @@
     "test:debug": "playwright test scenarios/ --project=chromium --debug",
     "seed": "docker exec -i raisetimeline-postgres psql -U raisetime -d raisetimeline_e2e < data/seed-e2e-data.sql",
     "cleanup": "docker exec -i raisetimeline-postgres psql -U raisetime -d raisetimeline_e2e < data/cleanup-e2e-data.sql",
+    "seed:ci": "cross-env PGPASSWORD=password psql -h localhost -p 5432 -U raisetime -d raisetimeline_e2e -f data/seed-e2e-data.sql",
     "report": "playwright show-report results/report"
   },
   "devDependencies": {

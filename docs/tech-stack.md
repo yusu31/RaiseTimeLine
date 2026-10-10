@@ -285,8 +285,9 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 |--------|---------|------------------------|
 | `frontend` | `npm ci` → `npm run lint` → `npm run test:run` → `npm run build` | 品質チェック（フロントエンド）と同じ |
 | `backend` | PostgreSQL 17 のサービスコンテナを起動 → `./gradlew checkstyleMain` → `./gradlew cleanTest build` | 品質チェック（バックエンド）と同じ |
+| `e2e` | PostgreSQL 17（`raisetimeline_e2e`）起動 → バックエンドを`e2e`プロファイルで起動 → `npm run seed:ci` → `npm run test` → `npm run test:a11y` | E2Eテスト（詳細は `docs/e2e-testing.md` 12章） |
 
-2つのジョブは並列に実行される。互いに依存しないため、直列にする理由がない。
+3つのジョブは並列に実行される。互いに依存しないため、直列にする理由がない。
 
 ### 実行環境のバージョン
 

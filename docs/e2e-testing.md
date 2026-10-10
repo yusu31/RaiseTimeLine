@@ -6,7 +6,7 @@
 パフォーマンスしきい値の根拠・CI化の方針はここに1か所だけ書く。ツールの選定理由・比較表は
 `docs/tech-stack.md`、どのユースケースを「なぜ」選んだかは `docs/testing-design.md` を参照。
 
-**現時点ではCIで自動実行しない。手動実行のみ。**（詳細は本文末尾「CI化について」）
+**`.github/workflows/ci.yml`の`e2e`ジョブでCI自動実行している（2026-10-10〜）。**（詳細は本文末尾「CI化について」）
 
 ---
 
@@ -154,7 +154,23 @@ WCAG 2.1 AA基準でチェックする（`npm run test:a11y`）。
 
 ## 12. CI化について
 
-**現時点ではCIに組み込んでいない。** 次のCI/CD講義を踏まえて、`.github/workflows/ci.yml`への
-組み込みを別途検討する。`playwright.config.ts`にはCI実行を想定した設定
-（`webServer`のCI時自動起動、`retries`/`workers`のCI用調整）を用意済みのため、組み込み自体の
-実装コストは低い。
+**`.github/workflows/ci.yml`の`e2e`ジョブで自動実行している（2026-10-10〜）。**
+`frontend`・`backend`とは独立した3つめのジョブとして、同じファイルに追加した（別ファイルには分割しない）。
+
+| 項目 | ローカル | CI |
+|---|---|---|
+| DBへのテストデータ投入 | `global-setup.ts`が`npm run seed`（`docker exec`経由）を実行 | ワークフロー側の専用ステップが`npm run seed:ci`（`psql`で直接接続）を先に実行。`global-setup.ts`は`process.env.CI`を見て投入をスキップする |
+| クリーンアップ | `global-teardown.ts`が`npm run cleanup`を実行 | 何もしない（`global-teardown.ts`も`process.env.CI`でスキップ）。GitHub Actionsの`services:`コンテナはジョブ終了ごとに破棄され、次回は必ずクリーンな状態になるため不要 |
+| 対象 | `test`（scenarios/）を主に手動実行 | `test`（scenarios/、32件）→`test:a11y`（accessibility/、6件）の順に実行。`test:perf`は今回のスコープ外のまま除外 |
+| worker数 | 既定（CPU数、並列） | `playwright.config.ts`の既存設定どおり1（`retries`も2）。固定投稿（aliceの検索用投稿）など共有データに触れるテストがあり、並列だと競合するため |
+
+> **`seed:ci`を別コマンドにした理由:** 既存の`seed`/`cleanup`（`docker exec raisetimeline-postgres ...`）は
+> コンテナ名に直接依存しており、GitHub Actionsの`services:`コンテナ上にはこの名前のコンテナが存在しないため
+> そのままでは動かない。Windows環境への`psql`クライアント追加インストールを避けるため、ローカル用の`seed`/`cleanup`
+> はそのまま残し、CI専用の`seed:ci`（`psql -h localhost`で直接接続）のみ新設した。
+
+> **ローカルでの動作確認時の注意（2026-10-10に実際に発生）:** `localhost:5173`が複数プロセスにバインドされていると
+> （例: 他プロジェクトのVite devサーバーが`[::1]:5173`を先に握っている等）、名前解決の優先順位によって
+> 意図しないサーバーに接続してしまい、全シナリオが同じ場所でタイムアウトする。`netstat -ano | findstr :5173`で
+> LISTENING中のPIDを確認し、`curl`でレスポンスの`<title>`が`RaiseTimeLine`になっているかまで確認してから
+> テストを実行する。
