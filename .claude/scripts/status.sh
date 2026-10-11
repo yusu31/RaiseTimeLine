@@ -18,7 +18,8 @@ PHASES="
 06|8|100%|監視運用とログ設計（講義No.32）
 07|0|  0%|デプロイ（AWS: EC2 + RDS + ALB）
 08|8|100%|非機能要件・パフォーマンステスト（k6、講義No.35）
-09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）  <-- いまここ
+09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）
+10|8|100%|CI整備（GitHub Actions、講義No.37）  <-- いまここ
 "
 
 # ── フェーズの内訳（親番号|番号|進捗0-8|表示|名前） ─────────────
@@ -49,6 +50,9 @@ SUBPHASES="
 09|09-1|8|100%|基盤整備・認証シナリオ（専用DB raisetimeline_e2e・POM・storageState） PR #117
 09|09-2|8|100%|残りシナリオ実装（投稿/コメント/いいね/フォロー/プロフィール/タイムライン/検索・計33件） PR #121
 09|09-3|8|100%|パフォーマンス計測・アクセシビリティ（axe-coreでa11y違反2件を検出・修正） PR #123
+10|10-1|8|100%|バックエンド静的解析（Checkstyle、google_checks.xmlベース・段階導入） PR #127
+10|10-2|8|100%|E2EテストのCI自動実行（seed:ci新設・global-setup/teardownをCI分岐） PR #129
+10|10-3|8|100%|検証PR（3系統に1件ずつテスト追加・Rulesetの必須チェック3つを確認） PR #131
 "
 
 # 05-5・05-6 は 05-3（PR #80）の探索で見つかった。
@@ -94,6 +98,19 @@ NEXT="
 # k6-reporterのHTMLレポートの読み方（Breached Thresholds・P95しきい値・平均の罠）を学んだ回。
 # 詳細はObsidianの ClaudeCode-School「2026-10-06_パフォーマンステストの実行とレポートの読み方」を参照。
 
+# フェーズ10（CI整備、講義No.37）は2026-10-10〜10-11に完了。既存の.github/workflows/ci.ymlに
+# 静的解析（Checkstyle）とE2Eジョブを追加し、Rulesetの必須チェックを2つから3つ（フロントエンド・
+# バックエンド・E2E）に増やした。Checkstyleはgoogle_checks.xmlベースでignoreFailures=trueの
+# 段階導入（Javadocチェックのみコメントアウトで無効化）。E2EはGitHub Actionsのservicesコンテナに
+# docker exec依存のseed/cleanupが使えないため、CI専用のseed:ciを新設しprocess.env.CIで分岐。
+# 10-3（PR #131）では3系統に1件ずつテストを追加し、Rulesetの必須チェックが実際にPR画面上で
+# 機能する（全部グリーンでないとマージ不可）ことを確認した。合わせてPaaS比較（Render推奨・
+# Neon無料プランのDB併用）を提案したが、これは会話内の提示のみで完結させ、実装・docs化はしていない
+# （デプロイ方式の確定はフェーズ07の課題として保留）。Javaバージョンアップ（21→25、
+# Spring Boot 3.4→3.5）も「CIという安全網を先に作ってから」の方針で今回のスコープ外のまま。
+# 詳細はObsidianの ClaudeCode-School「2026-10-10_CIパイプラインとJava・DB選定の判断」
+# 「2026-10-10_E2EテストのCI自動実行とポート競合のデバッグ」を参照。
+
 # フェーズ09（E2Eテスト・講義No.36）は2026-10-07〜10-08に完了。Playwrightを採用し、
 # Page Object Model・storageStateによる認証高速化を導入（ユーザー自身の計画と講師側
 # ClaudeCodeの計画を比較検討して確定）。実装計画の正本は
@@ -105,9 +122,9 @@ NEXT="
 # （`playwright.config.ts`にCI用設定は用意済み）。
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
-MEASURED_AT="2026-09-19"
-BACKEND_TESTS=401
-FRONTEND_TESTS=311
+MEASURED_AT="2026-10-11"
+BACKEND_TESTS=397
+FRONTEND_TESTS=312
 
 bar() { # $1=埋まっている数(0-8)
   local n=$1 i out=""
