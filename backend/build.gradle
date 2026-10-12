@@ -1,7 +1,7 @@
 plugins {
     id 'java'
     // テストがコードのどこを通ったかを計測する（カバレッジ）。Gradle 標準のプラグインで追加の依存は不要。
-    // toolVersion は指定しない: Gradle 8.14.5 が既定で使う JaCoCo のバージョンに従う。
+    // toolVersion は指定しない: Gradle 9.8.1 が既定で使う JaCoCo のバージョンに従う。
     // Gradle のバージョンは gradle-wrapper.properties で固定しているため、これでも結果は毎回同じになる
     id 'jacoco'
     // Javaの静的解析（命名規則・import順などコードスタイルをチェックする）。フロントエンドのESLintに相当する

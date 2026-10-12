@@ -295,7 +295,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 |------|-----|------|
 | Node.js | 24 | ローカルの実測値 v24.15.0 に合わせる |
 | Java | 21（temurin） | `build.gradle` の toolchain 指定 |
-| Gradle | 8.14.5 | リポジトリ同梱の wrapper をそのまま使う |
+| Gradle | 9.8.1 | リポジトリ同梱の wrapper をそのまま使う |
 | PostgreSQL | 17 | `docker-compose.yml` と同一 |
 
 > **バージョンを固定する理由:** CIとローカルで実行環境が違うと、「手元では通るのにCIで落ちる」
@@ -438,6 +438,17 @@ Spring Boot 4.0のモジュール分割で、以下のテスト用アノテー�
 |---|---|---|
 | `@AutoConfigureMockMvc` | `org.springframework.boot.test.autoconfigure.web.servlet` | `org.springframework.boot.webmvc.test.autoconfigure`（`spring-boot-starter-webmvc-test`を明示的にtestImplementationへ追加する必要がある） |
 | `@AutoConfigureTestDatabase` | `org.springframework.boot.test.autoconfigure.jdbc` | `org.springframework.boot.jdbc.test.autoconfigure`（依存自体は`mybatis-spring-boot-starter-test`経由で引き込まれるが、importパスの修正は別途必要） |
+
+## Gradle 9へのアップグレード（2026-10）
+
+バージョンアップ計画の②。GradleがJava25をtoolchainとして使うにはGradle 9.1.0以上が必要なため、
+Java25化（④）の前提として8.14.5→9.8.1に上げた。Spring Boot 3.4.5の時点ではGradle9.xは
+非公式サポートの組み合わせだったため、①（Spring Boot 4.0化）より後に行った。
+
+> **残タスク（Gradle10アップグレード時に対応）:** `build.gradle`で使っている`afterSuite(Closure)`
+> （テストの実行件数をログに出す`printTestSummary`で使用）はGradle10で削除予定の非推奨API。
+> 現時点では警告のみでビルドは成功するため、今回は対応を見送った。Gradle10へ上げるタイミングで
+> `addTestListener(TestListener)`への置き換えが必要になる。
 
 ---
 
