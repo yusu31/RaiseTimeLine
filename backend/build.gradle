@@ -60,7 +60,7 @@ dependencies {
 
 checkstyle {
     // CIとローカルで結果が変わらないよう、Checkstyle本体のバージョンを固定する(既存の固定方針に合わせる)
-    toolVersion = '10.20.2'
+    toolVersion = '14.3.0'
     // Google社が公開している標準ルールセットをベースにする(このプロジェクトのインデント幅に合わせて調整済み)
     configFile = file('config/checkstyle/checkstyle.xml')
     maxWarnings = Integer.MAX_VALUE
