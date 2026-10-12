@@ -101,11 +101,11 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
 |----------|----------|-----------|---------|
 | 言語 | Java | 21 | TaskManagementと同一のLTS版 |
-| フレームワーク | Spring Boot | 3.4.5 | RaiseTechの講義で使用。TaskManagementと同一バージョン |
+| フレームワーク | Spring Boot | 4.0.8 | 2026-10に3.4.5から更新(詳細は「Spring Boot 4.0へのバージョンアップ」節) |
 | 認証 | Spring Security + JWT | Boot同梱 + jjwt | 講義（No.24〜）がJWT方式のため。アクセストークン＋リフレッシュトークン構成 |
-| ORマッパー | MyBatis | mybatis-spring-boot-starter 3.0.4 | SQLを自分で書くことで、実行されるクエリを意識しながら学べると判断した |
-| DBマイグレーション | Flyway | Boot同梱 | 講義で導入するツール。DBの変更履歴をSQLファイルで管理できる |
-| API仕様書 | springdoc-openapi | 2.8.8 | TaskManagementと同一。エンドポイントの動作確認（Swagger UI）に便利 |
+| ORマッパー | MyBatis | mybatis-spring-boot-starter 4.0.0 | SQLを自分で書くことで、実行されるクエリを意識しながら学べると判断した |
+| DBマイグレーション | Flyway | `spring-boot-starter-flyway` | Spring Boot 4.0のモジュール分割で専用starterが必須になった（詳細は後述） |
+| API仕様書 | springdoc-openapi | 3.1.1 | Spring Boot 4対応はv3系。エンドポイントの動作確認（Swagger UI）に便利 |
 | 画像ストレージ | AWS SDK for Java v2（`s3`） | BOM 2.54.9 | 画像のS3保存に使用。v1はメンテナンスモードで新規採用の対象外。個々の依存にバージョンを書かずBOMで一括管理する |
 | ログ | Spring Boot構造化ログ（Logstash JSON形式） | Boot同梱 | 追加ライブラリ不要でJSON構造化ログを出力できる。詳細は [operations.md](./operations.md) |
 | ビルドツール | Gradle | 8.x | 前回課題と同じ |
@@ -400,6 +400,44 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 > まずは **警告として違反件数を可視化するだけ** にとどめ、ビルドは失敗させない。
 > 違反を実際に解消し終えたら、別Issueで `ignoreFailures = false` に切り替えて「違反があれば止める」運用に移行する。
 > それまでは、CIの `backend` ジョブで `./gradlew checkstyleMain` が走り、ログに違反件数が出ることを確認する。
+
+---
+
+## Spring Boot 4.0へのバージョンアップ（2026-10）
+
+Javaバージョンアップ（21→25）の前提として、Spring Bootを3.4.5→4.0.8に上げた（Spring Boot 3.5は
+2026-06-30にOSS版サポート終了済みのため、3.5を踏み台にせず一段飛びで4.0へ上げた）。
+5つのIssue/PRに分割して段階的に進める方針の①にあたる（実装計画の正本は
+`C:\Users\3fort\.claude\plans\virtual-zooming-flurry.md`）。
+
+### Flywayの自動設定が別モジュールに分割された
+
+Spring Boot 4.0でFlywayの自動設定クラスが`org.springframework.boot.autoconfigure.flyway`から
+`org.springframework.boot.flyway.autoconfigure`に移動し、**`flyway-core`を直接依存に書くだけでは
+自動設定が有効化されなくなった**（エラーも出ずマイグレーションが実行されない「静かな失敗」）。
+`implementation 'org.flywaydb:flyway-core'`を`implementation 'org.springframework.boot:spring-boot-starter-flyway'`
+に切り替えることで解決した。`@MapperTest`（Mapperテスト用の共通アノテーション）が
+`FlywayAutoConfiguration`を直接importしていたため、こちらもimportパスの修正が必要だった。
+
+### Jackson2からJackson3への既定変更
+
+Spring Boot 4.0はJSON処理の既定ライブラリがJackson2（`com.fasterxml.jackson`）からJackson3
+（`tools.jackson`）に変わり、**Jackson2の`ObjectMapper`はBean登録されなくなった**。
+`JsonAuthenticationEntryPoint`・`JsonAccessDeniedHandler`（認証エラー時にJSONを手書きで返す部品）が
+コンストラクタで`com.fasterxml.jackson.databind.ObjectMapper`を要求していたため、
+`NoSuchBeanDefinitionException`で起動時にテストが落ちた。`writeValueAsString`等のAPIはJackson2/3で
+変わっていないため、importを`tools.jackson.databind.ObjectMapper`に変えるだけで解決した
+（本体2ファイル・統合テスト8ファイル）。Spring Bootが用意する移行支援用`spring-boot-jackson2`
+モジュール（非推奨・将来削除予定）には頼らず、素直にJackson3へ書き換える方を選んだ。
+
+### テスト用アノテーションのパッケージ移動
+
+Spring Boot 4.0のモジュール分割で、以下のテスト用アノテーションのパッケージが変わった。
+
+| アノテーション | Boot3.x | Boot4.0 |
+|---|---|---|
+| `@AutoConfigureMockMvc` | `org.springframework.boot.test.autoconfigure.web.servlet` | `org.springframework.boot.webmvc.test.autoconfigure`（`spring-boot-starter-webmvc-test`を明示的にtestImplementationへ追加する必要がある） |
+| `@AutoConfigureTestDatabase` | `org.springframework.boot.test.autoconfigure.jdbc` | `org.springframework.boot.jdbc.test.autoconfigure`（依存自体は`mybatis-spring-boot-starter-test`経由で引き込まれるが、importパスの修正は別途必要） |
 
 ---
 
