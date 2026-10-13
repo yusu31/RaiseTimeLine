@@ -1,1 +1,8 @@
+plugins {
+    // toolchainで指定したJavaのバージョンがローカルに無い場合、自動でダウンロードできるようにする。
+    // これが無いと、CI(JDKを自分でセットアップする)では動くが、ローカルでは
+    // 「Cannot find a Java installation」で失敗する(Issue #140で判明)
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'raise-time-line'
