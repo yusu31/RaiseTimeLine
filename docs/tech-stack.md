@@ -108,7 +108,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | API仕様書 | springdoc-openapi | 3.1.1 | Spring Boot 4対応はv3系。エンドポイントの動作確認（Swagger UI）に便利 |
 | 画像ストレージ | AWS SDK for Java v2（`s3`） | BOM 2.54.9 | 画像のS3保存に使用。v1はメンテナンスモードで新規採用の対象外。個々の依存にバージョンを書かずBOMで一括管理する |
 | ログ | Spring Boot構造化ログ（Logstash JSON形式） | Boot同梱 | 追加ライブラリ不要でJSON構造化ログを出力できる。詳細は [operations.md](./operations.md) |
-| ビルドツール | Gradle | 8.x | 前回課題と同じ |
+| ビルドツール | Gradle | 9.x | 2026-10に8.14.5から更新（詳細は「Gradle 9へのアップグレード」節） |
 
 > **`-Xlint:deprecation` を有効にしている**（`build.gradle` の `compileJava`）。
 > AWS SDK 導入時に `DefaultCredentialsProvider.create()` が非推奨であることをこの警告で検知できたため、

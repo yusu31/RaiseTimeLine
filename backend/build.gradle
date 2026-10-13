@@ -53,7 +53,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
     testImplementation 'org.springframework.security:spring-security-test'
     // Mapper だけを読み込む @MybatisTest を使うために必要。
-    // 本体の mybatis-spring-boot-starter と同じ 3.0.4 を指定する（別バージョンだと組み合わせが保証されない）
+    // 本体の mybatis-spring-boot-starter と同じ 4.0.0 を指定する（別バージョンだと組み合わせが保証されない）
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:4.0.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
