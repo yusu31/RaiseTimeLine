@@ -100,7 +100,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 
 | カテゴリ | 使用技術 | バージョン | 選定理由 |
 |----------|----------|-----------|---------|
-| 言語 | Java | 21 | TaskManagementと同一のLTS版 |
+| 言語 | Java | 25 | 2026-10に21から更新。Spring Boot 4.0がJava25にfirst-class supportしたため |
 | フレームワーク | Spring Boot | 4.0.8 | 2026-10に3.4.5から更新(詳細は「Spring Boot 4.0へのバージョンアップ」節) |
 | 認証 | Spring Security + JWT | Boot同梱 + jjwt | 講義（No.24〜）がJWT方式のため。アクセストークン＋リフレッシュトークン構成 |
 | ORマッパー | MyBatis | mybatis-spring-boot-starter 4.0.0 | SQLを自分で書くことで、実行されるクエリを意識しながら学べると判断した |
@@ -294,7 +294,7 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 | 項目 | 値 | 根拠 |
 |------|-----|------|
 | Node.js | 24 | ローカルの実測値 v24.15.0 に合わせる |
-| Java | 21（temurin） | `build.gradle` の toolchain 指定 |
+| Java | 25（temurin） | `build.gradle` の toolchain 指定 |
 | Gradle | 9.8.1 | リポジトリ同梱の wrapper をそのまま使う |
 | PostgreSQL | 17 | `docker-compose.yml` と同一 |
 
