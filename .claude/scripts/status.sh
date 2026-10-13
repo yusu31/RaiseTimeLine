@@ -19,7 +19,8 @@ PHASES="
 07|0|  0%|デプロイ（AWS: EC2 + RDS + ALB）
 08|8|100%|非機能要件・パフォーマンステスト（k6、講義No.35）
 09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）
-10|8|100%|CI整備（GitHub Actions、講義No.37）  <-- いまここ
+10|8|100%|CI整備（GitHub Actions、講義No.37）
+11|8|100%|Javaバージョンアップ（21→25、Spring Boot 3.4→4.0）  <-- いまここ
 "
 
 # ── フェーズの内訳（親番号|番号|進捗0-8|表示|名前） ─────────────
@@ -53,6 +54,11 @@ SUBPHASES="
 10|10-1|8|100%|バックエンド静的解析（Checkstyle、google_checks.xmlベース・段階導入） PR #127
 10|10-2|8|100%|E2EテストのCI自動実行（seed:ci新設・global-setup/teardownをCI分岐） PR #129
 10|10-3|8|100%|検証PR（3系統に1件ずつテスト追加・Rulesetの必須チェック3つを確認） PR #131
+11|11-1|8|100%|Spring Boot 4.0.8 + MyBatis 4.0.0化（Flyway starter切替・Jackson3移行） PR #135
+11|11-2|8|100%|Gradle wrapper 9.8.1化（foojay-resolverでtoolchain自動DL対応） PR #137
+11|11-3|8|100%|Checkstyle 14.3.0化（Java25新文法対応・警告件数は変化なし） PR #139
+11|11-4|8|100%|Java toolchain 25化（ci.ymlのjava-versionも追従） PR #141
+11|11-5|8|100%|最終検証・ドキュメント総仕上げ（積み重ねの破損なしを確認） PR #143
 "
 
 # 05-5・05-6 は 05-3（PR #80）の探索で見つかった。
@@ -111,6 +117,19 @@ NEXT="
 # 詳細はObsidianの ClaudeCode-School「2026-10-10_CIパイプラインとJava・DB選定の判断」
 # 「2026-10-10_E2EテストのCI自動実行とポート競合のデバッグ」を参照。
 
+# フェーズ11（Javaバージョンアップ、21→25・Spring Boot 3.4→4.0）は2026-10-12〜10-13に完了。
+# 前回（フェーズ10）で保留した「3.4→3.5→将来4.0」の2段階プランを再調査し、Spring Boot 3.5は
+# 2026-06-30にOSS版サポート終了済みと判明したため、一段飛びで4.0へ上げることにユーザーと合意。
+# 5 Issue/PRに分割し、①Spring Boot4.0+MyBatis4.0→②Gradle9.8.1→③Checkstyle14.3.0→
+# ④Java25→⑤最終検証の順で進めた（Spring Boot3.4.5+Gradle9.xは非公式サポートの組み合わせ
+# だったため、Gradle更新より先にSpring Boot更新を行う順序にした）。
+# Spring Boot4.0のモジュール分割で、Flywayの自動設定が`flyway-core`直接依存だけでは
+# 有効化されなくなる「静かな失敗」と、JSON処理の既定がJackson2→Jackson3に変わり
+# `ObjectMapper`がBean登録されなくなる破壊的変更の2点が実際に影響した
+# （どちらもimportパス・依存の切替で解決、アプリの振る舞い自体は変更不要）。
+# ローカルにJDK25が無く`foojay-resolver-convention`プラグインの追加が必要だったことも判明。
+# 詳細はObsidianの ClaudeCode-School学習記録（フェーズ11回）を参照。
+
 # フェーズ09（E2Eテスト・講義No.36）は2026-10-07〜10-08に完了。Playwrightを採用し、
 # Page Object Model・storageStateによる認証高速化を導入（ユーザー自身の計画と講師側
 # ClaudeCodeの計画を比較検討して確定）。実装計画の正本は
@@ -122,7 +141,7 @@ NEXT="
 # （`playwright.config.ts`にCI用設定は用意済み）。
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
-MEASURED_AT="2026-10-11"
+MEASURED_AT="2026-10-13"
 BACKEND_TESTS=397
 FRONTEND_TESTS=312
 
