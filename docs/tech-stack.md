@@ -263,7 +263,9 @@ npm run test:coverage   # build/ ではなく frontend/coverage/index.html に�
 |----------|----------|------|---------|
 | 画像ストレージ | S3 | **確定・実装済み**（2026-09-02） | 投稿画像・アイコン画像の保存先。`StorageService` の実装を `app.storage.type` で切り替える方式にした。既定はローカル保存で、設定漏れ時にS3が有効化されて課金が発生しないようにしてある。バケット名・IAM・公開方針は [infrastructure.md](./infrastructure.md) を参照 |
 | クラウド | AWS | 前提 | 講義・前回課題と同じ。転職市場での需要が高い |
-| サーバー構成 | EC2 + RDS（PostgreSQL） + ALB | 前提 | 構成図は [infrastructure.md](./infrastructure.md) を参照。サーバー構築方式の詳細はデプロイフェーズで確定 |
+| フロント配信 | S3 + CloudFront | 前提（2026-10-13 講義No.38で確定） | ビルド成果物をS3に置き、CloudFrontでCDN配信。EC2上のnginx配信案は不採用（詳細は [infrastructure.md](./infrastructure.md) の「2.5」） |
+| バックエンド実行環境 | ECS Fargate | 前提（2026-10-13 講義No.38で確定） | コンテナ実行環境をAWSに任せ、EC2のOS管理・スケーリング設定を自前で行わない方式にした。**EC2は使用しない** |
+| サーバー構成 | ALB + RDS（PostgreSQL） | 前提 | 構成図は [infrastructure.md](./infrastructure.md) を参照。VPC設計・ECSタスク定義の詳細はデプロイフェーズで確定 |
 | IaC | Terraform | 前提 | 前回課題で使用。インフラをコードで管理 |
 
 ## 共通
