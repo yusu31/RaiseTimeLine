@@ -33,3 +33,33 @@ variable "private_subnet_cidrs" {
   type        = list(string)
   default     = ["10.0.11.0/24", "10.0.12.0/24"]
 }
+
+variable "db_name" {
+  description = "RDSに作成するデータベース名（ローカルのdocker-compose.ymlと一致させる）"
+  type        = string
+  default     = "raisetimeline"
+}
+
+variable "db_username" {
+  description = "RDSのマスターユーザー名（ローカルのdocker-compose.ymlと一致させる）"
+  type        = string
+  default     = "raisetime"
+}
+
+variable "db_instance_class" {
+  description = "RDSインスタンスタイプ（無料利用枠対象。Single-AZ構成のみ無料枠適用）"
+  type        = string
+  default     = "db.t4g.micro"
+}
+
+variable "db_allocated_storage" {
+  description = "RDSのストレージサイズ(GB)。無料利用枠は20GBまで"
+  type        = number
+  default     = 20
+}
+
+variable "db_engine_version" {
+  description = "PostgreSQLのエンジンバージョン"
+  type        = string
+  default     = "17.11"
+}
