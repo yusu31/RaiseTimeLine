@@ -32,6 +32,10 @@ jwt:
   access-token-validity: ${JWT_ACCESS_VALIDITY:30m}
   refresh-token-validity: ${JWT_REFRESH_VALIDITY:14d}
 
+cors:
+  # 本番ではCloudFrontのドメインを指定する。複数指定時はカンマ区切り
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
 logging:
   level:
     root: INFO
