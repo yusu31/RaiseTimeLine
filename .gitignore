@@ -26,3 +26,11 @@ logs/
 
 # パフォーマンステスト（k6）のレポート出力
 perf/results/
+
+# Terraform（状態ファイル・実行キャッシュ・実値入りの変数ファイル）
+# .terraform.lock.hcl はプロバイダーのバージョンを固定するファイルなので除外しない（Git管理する）
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
+terraform/*.tfplan

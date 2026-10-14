@@ -1,0 +1,8 @@
+# このファイルをコピーして terraform.tfvars を作成する（terraform.tfvars自体はGit管理外）
+# cp terraform.tfvars.example terraform.tfvars
+#
+# 現時点では variables.tf の default 値だけで動くため、このファイルは空のままでも良い。
+# 環境ごとに値を変えたくなったときに、ここに書いて上書きする。
+
+# aws_region   = "ap-northeast-1"
+# project_name = "raisetimeline"
