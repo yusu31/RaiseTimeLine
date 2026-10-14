@@ -16,11 +16,11 @@ PHASES="
 04|8|100%|テストの整備
 05|8|100%|品質の詰め（バグ修正・想定外テスト）
 06|8|100%|監視運用とログ設計（講義No.32）
-07|0|  0%|デプロイ（AWS: EC2 + RDS + ALB）
+07|3| 40%|デプロイ（S3+CloudFront+ECS Fargate+ALB+RDS、EC2不使用、講義No.38〜39）  <-- いまここ
 08|8|100%|非機能要件・パフォーマンステスト（k6、講義No.35）
 09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）
 10|8|100%|CI整備（GitHub Actions、講義No.37）
-11|8|100%|Javaバージョンアップ（21→25、Spring Boot 3.4→4.0）  <-- いまここ
+11|8|100%|Javaバージョンアップ（21→25、Spring Boot 3.4→4.0）
 "
 
 # ── フェーズの内訳（親番号|番号|進捗0-8|表示|名前） ─────────────
@@ -59,6 +59,10 @@ SUBPHASES="
 11|11-3|8|100%|Checkstyle 14.3.0化（Java25新文法対応・警告件数は変化なし） PR #139
 11|11-4|8|100%|Java toolchain 25化（ci.ymlのjava-versionも追従） PR #141
 11|11-5|8|100%|最終検証・ドキュメント総仕上げ（積み重ねの破損なしを確認） PR #143
+07|07-1|8|100%|Spring Boot Actuator導入・ヘルスチェック追加（ECS/ALB用） PR #150
+07|07-2|8|100%|CORS許可オリジンの環境変数化 PR #152
+07|07-3|8|100%|backend用Dockerfile新規作成（マルチステージビルド） PR #154
+07|07-4|8|100%|TerraformでVPCネットワーク基盤構築（NAT Gateway不採用に変更） PR #156
 "
 
 # 05-5・05-6 は 05-3（PR #80）の探索で見つかった。
@@ -82,12 +86,11 @@ SUBPHASES="
 
 # ── 次にやること（番号|内容） ────────────────────────────────
 NEXT="
-1|デプロイ（EC2 + RDS + ALB）  <-- あなたの明示指示があるまで着手しない
+1|Issue5: RDS構築（Terraformでdb.t4g.micro作成。apply→確認→destroyのサイクル）
 "
 
 # フェーズ06（監視運用とログ設計、講義No.32）は6 Issue全部完了（#89,#91,#93,#95,#97,#101）。
 # 実装計画の正本は C:\Users\3fort\.claude\plans\260915-no-32-datadog-robust-panda.md。
-# デプロイ（フェーズ07）は課金が発生するため、あなたの明示指示があるまで着手しない（2026-09-03に明言）。
 # 06-7（2026-09-20）は次の講義33「テストとログ実装の解説」のメモを先にもらい、模範解答と
 # 自分の実装を突き合わせた回。コード変更なし。テスト件数が講師の目安の2〜8倍あったが、
 # フェーズ05の探索実績・testing-design.mdの網羅方針で説明が付くと判断した。詳細はObsidianの
@@ -130,6 +133,20 @@ NEXT="
 # ローカルにJDK25が無く`foojay-resolver-convention`プラグインの追加が必要だったことも判明。
 # 詳細はObsidianの ClaudeCode-School学習記録（フェーズ11回）を参照。
 
+# フェーズ07（デプロイ）は2026-10-13〜14に講義No.38を受けて着手。実装計画の正本は
+# C:\Users\3fort\.claude\plans\eventual-baking-kay.md。講義メモとClaude独自調査を比較した後、
+# 講師の計画書（スクリーンショット）が共有され、両者を突き合わせて計画を確定した。
+# 当初は講師案（プライベートサブネット+NAT Gateway）で進めたが、Issue4のapply直前に
+# 過去2プロダクト（TaskManagement・Roami）の実績とAWS Cost Explorerの実課金（過去10ヶ月実質$0）
+# を確認した結果、どちらもNAT Gateway不使用の最小構成だったと判明。講師に確認し
+# 「NAT Gatewayは無くても問題ない」との回答を得たため、ECS Fargateはパブリックサブネット+SG絞り
+# （Claude独自案）に変更した。講義No.39で「無料枠対象外のリソースは動作確認後terraform destroy
+# してよい」という運用方針が明示されたため、以降のTerraform系Issueはapply→確認→destroyで進める。
+# 07-1〜07-3（コード改修、課金なし）→07-4（VPC基盤、apply実地検証済み）まで完了。
+# 新設されたcert-quizスキル（資格試験連動クイズ、7資格対象）を今回初めて使用し、
+# AWS基礎知識の確認クイズ5問（正答率20%）を実施・記録した。詳細はObsidianの
+# ClaudeCode-School「2026-10-14_AWSデプロイの技術解説とTerraform計画」を参照。
+
 # フェーズ09（E2Eテスト・講義No.36）は2026-10-07〜10-08に完了。Playwrightを採用し、
 # Page Object Model・storageStateによる認証高速化を導入（ユーザー自身の計画と講師側
 # ClaudeCodeの計画を比較検討して確定）。実装計画の正本は
@@ -141,8 +158,8 @@ NEXT="
 # （`playwright.config.ts`にCI用設定は用意済み）。
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
-MEASURED_AT="2026-10-13"
-BACKEND_TESTS=397
+MEASURED_AT="2026-10-14"
+BACKEND_TESTS=399
 FRONTEND_TESTS=312
 
 bar() { # $1=埋まっている数(0-8)
