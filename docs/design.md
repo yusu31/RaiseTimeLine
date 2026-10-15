@@ -177,7 +177,7 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
       "likeCount": 12,
       "commentCount": 3,
       "likedByMe": true,
-      "createdAt": "2026-07-17T10:30:00"
+      "createdAt": "2026-07-17T10:30:00Z"
     }
   ],
   "page": 0,
@@ -190,6 +190,11 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
 > **現状（F-03/F-04未実装）:** `likeCount`/`commentCount`は`0`、`likedByMe`は`false`で固定して返す。
 > F-03（コメント）・F-04（いいね）実装時に実際の集計値へ差し替える。フィールド自体を今のうちに用意しておくことで、
 > 将来の実装時にフロントエンドの型・表示コードを変更せずに済む。
+
+> **日時の扱い（Issue #171）:** APIの日時（`createdAt`）は、サーバーの時計に依存しないよう
+> **常にUTCの ISO-8601（末尾 `Z` 付き）** で返す。バックエンドは起動時にJVMのタイムゾーンをUTCに固定し、
+> DBにもUTCで保存する。ブラウザは `new Date(isoString)` で `Z` を見て自分のタイムゾーンへ変換するため、
+> 日本時間の端末なら +9 時間されて正しく表示される。
 
 ### GET /api/posts/new-count（新着件数の確認）
 
@@ -218,7 +223,7 @@ APIレスポンスの `imageUrl` にはローカル開発時は `/uploads/xxx.jp
       "likeCount": 0,
       "commentCount": 0,
       "likedByMe": false,
-      "createdAt": "2026-07-23T21:00:00"
+      "createdAt": "2026-07-23T21:00:00Z"
     }
   ],
   "hasMore": false

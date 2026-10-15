@@ -1,6 +1,6 @@
 package com.raisetech.raisetimeline.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record PostResponse(
         Long id,
@@ -10,6 +10,6 @@ public record PostResponse(
         int likeCount,
         int commentCount,
         boolean likedByMe,
-        LocalDateTime createdAt
+        Instant createdAt
 ) {
 }

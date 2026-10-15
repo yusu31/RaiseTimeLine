@@ -70,7 +70,7 @@
   "displayName": "デモ太郎",
   "bio": "F-07の動作確認中です。",
   "iconImageUrl": "/uploads/ee179c20-0fba-426a-8179-a70be7bc0bc5.png",
-  "createdAt": "2026-08-25T12:00:00"
+  "createdAt": "2026-08-25T12:00:00Z"
 }
 ```
 

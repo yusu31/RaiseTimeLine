@@ -1,6 +1,6 @@
 package com.raisetech.raisetimeline.response;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 /**
  * プロフィール画面に表示するユーザー情報。
@@ -16,7 +16,7 @@ public record UserProfileResponse(
         String displayName,
         String bio,
         String iconImageUrl,
-        LocalDateTime createdAt,
+        Instant createdAt,
         int followingCount,
         int followerCount,
         boolean followedByMe
