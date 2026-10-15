@@ -22,3 +22,8 @@ output "rds_master_user_secret_arn" {
   description = "Secrets Managerに自動生成されたマスターパスワードのARN"
   value       = aws_db_instance.main.master_user_secret[0].secret_arn
 }
+
+output "ecr_repository_url" {
+  description = "backendのDockerイメージをpushするECRリポジトリURL"
+  value       = aws_ecr_repository.backend.repository_url
+}
