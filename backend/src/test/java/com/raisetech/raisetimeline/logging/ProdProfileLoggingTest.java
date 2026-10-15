@@ -22,7 +22,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 @Tag("requiresIsolatedJvm")
 @ExtendWith(OutputCaptureExtension.class)
-@SpringBootTest
+// prodプロファイルはJWT_SECRETが必須（既定値なし）。application-test.yml の鍵は prod 側に上書きされるため、ここで渡す
+@SpringBootTest(properties = "JWT_SECRET=prod-logging-test-secret-key-32chars!!")
 @ActiveProfiles({"test", "prod"})
 class ProdProfileLoggingTest {
 
