@@ -27,3 +27,18 @@ output "ecr_repository_url" {
   description = "backendのDockerイメージをpushするECRリポジトリURL"
   value       = aws_ecr_repository.backend.repository_url
 }
+
+output "ecs_cluster_name" {
+  description = "ECSクラスター名(aws ecs run-task で指定する)"
+  value       = aws_ecs_cluster.main.name
+}
+
+output "ecs_task_definition_arn" {
+  description = "backendのタスク定義ARN(aws ecs run-task で指定する)"
+  value       = aws_ecs_task_definition.backend.arn
+}
+
+output "ecs_security_group_id" {
+  description = "ECSタスクに付けるセキュリティグループID(aws ecs run-task で指定する)"
+  value       = aws_security_group.ecs.id
+}

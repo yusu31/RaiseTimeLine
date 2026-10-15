@@ -6,3 +6,6 @@
 
 # aws_region   = "ap-northeast-1"
 # project_name = "raisetimeline"
+
+# 必須: 画像アップロード用の既存S3バケット名(aws s3 ls で確認できる)
+# image_bucket_name = "raisetimeline-dev-xxxxxxxxxxxx"
