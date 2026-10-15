@@ -12,7 +12,7 @@ data "aws_iam_policy_document" "ecs_tasks_assume_role" {
 }
 
 # ① タスク実行ロール: ECS(AWS側のエージェント)がコンテナを起動する「前」に使う権限。
-#    イメージをECRから取得する・ログをCloudWatch Logsに書く・DBパスワードをSecrets Managerから読む
+#    イメージをECRから取得する・ログをCloudWatch Logsに書く・DBパスワードとJWT署名鍵をSecrets Managerから読む
 resource "aws_iam_role" "ecs_task_execution" {
   name               = "${var.project_name}-ecs-task-execution"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks_assume_role.json
@@ -28,17 +28,20 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_managed" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
-# DBパスワードのシークレット1つだけを読めるようにする(他のシークレットは読めない=最小権限)
+# DBパスワードとJWT署名鍵の2つのシークレットだけを読めるようにする(他のシークレットは読めない=最小権限)
 resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
-  name = "read-db-master-secret"
+  name = "read-app-secrets"
   role = aws_iam_role.ecs_task_execution.id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [{
-      Effect   = "Allow"
-      Action   = ["secretsmanager:GetSecretValue"]
-      Resource = aws_db_instance.main.master_user_secret[0].secret_arn
+      Effect = "Allow"
+      Action = ["secretsmanager:GetSecretValue"]
+      Resource = [
+        aws_db_instance.main.master_user_secret[0].secret_arn,
+        aws_secretsmanager_secret.jwt_secret.arn,
+      ]
     }]
   })
 }
