@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -39,7 +40,7 @@ public class UserService {
                 detail.getDisplayName(),
                 detail.getBio(),
                 toIconUrl(detail.getIconImagePath()),
-                detail.getCreatedAt(),
+                detail.getCreatedAt().toInstant(ZoneOffset.UTC),
                 detail.getFollowingCount(),
                 detail.getFollowerCount(),
                 detail.isFollowedByMe());

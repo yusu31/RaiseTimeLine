@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -205,6 +206,7 @@ public class PostService {
         PostAuthorResponse author = new PostAuthorResponse(
                 detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName(), authorIconUrl);
         return new PostResponse(detail.getId(), detail.getContent(), imageUrl, author,
-                detail.getLikeCount(), detail.getCommentCount(), detail.isLikedByMe(), detail.getCreatedAt());
+                detail.getLikeCount(), detail.getCommentCount(), detail.isLikedByMe(),
+                detail.getCreatedAt().toInstant(ZoneOffset.UTC));
     }
 }

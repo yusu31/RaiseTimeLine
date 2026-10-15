@@ -113,7 +113,7 @@ WHERE p.user_id = #{currentUserId}
 
 ```json
 { "id": 1, "username": "user1", "displayName": "鈴木", "bio": null,
-  "iconImageUrl": null, "createdAt": "2026-07-20T20:51:10.501968",
+  "iconImageUrl": null, "createdAt": "2026-07-20T20:51:10.501968Z",
   "followingCount": 0, "followerCount": 1, "followedByMe": true }
 ```
 

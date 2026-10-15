@@ -14,6 +14,7 @@ import com.raisetech.raisetimeline.response.PostAuthorResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.ZoneOffset;
 import java.util.List;
 
 @Service
@@ -79,6 +80,6 @@ public class CommentService {
                 : null;
         PostAuthorResponse author = new PostAuthorResponse(
                 detail.getAuthorId(), detail.getAuthorUsername(), detail.getAuthorDisplayName(), authorIconUrl);
-        return new CommentResponse(detail.getId(), detail.getPostId(), detail.getContent(), author, detail.getCreatedAt());
+        return new CommentResponse(detail.getId(), detail.getPostId(), detail.getContent(), author, detail.getCreatedAt().toInstant(ZoneOffset.UTC));
     }
 }
