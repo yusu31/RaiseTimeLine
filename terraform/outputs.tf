@@ -52,3 +52,18 @@ output "ecs_service_name" {
   description = "backendのECSサービス名"
   value       = aws_ecs_service.backend.name
 }
+
+output "cloudfront_domain_name" {
+  description = "公開URL(https://<この値>/ でフロントとAPIの両方に届く)"
+  value       = aws_cloudfront_distribution.main.domain_name
+}
+
+output "cloudfront_distribution_id" {
+  description = "ディストリビューションID(index.htmlのキャッシュ削除 aws cloudfront create-invalidation で指定する)"
+  value       = aws_cloudfront_distribution.main.id
+}
+
+output "frontend_bucket_name" {
+  description = "フロントのビルド成果物の置き場(aws s3 sync dist/ s3://<この値> で配備する)"
+  value       = aws_s3_bucket.frontend.bucket
+}
