@@ -3,6 +3,12 @@
 # 本番だけINFOレベル・JSON形式（Logstash構造化ログ）に切り替える。
 #
 # 実際にEC2側でこのプロファイルを有効化する配線は、デプロイフェーズの作業として別途行う。
+#
+# JWT署名鍵は application.yml の既定値（公開リポジトリ上の値）を使わせない。
+# 環境変数 JWT_SECRET（本番ではSecrets Managerから注入）が無ければ起動に失敗させ、渡し忘れに気づけるようにする。
+jwt:
+  secret: ${JWT_SECRET}
+
 logging:
   level:
     root: INFO

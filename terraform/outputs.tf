@@ -42,3 +42,13 @@ output "ecs_security_group_id" {
   description = "ECSタスクに付けるセキュリティグループID(aws ecs run-task で指定する)"
   value       = aws_security_group.ecs.id
 }
+
+output "alb_dns_name" {
+  description = "ALBのDNS名(curl http://<この値>/actuator/health で疎通確認する)"
+  value       = aws_lb.main.dns_name
+}
+
+output "ecs_service_name" {
+  description = "backendのECSサービス名"
+  value       = aws_ecs_service.backend.name
+}

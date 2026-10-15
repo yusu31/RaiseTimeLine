@@ -60,6 +60,12 @@ resource "aws_ecs_task_definition" "backend" {
         name      = "SPRING_DATASOURCE_PASSWORD"
         valueFrom = "${aws_db_instance.main.master_user_secret[0].secret_arn}:password::"
       },
+      # JWT署名鍵は文字列1つだけのシークレットなので、ARNをそのまま指定する。
+      # 渡し忘れ・取得失敗時は、アプリ側(application-prod.yml)が起動を止める
+      {
+        name      = "JWT_SECRET"
+        valueFrom = aws_secretsmanager_secret.jwt_secret.arn
+      },
     ]
 
     logConfiguration = {
@@ -71,6 +77,40 @@ resource "aws_ecs_task_definition" "backend" {
       }
     }
   }])
+
+  tags = {
+    Name = "${var.project_name}-backend"
+  }
+}
+
+# ECSサービス: 「タスクを常に desired_count 個、動かし続ける」ための管理役。
+# タスクが落ちたら自動で起動し直し、ALBのターゲットグループへ登録・解除も行う
+resource "aws_ecs_service" "backend" {
+  name            = "${var.project_name}-backend"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.backend.arn
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  # Spring Bootの起動に約81〜91秒かかる。この間にヘルスチェックに落ちて殺されないよう、倍近い猶予を持たせる
+  health_check_grace_period_seconds = 180
+
+  # NAT Gatewayを置かない構成のため、パブリックサブネット+パブリックIPでECR等へ直接出る
+  # (外からの入口はECS用SGがALBからの8080番だけに絞っている)
+  network_configuration {
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.ecs.id]
+    assign_public_ip = true
+  }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.backend.arn
+    container_name   = "backend"
+    container_port   = 8080
+  }
+
+  # リスナーができる前にサービスを作ると、ターゲットグループがALBに紐付いていないとして失敗する
+  depends_on = [aws_lb_listener.http]
 
   tags = {
     Name = "${var.project_name}-backend"
