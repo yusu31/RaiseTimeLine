@@ -50,7 +50,9 @@ resource "aws_ecs_task_definition" "backend" {
       { name = "APP_STORAGE_TYPE", value = "s3" },
       { name = "APP_STORAGE_S3_BUCKET", value = var.image_bucket_name },
       { name = "APP_STORAGE_S3_REGION", value = var.aws_region },
-      { name = "CORS_ALLOWED_ORIGINS", value = var.cors_allowed_origins },
+      # CloudFront→ALBはHTTPで転送されるため、バックエンドから見るとブラウザのOrigin(https://…cloudfront.net)は
+      # 別オリジン扱いになる。CloudFrontのドメインを許可しないとPOST等が403で弾かれる
+      { name = "CORS_ALLOWED_ORIGINS", value = "https://${aws_cloudfront_distribution.main.domain_name}" },
     ]
 
     # パスワードは値そのものを書かず、Secrets Managerのシークレット(JSON)の"password"キーだけを

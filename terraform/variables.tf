@@ -68,9 +68,3 @@ variable "image_bucket_name" {
   description = "画像アップロード用の既存S3バケット名(Terraform管理外。terraform.tfvarsで指定する)"
   type        = string
 }
-
-variable "cors_allowed_origins" {
-  description = "バックエンドが許可するCORSオリジン(カンマ区切り)。CloudFrontのドメインはIssue9で追加する"
-  type        = string
-  default     = "http://localhost:5173"
-}

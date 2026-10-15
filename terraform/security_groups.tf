@@ -10,13 +10,19 @@ resource "aws_security_group" "alb" {
   }
 }
 
+# CloudFrontがオリジン(ALB)へ接続するときに使うIPアドレスの一覧。AWSが管理していて、変わると自動で追従する。
+# これで入口をCloudFrontだけに絞り、CloudFrontを避けてALBへ直接アクセスされるのを防ぐ
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "alb_http" {
   security_group_id = aws_security_group.alb.id
-  description       = "HTTP from the internet"
+  description       = "HTTP from CloudFront only"
   from_port         = 80
   to_port           = 80
   ip_protocol       = "tcp"
-  cidr_ipv4         = "0.0.0.0/0"
+  prefix_list_id    = data.aws_ec2_managed_prefix_list.cloudfront.id
 }
 
 resource "aws_vpc_security_group_egress_rule" "alb_to_ecs" {
