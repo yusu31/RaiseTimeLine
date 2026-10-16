@@ -32,7 +32,7 @@
 | DBマイグレーション | Flyway |
 | データベース | PostgreSQL 17（ローカルは Docker） |
 | 画像ストレージ | AWS S3（確定） |
-| デプロイ | AWS: EC2 + RDS + ALB 前提（詳細はデプロイフェーズで確定） |
+| デプロイ | AWS: S3 + CloudFront（フロント）／ECS Fargate + ALB（API）／RDS。**EC2は使用しない**（IaCは Terraform。詳細は docs/infrastructure.md） |
 
 > **バージョン方針（講師指示）:** ライブラリのバージョンは前回課題 TaskManagement と同じものを使う。
 > 詳細は docs/tech-stack.md を参照。
@@ -72,6 +72,7 @@ RaiseTimeLine/
 ├── prototype/      # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし。localStorageで疑似データ保持。全Phase分の画面を先行して盛り込む）
 ├── docs/           # 要件定義・設計ドキュメント
 │   └── features/   # 機能別詳細設計（各機能の実装直前に作成）
+├── terraform/      # AWS構成のIaC（VPC・RDS・ECR・ECS・ALB・S3・CloudFront）
 ├── docker-compose.yml
 └── CLAUDE.md
 ```
@@ -82,7 +83,7 @@ RaiseTimeLine/
   database-design.md / design.md / tech-stack.md に**1か所だけ**書く。同じ内容を複数ファイルに書かない
 - **ドキュメントは実装を「正」として修正する**（ドキュメントに合わせて実装を変えない）
 - `docs/features/` の機能別詳細設計は、各機能の**実装直前**に作成する
-- `docs/infrastructure.md` はデプロイフェーズで作成する
+- `docs/infrastructure.md` は構成図・ネットワーク設計・デプロイ手順の正本。`terraform/` の実コードを正として直す
 
 ## GitHubワークフロー（厳守）
 

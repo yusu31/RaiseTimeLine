@@ -55,7 +55,7 @@ X（旧Twitter）のタイムライン形式を参考にした、テキストベ
 | [データベース設計書](./docs/database-design.md) | ER図（目標スキーマ）・テーブル定義・インデックス・マイグレーション計画 |
 | [設計書（API）](./docs/design.md) | システム構成・JWT認証フロー・APIエンドポイント・エラー形式 |
 | [技術スタック](./docs/tech-stack.md) | 使用技術・バージョン・選定理由・採用しない技術 |
-| [インフラ構成図](./docs/infrastructure.md) | EC2 + RDS + ALB + S3 前提の構成図（デプロイフェーズで詳細化） |
+| [インフラ構成図](./docs/infrastructure.md) | S3 + CloudFront・ECS Fargate + ALB・RDS の構成図・ネットワーク設計・デプロイ手順（確定版） |
 | docs/features/ | 機能別の詳細設計（各機能の実装直前に作成） |
 
 > **ドキュメント運用ルール:** requirements.md は「目次役」とし、詳細は各分冊に1か所だけ書く（重複させない）。
