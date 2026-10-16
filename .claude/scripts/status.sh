@@ -16,7 +16,7 @@ PHASES="
 04|8|100%|テストの整備
 05|8|100%|品質の詰め（バグ修正・想定外テスト）
 06|8|100%|監視運用とログ設計（講義No.32）
-07|6| 70%|デプロイ（S3+CloudFront+ECS Fargate+ALB+RDS、EC2不使用、講義No.38〜39）  <-- いまここ
+07|8|100%|デプロイ（S3+CloudFront+ECS Fargate+ALB+RDS、EC2不使用、講義No.38〜39）
 08|8|100%|非機能要件・パフォーマンステスト（k6、講義No.35）
 09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）
 10|8|100%|CI整備（GitHub Actions、講義No.37）
@@ -66,6 +66,9 @@ SUBPHASES="
 07|07-5|8|100%|TerraformでRDS(PostgreSQL)構築（apply→Flyway8件適用を確認→destroy） PR #160
 07|07-6|8|100%|TerraformでECRリポジトリ構築（イメージ3件をpush済み） PR #162
 07|07-7|8|100%|TerraformでECSクラスター・タスク定義・IAM2ロール構築（Fargate単発起動で確認） PR #164
+07|07-8|8|100%|TerraformでALB・ECSサービス構築、JWT署名鍵をSecrets Managerで注入（prodで渡し忘れは起動失敗） PR #168
+07|07-9|8|100%|S3+CloudFrontでフロント配信、/api/*をALBへ振り分け（SPAの深いURLはCloudFront Function） PR #170
+07|07-10|8|100%|docs/infrastructure.md確定版・CLAUDE.mdのEC2記載修正（途中で見つけた時刻9時間ずれは PR #172 で修正） PR #174
 "
 
 # 05-5・05-6 は 05-3（PR #80）の探索で見つかった。
@@ -89,9 +92,8 @@ SUBPHASES="
 
 # ── 次にやること（番号|内容） ────────────────────────────────
 NEXT="
-1|Issue8: ALB+ECSサービス化（JWT署名鍵はSecrets Managerで注入。apply前に課金確認）
-2|Issue9: S3+CloudFront構築・CORS本番ドメイン反映
-3|Issue10: docs/infrastructure.md確定版・CLAUDE.mdのEC2記載修正
+1|次回apply時: ECS上で作成直後の投稿が「たった今」と出るか確認（#171/#172の最終確認。apply前に課金確認）
+2|docs/operations.md のEC2前提をECS Fargate前提に見直す（Issue #147）
 "
 
 # フェーズ06（監視運用とログ設計、講義No.32）は6 Issue全部完了（#89,#91,#93,#95,#97,#101）。
@@ -151,6 +153,8 @@ NEXT="
 # 新設されたcert-quizスキル（資格試験連動クイズ、7資格対象）を今回初めて使用し、
 # AWS基礎知識の確認クイズ5問（正答率20%）を実施・記録した。詳細はObsidianの
 # ClaudeCode-School「2026-10-14_AWSデプロイの技術解説とTerraform計画」を参照。
+# 07-8〜07-10（2026-10-15〜16）でALB・ECSサービス・S3+CloudFrontを構築しdocsを確定。Terraform計画のIssue1〜10は完了。
+# 課金リソースはすべてdestroy済み（待機中の無課金: ECR・ECSクラスター・ロググループ・IAMロール2つ）。
 # 07-5〜07-7（2026-10-14〜15）でRDS・ECR・ECS+IAMをTerraform化。方針どおり「apply→確認→destroy」
 # で進め、現在はVPC・RDSのみ破棄済み（課金なし）。ECRリポジトリ・ECSクラスター・IAMロール2つ
 # （タスク実行ロール／タスクロールの最小権限分離）は待機中で無課金。ECS用SGは ingress なしで、

@@ -173,7 +173,7 @@ X（旧Twitter）のタイムライン形式を参考にした、テキストベ
 | データ永続化 | PostgreSQL（マイグレーションは Flyway で管理） |
 | 画像保存 | 本番はAWS S3（確定）。ローカル開発中はファイルシステム保存で代替し、`StorageService`抽象化でS3に切替可能な設計にする |
 | 通信 | REST API（JSON）。ローカル開発は http、本番は https を想定 |
-| ホスティング | AWS。S3+CloudFront（フロント）・ECS Fargate+ALB（バックエンド）・RDSを前提とした構成図は [infrastructure.md](./infrastructure.md) を参照。EC2は使用しない（ネットワーク設計の詳細はデプロイフェーズで確定） |
+| ホスティング | AWS。S3+CloudFront（フロント）・ECS Fargate+ALB（バックエンド）・RDSの構成図・ネットワーク設計・デプロイ手順は [infrastructure.md](./infrastructure.md) を参照（確定版）。EC2は使用しない |
 
 ---
 
@@ -278,5 +278,5 @@ Phase 3 より後の検討事項（現時点では設計に含めない）。
 | [tech-stack.md](./tech-stack.md) | 使用技術・バージョン・選定理由・テストの型と方針 | 要件定義時（本書と同時） |
 | [testing-design.md](./testing-design.md) | テストケース設計（同値分割・境界値分析・デシジョンテーブル） | テスト実装時に作成・機能追加のたびに追記 |
 | docs/features/（機能別詳細） | 各機能の実装レベルの詳細設計 | 各機能の実装直前に順次作成 |
-| [infrastructure.md](./infrastructure.md) | AWS構成図（S3+CloudFront・ECS Fargate+ALB・RDS+S3 前提版）・デプロイ手順 | 前提構成図は作成済み。デプロイフェーズで詳細化 |
+| [infrastructure.md](./infrastructure.md) | AWS構成図（S3+CloudFront・ECS Fargate+ALB・RDS+S3）・ネットワーク設計・デプロイ手順 | 確定版（Terraform Issue1〜9で構築・実機確認済み） |
 | [operations.md](./operations.md) | ログ設計・監視項目・障害対応フロー | 講義No.32を受けて作成 |
