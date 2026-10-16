@@ -294,4 +294,3 @@ terraform destroy   # 課金リソースを消す。終わったらAWSコンソ�
 | CloudFront → ALB間のHTTPS化 | 現状は**HTTP**（独自ドメインがなく、ALBに証明書を付けられないため）。ブラウザ〜CloudFront間はHTTPSで保護されているが、CloudFront〜ALB間は平文。**本番ならドメインを取得してACMで証明書を発行し、ALBにHTTPSリスナーを追加して `https-only` にする** |
 | 独自ドメイン・DNS | 現状は `*.cloudfront.net` のまま。Route 53などでドメインを割り当てる |
 | Multi-AZ・冗長化 | RDSはSingle-AZ、ECSタスクは1つ。落ちたら止まる。学習用途のため許容 |
-| 運用ドキュメント | `docs/operations.md` にEC2前提の記述が残っている（Issue #147で見直す） |
