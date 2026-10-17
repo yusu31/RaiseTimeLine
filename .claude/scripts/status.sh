@@ -172,8 +172,8 @@ NEXT="
 # （`playwright.config.ts`にCI用設定は用意済み）。
 
 # ── 最終計測値（テスト実行に時間がかかるため手で更新） ──────────
-MEASURED_AT="2026-10-14"
-BACKEND_TESTS=399
+MEASURED_AT="2026-10-17"
+BACKEND_TESTS=406
 FRONTEND_TESTS=312
 
 bar() { # $1=埋まっている数(0-8)
