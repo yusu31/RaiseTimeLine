@@ -26,7 +26,7 @@
 | 役割 | 技術 |
 |------|------|
 | フロントエンド | React 19 + TypeScript + Vite + Tailwind CSS |
-| バックエンド | Java 21 + Spring Boot 3.x（REST API） |
+| バックエンド | Java 25 + Spring Boot 4.0.8（REST API） |
 | 認証 | Spring Security + JWT（アクセストークン＋リフレッシュトークン） |
 | ORマッパー | MyBatis（JOOQ・JPAは不採用） |
 | DBマイグレーション | Flyway |
@@ -34,8 +34,8 @@
 | 画像ストレージ | AWS S3（確定） |
 | デプロイ | AWS: S3 + CloudFront（フロント）／ECS Fargate + ALB（API）／RDS。**EC2は使用しない**（IaCは Terraform。詳細は docs/infrastructure.md） |
 
-> **バージョン方針（講師指示）:** ライブラリのバージョンは前回課題 TaskManagement と同じものを使う。
-> 詳細は docs/tech-stack.md を参照。
+> **バージョン方針:** 当初は前回課題 TaskManagement と同じバージョンで揃えていたが、2026-10 に
+> Java 25 / Spring Boot 4.0.8 へ上げた。現在のバージョンと経緯は docs/tech-stack.md を参照。
 
 ## サーバー起動・ポート管理（厳守）
 
@@ -63,17 +63,21 @@ netstat -ano | findstr :8080
 taskkill /PID <PID> /F
 ```
 
-## ディレクトリ構成（予定）
+## ディレクトリ構成
 
 ```
 RaiseTimeLine/
 ├── backend/        # Java + Spring Boot（REST API）
 ├── frontend/       # React + TypeScript（Vite）
+├── e2e/            # E2Eテスト（Playwright）。詳細は docs/e2e-testing.md
+├── perf/           # 負荷試験（k6）。詳細は docs/performance-testing.md
+├── docker/         # ローカルDB（PostgreSQL）の初期化設定
 ├── prototype/      # 静的プロトタイプ（HTML/CSS/JSのみ、DBなし。localStorageで疑似データ保持。全Phase分の画面を先行して盛り込む）
 ├── docs/           # 要件定義・設計ドキュメント
 │   └── features/   # 機能別詳細設計（各機能の実装直前に作成）
 ├── terraform/      # AWS構成のIaC（VPC・RDS・ECR・ECS・ALB・S3・CloudFront）
 ├── docker-compose.yml
+├── README.md
 └── CLAUDE.md
 ```
 

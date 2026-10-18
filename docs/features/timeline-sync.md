@@ -13,7 +13,7 @@
 ### 軽量チェック用エンドポイントと新着取得エンドポイントを分離した理由
 
 `GET /api/posts/new-count`は`posts`テーブル単体への`COUNT(*) WHERE id > #{afterId}`のみで完結し、JOIN不要のため
-既存の「単純なCRUD/単票SELECTはアノテーション方式」という慣習にそのまま乗る。フロントエンドが30秒ごとに
+既存の「単純なCRUD/単票SELECTはアノテーション方式」という慣習にそのまま乗る（現在は全SQLをMapper XMLに一本化している。現行の方針は `docs/tech-stack.md` の「SQLの記述方針（MyBatis）」）。フロントエンドが30秒ごとに
 ポーリングしてもDBへの負荷が小さい。
 
 一方、実際に新着投稿の中身（投稿者・本文・画像URLなど）を取得する`GET /api/posts/new`は`posts`×`users`のJOINを伴うため、

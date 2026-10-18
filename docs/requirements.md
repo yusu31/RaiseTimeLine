@@ -22,6 +22,7 @@
 | 1.1 | 2026-07-17 | yusu | 分冊構成に再構成（features.md / screen-design.md を分離）。性能目標・セキュリティ要件・将来の拡張候補を追記 |
 | 1.2 | 2026-07-23 | yusu | F-08（投稿の削除・編集）をPhase 1に変更。画像保存はローカル開発中はファイルシステム保存、本番はS3に切替する方針を明記 |
 | 1.3 | 2026-07-23 | yusu | F-12（タイムラインの新着チェック）を追加。定期チェック＋通知バナー方式（X/Twitter方式）を採用し、F-03/F-04より先にPhase 1で実装 |
+| 1.4 | 2026-10-18 | yusu | 技術スタック表を実装に合わせて更新（Java 25 / Spring Boot 4.0.8、ORマッパーはMyBatis、インフラは確定） |
 
 ---
 
@@ -215,12 +216,12 @@ ER図・テーブル定義・インデックス設計は **[データベース�
 | 役割 | 技術 |
 |------|------|
 | フロントエンド | React + TypeScript（Vite） + Tailwind CSS |
-| バックエンド | Java 21 + Spring Boot 3.x（REST API） |
+| バックエンド | Java 25 + Spring Boot 4.0.8（REST API） |
 | 認証 | Spring Security + JWT |
-| ORマッパー | Spring Data JPA |
+| ORマッパー | MyBatis（JPAは不採用。経緯は [tech-stack.md](./tech-stack.md)） |
 | DBマイグレーション | Flyway |
 | データベース | PostgreSQL（ローカルは Docker） |
-| インフラ | AWS（デプロイフェーズで詳細決定） |
+| インフラ | AWS（S3 + CloudFront / ECS Fargate + ALB / RDS。Terraformで構築。確定版は [infrastructure.md](./infrastructure.md)） |
 
 ---
 
