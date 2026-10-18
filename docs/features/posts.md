@@ -11,6 +11,8 @@ F-08は当初Phase 2の予定だったが、投稿機能の基本操作の一部
 
 ### MapperはアノテーションとXMLを併用（今回からXMLマッパーを初導入）
 
+> （現在は全SQLをMapper XMLに一本化している。現行の方針は `docs/tech-stack.md` の「SQLの記述方針（MyBatis）」）
+
 `docs/features/auth.md`に「将来JOINを伴う複雑なクエリ（タイムライン取得など）が出てきたらXMLマッパーへの移行を検討する」と記載していた通り、
 タイムライン取得は`posts`×`users`のJOINが必要になったため、ここでXMLマッパー（`PostMapper.xml`）を初導入する。
 
