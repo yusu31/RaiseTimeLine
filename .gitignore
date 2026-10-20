@@ -34,3 +34,6 @@ terraform/*.tfstate
 terraform/*.tfstate.*
 terraform/terraform.tfvars
 terraform/*.tfplan
+
+# README用の撮影で出る動画・コマ画像
+e2e/showcase/video/

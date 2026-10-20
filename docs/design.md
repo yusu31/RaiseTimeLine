@@ -108,8 +108,8 @@
 
 | メソッド | パス | 説明 | 認証 |
 |---------|------|------|------|
-| POST | /api/posts/{postId}/like | いいねする | 必要 |
-| DELETE | /api/posts/{postId}/like | いいねを取り消す | 必要 |
+| POST | /api/posts/{postId}/likes | いいねする | 必要 |
+| DELETE | /api/posts/{postId}/likes | いいねを取り消す | 必要 |
 
 ### 画像（Phase 1）
 
