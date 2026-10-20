@@ -11,7 +11,9 @@ X（旧Twitter）のタイムライン形式を参考にした、テキストベ
 デプロイ構成は Terraform で定義し、`apply` → 動作確認 → `destroy` まで実機で検証しています。
 常時公開はしていません（理由は「[公開について](#公開について常時稼働させていない理由)」）。
 
-![ログイン画面](./docs/images/01-login.png)
+![操作デモ: 投稿・いいね・コメント・フォロー](./docs/images/demo.gif)
+
+> 上の動画は、投稿 → いいね → コメント → フォローの一連の操作です（架空のユーザー・自作イラストを使っています）。
 
 ---
 
@@ -38,9 +40,16 @@ X（旧Twitter）のタイムライン形式を参考にした、テキストベ
 
 ## 画面
 
-| タイムライン | プロフィール |
+| タイムライン | 投稿詳細（コメント） |
 |---|---|
-| ![タイムライン](./docs/images/02-timeline.png) | ![プロフィール](./docs/images/04-profile.png) |
+| ![タイムライン](./docs/images/02-timeline.png) | ![投稿詳細](./docs/images/03-post-detail.png) |
+
+| プロフィール | 検索 |
+|---|---|
+| ![プロフィール](./docs/images/04-profile.png) | ![検索](./docs/images/05-search.png) |
+
+ログイン画面は [こちら](./docs/images/01-login.png)。画像は `e2e/showcase/capture.mjs` で再生成できます
+（撮影専用のDBに架空のデータを投入して撮影します）。
 
 ---
 
