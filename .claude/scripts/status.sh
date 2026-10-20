@@ -21,6 +21,7 @@ PHASES="
 09|8|100%|E2Eテスト・ブラウザパフォーマンス・アクセシビリティ（Playwright、講義No.36）
 10|8|100%|CI整備（GitHub Actions、講義No.37）
 11|8|100%|Javaバージョンアップ（21→25、Spring Boot 3.4→4.0）
+12|8|100%|RaiseTimeLine仕上げ（講義No.39の最終課題に向けた整備）
 "
 
 # ── フェーズの内訳（親番号|番号|進捗0-8|表示|名前） ─────────────
@@ -69,6 +70,10 @@ SUBPHASES="
 07|07-8|8|100%|TerraformでALB・ECSサービス構築、JWT署名鍵をSecrets Managerで注入（prodで渡し忘れは起動失敗） PR #168
 07|07-9|8|100%|S3+CloudFrontでフロント配信、/api/*をALBへ振り分け（SPAの深いURLはCloudFront Function） PR #170
 07|07-10|8|100%|docs/infrastructure.md確定版・CLAUDE.mdのEC2記載修正（途中で見つけた時刻9時間ずれは PR #172 で修正） PR #174
+12|12-1|8|100%|古いドキュメントの掃除（実装と食い違う記載を修正） PR #179
+12|12-2|8|100%|ECS上で実際にapply→動作確認→destroy、コストを公式単価と実績で記録（Cost Explorerの実測は反映待ちで追記予定） PR #183
+12|12-3|8|100%|README全面刷新（構成図・スクショ・操作デモGIF・MIT LICENSE・テスト手順） PR #185
+12|12-4|8|100%|講師の構成とのEC2/Fargate比較をinfrastructure.mdに追記 PR #181
 "
 
 # 05-5・05-6 は 05-3（PR #80）の探索で見つかった。
