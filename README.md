@@ -240,3 +240,9 @@ $env:AWS_PROFILE = "<プロファイル名>"
 | ファイル | 内容 |
 |----------|------|
 | [理解度チェック（中級編No.34）](docs/assignments/understanding-check-intermediate.md) | 認証・アーキテクチャ・インフラ・テスト等に関する中級編理解度チェック回答 |
+
+---
+
+## ライセンス
+
+[MIT License](./LICENSE)
