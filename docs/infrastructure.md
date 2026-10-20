@@ -237,7 +237,7 @@ terraform destroy   # 課金リソースを消す。終わったらAWSコンソ�
 
 | 項目 | 値 |
 |------|-----|
-| バケット名 | `raisetimeline-dev-578760237100` |
+| バケット名 | `raisetimeline-dev-<アカウントID>` |
 | リージョン | `ap-northeast-1`（東京） |
 | バージョニング | **無効**（有効だと削除しても実体が残り、課金が積み上がるため） |
 | 暗号化 | S3の既定（`AES256`）をそのまま使用 |
@@ -252,8 +252,8 @@ terraform destroy   # 課金リソースを消す。終わったらAWSコンソ�
 
 | 許可 | 対象 |
 |------|------|
-| `s3:PutObject` / `s3:GetObject` / `s3:DeleteObject` | `arn:aws:s3:::raisetimeline-dev-578760237100/*` |
-| `s3:ListBucket` | `arn:aws:s3:::raisetimeline-dev-578760237100` |
+| `s3:PutObject` / `s3:GetObject` / `s3:DeleteObject` | `arn:aws:s3:::raisetimeline-dev-<アカウントID>/*` |
+| `s3:ListBucket` | `arn:aws:s3:::raisetimeline-dev-<アカウントID>` |
 
 `s3:ListAllMyBuckets` や IAM 操作の権限は与えていない（実際に拒否されることを検証済み）。
 
